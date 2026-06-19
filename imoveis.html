@@ -1,0 +1,374 @@
+<!--
+  ============================================================
+  PORTAL DE IMÓVEIS CAIXA — RS & SC · Reginaldo Rosso
+  ------------------------------------------------------------
+  Lê os arquivos imoveis-rs.json e imoveis-sc.json (gerados
+  diariamente pelo robô atualizar-imoveis.js) e mostra tudo
+  aqui dentro do site. Nenhum redirecionamento para a Caixa.
+  Edite WHATS no <script id="amostra">
+// Dados de exemplo embutidos: usados so quando os arquivos JSON ainda nao
+// estao disponiveis (ex.: abrir o arquivo localmente com 2 cliques).
+// Quando o robo publicar os JSON no seu site, eles tem prioridade.
+window.__AMOSTRA_RS__=[{"id":"1444400000","uf":"RS","cidade":"Lajeado","bairro":"Centro","tipo":"Apartamento","endereco":"Rua das Acácias, 1250, Apt 304","preco":182000,"avaliacao":260000,"desconto":30,"descricao":"Apartamento, 48,30m² de área privativa, 1 vaga de garagem","modalidade":"Venda Online","link":""},{"id":"1444400001","uf":"RS","cidade":"Porto Alegre","bairro":"Cidade Baixa","tipo":"Apartamento","endereco":"Rua João Alfredo, 410, Apt 502","preco":149900,"avaliacao":221000,"desconto":32.1,"descricao":"Apartamento, 52m², 2 dormitórios","modalidade":"Venda Online","link":""},{"id":"1444400002","uf":"RS","cidade":"Caxias do Sul","bairro":"São Pelegrino","tipo":"Casa","endereco":"Av. Júlio de Castilhos, 900","preco":235000,"avaliacao":318000,"desconto":26.1,"descricao":"Casa, 120m² construídos, 3 dormitórios","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"1444400003","uf":"RS","cidade":"Canoas","bairro":"Marechal Rondon","tipo":"Apartamento","endereco":"Rua Tiradentes, 77, Apt 201","preco":98000,"avaliacao":142000,"desconto":30.9,"descricao":"Apartamento, 44m², 1 dormitório","modalidade":"Venda Online","link":""},{"id":"1444400004","uf":"RS","cidade":"Pelotas","bairro":"Centro","tipo":"Sala comercial","endereco":"Rua General Osório, 555, Sala 12","preco":72000,"avaliacao":96000,"desconto":25,"descricao":"Sala comercial, 33m²","modalidade":"Compra Direta","link":""},{"id":"1444400005","uf":"RS","cidade":"Santa Maria","bairro":"Camobi","tipo":"Casa","endereco":"Rua das Palmeiras, 88","preco":168000,"avaliacao":205000,"desconto":18,"descricao":"Casa, 98m², 2 dormitórios, pátio","modalidade":"Venda Online","link":""},{"id":"1444400006","uf":"RS","cidade":"Novo Hamburgo","bairro":"Rio Branco","tipo":"Apartamento","endereco":"Rua Bento Gonçalves, 1200, Apt 33","preco":119000,"avaliacao":176000,"desconto":32.4,"descricao":"Apartamento, 49m², 2 dormitórios","modalidade":"Licitação Aberta","link":""},{"id":"1444400007","uf":"RS","cidade":"Gravataí","bairro":"Bom Sucesso","tipo":"Terreno","endereco":"Estrada das Três Meninas, s/n","preco":54000,"avaliacao":80000,"desconto":32.5,"descricao":"Terreno, 360m²","modalidade":"Venda Online","link":""},{"id":"1444400008","uf":"RS","cidade":"Passo Fundo","bairro":"Boqueirão","tipo":"Casa","endereco":"Rua Uruguai, 432","preco":142000,"avaliacao":189000,"desconto":24.9,"descricao":"Casa, 110m², 3 dormitórios","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"1444400009","uf":"RS","cidade":"Bento Gonçalves","bairro":"Cidade Alta","tipo":"Apartamento","endereco":"Rua Marechal Deodoro, 250, Apt 404","preco":205000,"avaliacao":268000,"desconto":23.5,"descricao":"Apartamento, 67m², 2 dormitórios, 1 vaga","modalidade":"Venda Online","link":""}];
+window.__AMOSTRA_SC__=[{"id":"4855500000","uf":"SC","cidade":"Florianópolis","bairro":"Trindade","tipo":"Apartamento","endereco":"Rua Lauro Linhares, 1010, Apt 706","preco":298000,"avaliacao":395000,"desconto":24.5,"descricao":"Apartamento, 58m², 2 dormitórios, 1 vaga","modalidade":"Venda Online","link":""},{"id":"4855500001","uf":"SC","cidade":"Blumenau","bairro":"Velha","tipo":"Casa","endereco":"Rua Amazonas, 322","preco":265000,"avaliacao":340000,"desconto":22,"descricao":"Casa, 130m², 3 dormitórios","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"4855500002","uf":"SC","cidade":"Joinville","bairro":"Glória","tipo":"Apartamento","endereco":"Rua Blumenau, 1450, Apt 102","preco":159000,"avaliacao":231000,"desconto":31.2,"descricao":"Apartamento, 50m², 2 dormitórios","modalidade":"Venda Online","link":""},{"id":"4855500003","uf":"SC","cidade":"Itajaí","bairro":"Fazenda","tipo":"Apartamento","endereco":"Av. Ministro Victor Konder, 80, Apt 901","preco":340000,"avaliacao":430000,"desconto":20.9,"descricao":"Apartamento, 72m², vista mar, 1 vaga","modalidade":"Compra Direta","link":""},{"id":"4855500004","uf":"SC","cidade":"Chapecó","bairro":"Centro","tipo":"Sala comercial","endereco":"Av. Getúlio Vargas, 600, Sala 5","preco":88000,"avaliacao":118000,"desconto":25.4,"descricao":"Sala comercial, 40m²","modalidade":"Venda Online","link":""},{"id":"4855500005","uf":"SC","cidade":"Criciúma","bairro":"Próspera","tipo":"Casa","endereco":"Rua Santos Dumont, 145","preco":178000,"avaliacao":224000,"desconto":20.5,"descricao":"Casa, 105m², 2 dormitórios, garagem","modalidade":"Licitação Aberta","link":""},{"id":"4855500006","uf":"SC","cidade":"Balneário Camboriú","bairro":"Centro","tipo":"Apartamento","endereco":"Rua 1500, 250, Apt 1203","preco":520000,"avaliacao":640000,"desconto":18.7,"descricao":"Apartamento, 80m², 2 suítes, vista mar","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"4855500007","uf":"SC","cidade":"Lages","bairro":"Coral","tipo":"Terreno","endereco":"Rua João Costa, s/n","preco":61000,"avaliacao":92000,"desconto":33.6,"descricao":"Terreno, 420m²","modalidade":"Venda Online","link":""}];
+window.__AMOSTRA_META__={
+  "atualizado": "2026-06-19T12:14:10.915Z",
+  "total": 18,
+  "porEstado": {
+    "RS": 10,
+    "SC": 8
+  },
+  "exemplo": true
+};
+</script>
+<script id="config"> se mudar de número.
+  ============================================================
+-->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#08182B" />
+<title>Imóveis Caixa à venda no RS e SC — Reginaldo Rosso</title>
+<meta name="description" content="Portal de imóveis da Caixa à venda no Rio Grande do Sul e Santa Catarina, atualizado diariamente. Filtre por cidade, modalidade, preço e desconto e fale direto comigo." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#08182B; --surface:#0F2840; --surface2:#13314F; --line:#22405E;
+    --accent:#3BB4CE; --gold:#E8B04B; --orange:#F07A1E; --green:#2FBE77;
+    --ink:#EAF2F9; --muted:#93AAC2; --maxw:1240px; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Archivo",system-ui,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+  a{color:inherit;text-decoration:none}
+  h1,h2{font-family:"Fraunces",Georgia,serif;font-weight:700;margin:0;line-height:1.05;letter-spacing:-.01em}
+
+  header{position:sticky;top:0;z-index:40;background:rgba(8,24,43,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0}
+  .brand{display:flex;align-items:center;gap:10px;font-family:"Fraunces";font-weight:700;font-size:1.08rem}
+  .brand .mk{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#1d6f86);display:grid;place-items:center;font-family:"Archivo";font-weight:800;color:#03131c;font-size:1rem}
+  .brand small{display:block;font-family:"Archivo";font-weight:600;font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .back{font-size:.84rem;font-weight:700;color:var(--muted)}
+  .back:hover{color:var(--accent)}
+
+  .hero{padding:30px 0 6px}
+  .hero .eyebrow{font-weight:800;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+  .hero h1{font-size:clamp(1.8rem,3.6vw,2.6rem);margin:8px 0 6px}
+  .hero p{color:var(--muted);margin:0;font-size:.98rem}
+  .updated{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.8rem;color:var(--muted)}
+  .updated .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(47,190,119,.6);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,190,119,.5)}70%{box-shadow:0 0 0 10px rgba(47,190,119,0)}100%{box-shadow:0 0 0 0 rgba(47,190,119,0)}}
+
+  /* filtros */
+  .filters{position:sticky;top:57px;z-index:30;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
+  .fbar{display:grid;grid-template-columns:1.4fr repeat(4,1fr) auto;gap:10px}
+  .field label{display:block;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 5px 2px;font-weight:700}
+  .field input,.field select{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:"Archivo";font-size:.92rem;padding:11px 12px;outline:none}
+  .field input:focus,.field select:focus{border-color:var(--accent)}
+  .field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px;background-size:5px 5px;background-repeat:no-repeat}
+  .clearbtn{align-self:end;background:none;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-family:"Archivo";font-weight:700;font-size:.85rem;padding:11px 14px;cursor:pointer;white-space:nowrap}
+  .clearbtn:hover{border-color:var(--orange);color:var(--orange)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:.82rem;color:var(--muted);cursor:pointer;font-weight:600;transition:.15s}
+  .chip[aria-pressed="true"]{background:var(--accent);color:#03131c;border-color:var(--accent);font-weight:800}
+  .count{margin-left:auto;font-size:.85rem;color:var(--muted)}
+  .count b{color:var(--ink)}
+
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;padding:26px 0 10px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:transform .18s,border-color .18s,box-shadow .2s;cursor:pointer}
+  .card:hover{transform:translateY(-4px);border-color:#2f5d82;box-shadow:0 18px 40px -24px #000}
+  .ph{position:relative;aspect-ratio:16/10;background:linear-gradient(135deg,#10243b,#0a1a2c);overflow:hidden}
+  .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .ph .pholder{position:absolute;inset:0;display:grid;place-items:center;color:#33597e;font-family:"Fraunces";font-size:1rem}
+  .ph .uf{position:absolute;top:10px;left:10px;background:rgba(8,24,43,.82);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:.72rem;font-weight:800;letter-spacing:.05em}
+  .ph .desc{position:absolute;top:10px;right:10px;background:var(--green);color:#04130b;border-radius:7px;padding:4px 9px;font-size:.75rem;font-weight:800}
+  .cbody{padding:15px 16px 16px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .ctype{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:800}
+  .caddr{font-size:.92rem;color:#cdddec;line-height:1.35}
+  .ccity{font-family:"Fraunces";font-weight:700;font-size:1.05rem}
+  .price{margin-top:auto;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .price .now{font-family:"Fraunces";font-weight:700;font-size:1.35rem;color:var(--gold)}
+  .price .old{font-size:.82rem;color:var(--muted);text-decoration:line-through}
+  .mod{font-size:.72rem;color:var(--muted);border-top:1px solid var(--line);padding-top:9px;margin-top:4px}
+
+  .loadmore{display:block;margin:16px auto 40px;background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--ink);font-family:"Archivo";font-weight:800;font-size:.92rem;padding:14px 28px;cursor:pointer}
+  .loadmore:hover{border-color:var(--accent);color:var(--accent)}
+  .empty,.loading{text-align:center;color:var(--muted);padding:70px 20px}
+  .empty h2{font-size:1.4rem;margin-bottom:8px;color:var(--ink)}
+  .spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* modal detalhe */
+  .modal{position:fixed;inset:0;z-index:90;display:none;align-items:flex-start;justify-content:center;background:rgba(3,12,22,.78);padding:30px 18px;overflow:auto}
+  .modal.open{display:flex}
+  .sheet{background:var(--surface2);border:1px solid var(--line);border-radius:18px;max-width:680px;width:100%;overflow:hidden;position:relative;margin:auto}
+  .sheet__img{aspect-ratio:16/9;background:linear-gradient(135deg,#10243b,#0a1a2c);position:relative}
+  .sheet__img img{width:100%;height:100%;object-fit:cover}
+  .sheet__x{position:absolute;top:12px;right:14px;background:rgba(8,24,43,.8);border:1px solid var(--line);color:var(--ink);width:36px;height:36px;border-radius:50%;font-size:1.3rem;cursor:pointer;line-height:1}
+  .sheet__body{padding:24px}
+  .sheet__body h2{font-size:1.5rem;margin-bottom:4px}
+  .sheet__addr{color:var(--muted);margin-bottom:16px}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .kv div{background:#0a2036;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:.85rem;color:#cdddec}
+  .kv b{display:block;color:var(--ink);font-family:"Archivo";font-weight:800;font-size:1rem}
+  .sheet__desc{font-size:.92rem;color:#cdddec;background:#0a2036;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:18px}
+  .sheet__cta{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:9px;font-family:"Archivo";font-weight:800;font-size:.92rem;padding:14px 22px;border-radius:11px;border:0;cursor:pointer;transition:transform .15s}
+  .btn--wa{background:var(--orange);color:#fff;box-shadow:0 10px 26px -10px var(--orange);flex:1;justify-content:center}
+  .btn--wa:hover{transform:translateY(-2px)}
+  .btn--ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  .relat{margin-top:14px;font-size:.84rem;color:var(--green);background:rgba(47,190,119,.1);border:1px solid #1f6b48;border-radius:10px;padding:11px 13px}
+
+  footer{border-top:1px solid var(--line);padding:30px 0;color:#5b7393;font-size:.8rem;line-height:1.7;text-align:center}
+
+  @media(max-width:880px){.fbar{grid-template-columns:1fr 1fr}.filters{position:static}}
+  @media(max-width:560px){.kv{grid-template-columns:1fr}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="index.html"><span class="mk">RR</span><span>Reginaldo Rosso<small>Imóveis Caixa · RS &amp; SC</small></span></a>
+    <a class="back" href="index.html">← Voltar ao início</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Portal de imóveis</span>
+    <h1>Imóveis da Caixa à venda no RS e SC</h1>
+    <p>Encontre o seu imóvel, fale comigo e receba o Relatório Confidencial sem custo. Tudo aqui no site.</p>
+    <div class="updated"><span class="dot"></span><span id="updatedTxt">Carregando lista atualizada…</span></div>
+  </div>
+</section>
+
+<section class="filters">
+  <div class="wrap">
+    <div class="fbar">
+      <div class="field"><label for="q">Buscar (cidade, bairro, descrição)</label><input id="q" type="search" placeholder="Ex.: apartamento Lajeado, casa Blumenau…" autocomplete="off"></div>
+      <div class="field"><label for="cidade">Cidade</label><select id="cidade"><option value="">Todas</option></select></div>
+      <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
+      <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
+      <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
+        <option value="desc">Maior desconto</option>
+        <option value="precoasc">Menor preço</option>
+        <option value="precodesc">Maior preço</option>
+      </select></div>
+      <button class="clearbtn" id="clear">Limpar</button>
+    </div>
+    <div class="chips">
+      <button class="chip" data-uf="" aria-pressed="true">Todos os estados</button>
+      <button class="chip" data-uf="RS" aria-pressed="false">Rio Grande do Sul</button>
+      <button class="chip" data-uf="SC" aria-pressed="false">Santa Catarina</button>
+      <button class="chip" data-min="0" data-max="100000" aria-pressed="false">Até R$ 100 mil</button>
+      <button class="chip" data-min="100000" data-max="200000" aria-pressed="false">R$ 100–200 mil</button>
+      <button class="chip" data-min="200000" data-max="400000" aria-pressed="false">R$ 200–400 mil</button>
+      <button class="chip" data-mindesc="30" aria-pressed="false">Desconto 30%+</button>
+      <span class="count" id="count"></span>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div id="grid" class="grid"></div>
+  <div id="loading" class="loading"><div class="spinner"></div>Buscando imóveis…</div>
+  <button id="loadmore" class="loadmore" style="display:none">Ver mais imóveis</button>
+</div>
+
+<footer>
+  <div class="wrap">
+    Dados obtidos da base pública da CAIXA Econômica Federal, atualizados diariamente. Valores e situação podem mudar — confirme sempre no edital oficial.<br>
+    © 2026 — Reginaldo Rosso · Corretor de Imóveis · CRECI RS 28565J · CRECI SC 8152J.
+  </div>
+</footer>
+
+<!-- MODAL detalhe -->
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script id="config">
+  // ===== EDITE AQUI SE PRECISAR =====
+  const WHATS = { RS:"5551991104976", SC:"5548991642332" };
+  // Mostrar foto da Caixa (hotlink). Se aparecer muita foto quebrada, deixe false.
+  const USAR_FOTOS = true;
+  const fotoURL = id => `https://venda-imoveis.caixa.gov.br/fotos/F${id}21.jpg`;
+</script>
+<script>
+  const BRL = v => v==null ? "—" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+  const norm = s => (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const PER_PAGE = 24;
+
+  let ALL=[], view=[], shown=0;
+  const state={uf:"",q:"",cidade:"",tipo:"",modalidade:"",min:null,max:null,mindesc:null,ordem:"desc"};
+
+  const grid=document.getElementById("grid"), loadingEl=document.getElementById("loading"),
+        loadmore=document.getElementById("loadmore"), countEl=document.getElementById("count");
+
+  // ---- carregar JSON (mesmo site, sem CORS) ----
+  async function carregar(){
+    try{
+      const [rs,sc,meta]=await Promise.all([
+        fetch("imoveis-rs.json").then(r=>r.ok?r.json():[]).catch(()=>[]),
+        fetch("imoveis-sc.json").then(r=>r.ok?r.json():[]).catch(()=>[]),
+        fetch("meta.json").then(r=>r.ok?r.json():null).catch(()=>null),
+      ]);
+      ALL=[...rs,...sc];
+      // fallback: abrindo localmente (file://) o fetch falha — usa a amostra embutida
+      if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; meta=meta||window.__AMOSTRA_META__; }
+      if(meta&&meta.atualizado){
+        const d=new Date(meta.atualizado);
+        document.getElementById("updatedTxt").textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" · "+ALL.length+" imóveis";
+      }else{
+        document.getElementById("updatedTxt").textContent=ALL.length+" imóveis disponíveis";
+      }
+      preencherFiltros();
+      aplicar();
+    }catch(e){
+      loadingEl.innerHTML="<h2>Não consegui carregar a lista agora.</h2><p>Atualize a página em instantes.</p>";
+    }
+  }
+
+  function preencherFiltros(){
+    const cidades=[...new Set(ALL.map(i=>i.cidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
+    const tipos=[...new Set(ALL.map(i=>i.tipo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
+    const mods=[...new Set(ALL.map(i=>i.modalidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
+    const fill=(id,arr)=>{const s=document.getElementById(id);arr.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;s.appendChild(o)})};
+    fill("cidade",cidades);fill("tipo",tipos);fill("modalidade",mods);
+  }
+
+  function aplicar(){
+    view=ALL.filter(i=>{
+      if(state.uf && i.uf!==state.uf) return false;
+      if(state.cidade && i.cidade!==state.cidade) return false;
+      if(state.tipo && i.tipo!==state.tipo) return false;
+      if(state.modalidade && i.modalidade!==state.modalidade) return false;
+      if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
+      if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
+      if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
+      if(state.q){
+        const hay=norm(i.cidade+" "+i.bairro+" "+i.endereco+" "+i.descricao+" "+i.tipo);
+        if(!norm(state.q).split(/\s+/).every(w=>hay.includes(w))) return false;
+      }
+      return true;
+    });
+    view.sort((a,b)=>{
+      if(state.ordem==="precoasc") return (a.preco??1e15)-(b.preco??1e15);
+      if(state.ordem==="precodesc") return (b.preco??-1)-(a.preco??-1);
+      return (b.desconto??-1)-(a.desconto??-1);
+    });
+    shown=0; grid.innerHTML=""; loadingEl.style.display="none";
+    countEl.innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> imóvel"+(view.length===1?"":"is");
+    if(!view.length){
+      grid.innerHTML="<div class='empty' style='grid-column:1/-1'><h2>Nenhum imóvel com esses filtros.</h2><p>Tente ampliar a busca ou limpar os filtros.</p></div>";
+      loadmore.style.display="none"; return;
+    }
+    render();
+  }
+
+  function fotoDe(i){ return USAR_FOTOS ? fotoURL(i.id) : null; }
+
+  function render(){
+    const frag=document.createDocumentFragment();
+    const slice=view.slice(shown,shown+PER_PAGE);
+    slice.forEach(i=>{
+      const el=document.createElement("article");
+      el.className="card";
+      const foto=fotoDe(i);
+      const img = foto
+        ? `<img src="${foto}" loading="lazy" referrerpolicy="no-referrer" alt="${i.tipo||'Imóvel'} em ${i.cidade}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div class="pholder" style="display:none">${i.tipo||'Imóvel'}</div>`
+        : `<div class="pholder" style="display:grid">${i.tipo||'Imóvel'}</div>`;
+      el.innerHTML=`
+        <div class="ph">${img}
+          <span class="uf">${i.uf}</span>
+          ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
+        </div>
+        <div class="cbody">
+          <span class="ctype">${i.tipo||"Imóvel"}</span>
+          <span class="ccity">${i.cidade}${i.bairro?" · "+i.bairro:""}</span>
+          <span class="caddr">${i.endereco||""}</span>
+          <div class="price"><span class="now">${BRL(i.preco)}</span>${i.avaliacao&&i.avaliacao>i.preco?`<span class="old">${BRL(i.avaliacao)}</span>`:""}</div>
+          <div class="mod">${i.modalidade||"—"}</div>
+        </div>`;
+      el.addEventListener("click",()=>abrir(i));
+      frag.appendChild(el);
+    });
+    grid.appendChild(frag);
+    shown+=slice.length;
+    loadmore.style.display = shown<view.length ? "block" : "none";
+  }
+  loadmore.addEventListener("click",render);
+
+  // ---- modal detalhe ----
+  const modal=document.getElementById("modal"), sheet=document.getElementById("sheet");
+  function abrir(i){
+    const foto=fotoDe(i);
+    const waMsg=`Olá Reginaldo! Tenho interesse no imóvel ${i.id} — ${i.tipo||"imóvel"} em ${i.cidade}/${i.uf} (${BRL(i.preco)}). Vi no seu site. Pode me ajudar a arrematar?`;
+    const wa="https://wa.me/"+(WHATS[i.uf]||WHATS.RS)+"?text="+encodeURIComponent(waMsg);
+    sheet.innerHTML=`
+      <div class="sheet__img">
+        ${foto?`<img src="${foto}" referrerpolicy="no-referrer" alt="" onerror="this.style.display='none'">`:""}
+        <button class="sheet__x" id="mx" aria-label="Fechar">×</button>
+      </div>
+      <div class="sheet__body">
+        <span class="ctype" style="color:var(--accent);font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase">${i.tipo||"Imóvel"} · ${i.uf}</span>
+        <h2>${i.cidade}${i.bairro?" · "+i.bairro:""}</h2>
+        <div class="sheet__addr">${i.endereco||""}</div>
+        <div class="kv">
+          <div>Preço de venda<b>${BRL(i.preco)}</b></div>
+          <div>Avaliação Caixa<b>${BRL(i.avaliacao)}</b></div>
+          <div>Desconto<b>${i.desconto?Math.round(i.desconto)+"%":"—"}</b></div>
+          <div>Modalidade<b style="font-size:.9rem">${i.modalidade||"—"}</b></div>
+        </div>
+        ${i.descricao?`<div class="sheet__desc">${i.descricao}</div>`:""}
+        <div class="sheet__cta">
+          <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">📲 Tenho interesse — falar no WhatsApp</a>
+        </div>
+        <div class="relat">★ Arrematando comigo, o Relatório Confidencial deste imóvel é gratuito. Código do imóvel na Caixa: ${i.id}.</div>
+      </div>`;
+    modal.classList.add("open"); document.body.style.overflow="hidden";
+    document.getElementById("mx").addEventListener("click",fechar);
+  }
+  function fechar(){modal.classList.remove("open");document.body.style.overflow=""}
+  modal.addEventListener("click",e=>{if(e.target===modal)fechar()});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")fechar()});
+
+  // ---- eventos filtros ----
+  const deb=(fn,t=220)=>{let h;return(...a)=>{clearTimeout(h);h=setTimeout(()=>fn(...a),t)}};
+  document.getElementById("q").addEventListener("input",deb(e=>{state.q=e.target.value;aplicar()}));
+  document.getElementById("cidade").addEventListener("change",e=>{state.cidade=e.target.value;aplicar()});
+  document.getElementById("tipo").addEventListener("change",e=>{state.tipo=e.target.value;aplicar()});
+  document.getElementById("modalidade").addEventListener("change",e=>{state.modalidade=e.target.value;aplicar()});
+  document.getElementById("ordem").addEventListener("change",e=>{state.ordem=e.target.value;aplicar()});
+
+  document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+    if(c.dataset.uf!==undefined){
+      document.querySelectorAll(".chip[data-uf]").forEach(x=>x.setAttribute("aria-pressed","false"));
+      c.setAttribute("aria-pressed","true"); state.uf=c.dataset.uf;
+    }else if(c.dataset.min!==undefined){
+      const on=c.getAttribute("aria-pressed")==="true";
+      document.querySelectorAll(".chip[data-min]").forEach(x=>x.setAttribute("aria-pressed","false"));
+      if(on){state.min=null;state.max=null;}
+      else{c.setAttribute("aria-pressed","true");state.min=+c.dataset.min;state.max=+c.dataset.max;}
+    }else if(c.dataset.mindesc!==undefined){
+      const on=c.getAttribute("aria-pressed")==="true";
+      c.setAttribute("aria-pressed",on?"false":"true"); state.mindesc=on?null:+c.dataset.mindesc;
+    }
+    aplicar();
+  }));
+
+  document.getElementById("clear").addEventListener("click",()=>{
+    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",min:null,max:null,mindesc:null,ordem:"desc"});
+    document.getElementById("q").value="";["cidade","tipo","modalidade"].forEach(id=>document.getElementById(id).value="");
+    document.getElementById("ordem").value="desc";
+    document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
+    document.querySelector('.chip[data-uf=""]').setAttribute("aria-pressed","true");
+    aplicar();
+  });
+
+  carregar();
+</script>
