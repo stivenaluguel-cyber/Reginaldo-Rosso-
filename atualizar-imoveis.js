@@ -1,22 +1,25 @@
 /**
  * ============================================================
- *  atualizar-imoveis.js  (versão robusta)
- *  Baixa as listas oficiais da Caixa (RS e SC), converte para
- *  JSON e grava imoveis-rs.json, imoveis-sc.json e meta.json.
+ *  atualizar-imoveis.js  (v3 - resiliente ao bloqueio da Caixa)
  *
- *  Melhorias desta versão:
- *   - pausa entre os estados (evita o servidor da Caixa bloquear);
- *   - até 3 tentativas por estado;
- *   - NUNCA zera uma lista que já estava boa: se um download falhar,
- *     mantém os imóveis do dia anterior.
- *
- *  Rode com:  node atualizar-imoveis.js   (Node 18+)
+ *  Estratégia:
+ *   1) O workflow baixa os CSV com curl (sessão "aquecida" + cookie)
+ *      e salva como raw-RS.csv / raw-SC.csv.
+ *   2) Este script lê esses CSV, converte para JSON e grava
+ *      imoveis-rs.json, imoveis-sc.json e meta.json.
+ *   3) Se o CSV de um estado não veio (vazio/bloqueado), o script
+ *      tenta baixar pelo Node (também com sessão) como reserva.
+ *   4) Se ainda assim falhar, MANTÉM a lista boa do dia anterior
+ *      (nunca zera o portal).
  * ============================================================
  */
 const fs = require("fs");
 
-const ESTADOS = ["RS", "SC"]; // adicione outros se quiser, ex.: "PR"
-const URL = uf => `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_${uf}.csv`;
+const ESTADOS = ["RS", "SC"];
+const BASE = "https://venda-imoveis.caixa.gov.br";
+const URL = uf => `${BASE}/listaweb/Lista_imoveis_${uf}.csv`;
+const SESSAO = `${BASE}/sistema/busca-imovel.asp`;
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const key = s => (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
@@ -51,10 +54,7 @@ function parseCSV(texto) {
   const idx = name => cols.findIndex(c => c.includes(name));
   const map = {
     id: cols.findIndex(c => c.includes("imovel")) >= 0 ? cols.findIndex(c => c.includes("imovel")) : 0,
-    uf: idx("uf"),
-    cidade: idx("cidade"),
-    bairro: idx("bairro"),
-    endereco: idx("endereco"),
+    uf: idx("uf"), cidade: idx("cidade"), bairro: idx("bairro"), endereco: idx("endereco"),
     preco: cols.findIndex(c => c.includes("preco")),
     avaliacao: cols.findIndex(c => c.includes("avaliacao")),
     desconto: cols.findIndex(c => c.includes("desconto")),
@@ -62,7 +62,6 @@ function parseCSV(texto) {
     modalidade: cols.findIndex(c => c.includes("modalidade")),
     link: cols.findIndex(c => c.includes("link")),
   };
-
   const out = [];
   for (let i = hi + 1; i < linhas.length; i++) {
     const linha = linhas[i];
@@ -73,76 +72,81 @@ function parseCSV(texto) {
     if (!id) continue;
     const descricao = get(map.descricao);
     out.push({
-      id,
-      uf: get(map.uf) || "",
-      cidade: get(map.cidade) || "",
-      bairro: get(map.bairro) || "",
-      endereco: get(map.endereco) || "",
-      preco: num(get(map.preco)),
-      avaliacao: num(get(map.avaliacao)),
-      desconto: num(get(map.desconto)),
-      descricao,
-      modalidade: get(map.modalidade) || "",
-      tipo: tipoDe(descricao),
-      link: get(map.link) || "",
+      id, uf: get(map.uf) || "", cidade: get(map.cidade) || "", bairro: get(map.bairro) || "",
+      endereco: get(map.endereco) || "", preco: num(get(map.preco)), avaliacao: num(get(map.avaliacao)),
+      desconto: num(get(map.desconto)), descricao, modalidade: get(map.modalidade) || "",
+      tipo: tipoDe(descricao), link: get(map.link) || "",
     });
   }
   return out;
 }
 
-async function baixarUmaVez(uf) {
+const valido = t => t && t.length > 200 && /cidade/i.test(t);
+
+// 1) tenta o CSV bruto que o workflow baixou com curl
+function lerRaw(uf) {
+  for (const f of [`raw-${uf}.csv`, `raw-${uf.toLowerCase()}.csv`]) {
+    try { if (fs.existsSync(f)) { const t = fs.readFileSync(f, "latin1"); if (valido(t)) return t; } } catch {}
+  }
+  return null;
+}
+
+// 2) reserva: baixa pelo Node, "aquecendo" a sessão (pega cookie)
+async function baixarNode(uf) {
+  let cookie = "";
+  try {
+    const w = await fetch(SESSAO, { headers: { "User-Agent": UA, "Accept-Language": "pt-BR,pt;q=0.9" } });
+    const sc = w.headers.get("set-cookie");
+    if (sc) cookie = sc.split(",").map(c => c.split(";")[0]).join("; ");
+  } catch {}
   const res = await fetch(URL(uf), {
     headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
-      "Accept": "text/csv,application/octet-stream,*/*",
-      "Accept-Language": "pt-BR,pt;q=0.9",
-      "Referer": "https://venda-imoveis.caixa.gov.br/sistema/download-lista.asp",
+      "User-Agent": UA, "Accept": "text/csv,application/octet-stream,*/*",
+      "Accept-Language": "pt-BR,pt;q=0.9", "Referer": SESSAO,
+      ...(cookie ? { "Cookie": cookie } : {}),
     },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  const texto = buf.toString("latin1");
-  if (buf.length < 200 || !/cidade/i.test(texto)) throw new Error("conteudo vazio ou inesperado");
-  return parseCSV(texto);
+  const t = Buffer.from(await res.arrayBuffer()).toString("latin1");
+  if (!valido(t)) throw new Error("conteudo vazio/bloqueado");
+  return t;
 }
 
-async function baixar(uf, tentativas = 3) {
+async function obter(uf) {
+  const raw = lerRaw(uf);
+  if (raw) { console.log(`${uf}: usando CSV baixado pelo workflow`); return parseCSV(raw); }
   let erro;
-  for (let t = 1; t <= tentativas; t++) {
+  for (let t = 1; t <= 4; t++) {
     try {
-      const lista = await baixarUmaVez(uf);
-      if (lista.length > 0) return lista;
+      const lista = parseCSV(await baixarNode(uf));
+      if (lista.length) { console.log(`${uf}: baixado pelo Node (reserva)`); return lista; }
       erro = new Error("lista vazia");
     } catch (e) { erro = e; }
-    console.warn(`${uf}: tentativa ${t}/${tentativas} falhou (${erro.message})`);
-    if (t < tentativas) await sleep(3000 * t);
+    console.warn(`${uf}: tentativa Node ${t}/4 falhou (${erro.message})`);
+    if (t < 4) await sleep(8000 * t + Math.floor(Math.random() * 4000));
   }
   throw erro;
 }
 
-function lerAnterior(arq) {
-  try { return JSON.parse(fs.readFileSync(arq, "utf8")); } catch { return []; }
-}
+const lerAnterior = arq => { try { return JSON.parse(fs.readFileSync(arq, "utf8")); } catch { return []; } };
 
 (async () => {
   const meta = { atualizado: new Date().toISOString(), total: 0, porEstado: {} };
   for (const uf of ESTADOS) {
     const arq = `imoveis-${uf.toLowerCase()}.json`;
     try {
-      const lista = await baixar(uf);
+      const lista = await obter(uf);
       fs.writeFileSync(arq, JSON.stringify(lista));
-      meta.porEstado[uf] = lista.length;
-      meta.total += lista.length;
+      meta.porEstado[uf] = lista.length; meta.total += lista.length;
       console.log(`${uf}: ${lista.length} imoveis`);
     } catch (e) {
       const anterior = lerAnterior(arq);
       if (!fs.existsSync(arq)) fs.writeFileSync(arq, "[]");
-      meta.porEstado[uf] = anterior.length;
-      meta.total += anterior.length;
-      console.error(`${uf}: download falhou (${e.message}). Mantida a lista anterior (${anterior.length}).`);
+      meta.porEstado[uf] = anterior.length; meta.total += anterior.length;
+      console.error(`${uf}: FALHOU (${e.message}). Mantida lista anterior (${anterior.length}).`);
     }
-    await sleep(4000); // pausa entre estados - evita bloqueio da Caixa
+    await sleep(4000);
   }
   fs.writeFileSync("meta.json", JSON.stringify(meta, null, 2));
-  console.log("OK - total:", meta.total, "- atualizado:", meta.atualizado);
+  console.log("OK - total:", meta.total);
 })();
