@@ -1,0 +1,33 @@
+name: Atualizar imóveis Caixa
+
+# Roda todo dia e também quando você clicar em "Run workflow"
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 09:00 UTC = 06:00 no horário de Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Rodar o robô (baixa as listas da Caixa)
+        run: node atualizar-imoveis.js
+
+      - name: Publicar a lista atualizada
+        run: |
+          git config user.name "robo-imoveis"
+          git config user.email "robo@users.noreply.github.com"
+          git add imoveis-rs.json imoveis-sc.json meta.json
+          git commit -m "Atualiza imóveis Caixa ($(date +%F))" || echo "Sem mudanças hoje."
+          git push
