@@ -229,7 +229,7 @@ window.__AMOSTRA_META__={
     const cols=L[hi].split(";").map(_k),ix=n=>cols.findIndex(c=>c.includes(n));
     const M={id:cols.findIndex(c=>c.includes("imovel"))>=0?cols.findIndex(c=>c.includes("imovel")):0,uf:ix("uf"),cidade:ix("cidade"),bairro:ix("bairro"),endereco:ix("endereco"),preco:cols.findIndex(c=>c.includes("preco")),avaliacao:cols.findIndex(c=>c.includes("avaliacao")),desconto:cols.findIndex(c=>c.includes("desconto")),financiamento:cols.findIndex(c=>c.includes("financiamento")),descricao:ix("descricao"),modalidade:cols.findIndex(c=>c.includes("modalidade")),link:cols.findIndex(c=>c.includes("link"))};
     const out=[];
-    for(let i=hi+1;i<L.length;i++){const ln=L[i];if(!ln||!ln.includes(";"))continue;const p=ln.split(";"),g=j=>(j>=0&&j<p.length?p[j].trim():"");const id=g(M.id).replace(/\D/g,"");if(!id)continue;const desc=g(M.descricao);out.push({id,uf:g(M.uf),cidade:g(M.cidade),bairro:g(M.bairro),endereco:g(M.endereco),preco:_num(g(M.preco)),avaliacao:_num(g(M.avaliacao)),desconto:_num(g(M.desconto)),financiamento:_simNao(g(M.financiamento)),descricao:desc,modalidade:g(M.modalidade),tipo:_tipo(desc)});}
+    for(let i=hi+1;i<L.length;i++){const ln=L[i];if(!ln||!ln.includes(";"))continue;const p=ln.split(";"),g=j=>(j>=0&&j<p.length?p[j].trim():"");const id=g(M.id).replace(/\D/g,"");if(!id)continue;const desc=g(M.descricao);out.push({id,uf:g(M.uf),cidade:g(M.cidade),bairro:g(M.bairro),endereco:g(M.endereco),preco:_num(g(M.preco)),avaliacao:_num(g(M.avaliacao)),desconto:_num(g(M.desconto)),financiamento:_simNao(g(M.financiamento)),descricao:desc,modalidade:g(M.modalidade),tipo:_tipo(desc),link:g(M.link)});}
     return out;
   }
   async function carregarCSV(uf){
@@ -349,6 +349,7 @@ window.__AMOSTRA_META__={
   const modal=document.getElementById("modal"), sheet=document.getElementById("sheet");
   // rótulos amigáveis e extração de dados da descrição
   const CRECI={RS:"CRECI/RS 28565J",SC:"CRECI/SC 8152J"};
+  const BASE_CAIXA="https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel=";
   function modalidadeLabel(m){
     if(!m) return "—"; const k=_k(m);
     if(k.includes("direta")) return "Venda Direta Online";
@@ -408,7 +409,9 @@ window.__AMOSTRA_META__={
         ${i.descricao?`<div class="sheet__desc"><b style="color:var(--ink)">Descrição:</b> ${i.descricao}</div>`:""}
         <div class="sheet__cta">
           <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">📲 Tenho interesse — falar no WhatsApp</a>
+          <a class="btn btn--ghost" href="${i.link||(BASE_CAIXA+i.id)}" target="_blank" rel="noopener">📄 Ver ficha oficial na Caixa</a>
         </div>
+        <div class="binfo" style="border-left-color:var(--gold);margin-top:12px"><b>Na ficha oficial da Caixa você confere:</b> matrícula, FGTS, parcelamento, tributos/condomínio (quem paga) e valores de 1ª e 2ª praça.</div>
         <div class="relat">★ Arrematando comigo, o Relatório Confidencial deste imóvel é gratuito.<br>Código Caixa: ${i.id} · Corretagem: <b style="color:var(--green)">${CRECI[i.uf]||"Reginaldo Rosso"}</b> (indique na proposta)</div>
       </div>`;
     modal.classList.add("open"); document.body.style.overflow="hidden";
