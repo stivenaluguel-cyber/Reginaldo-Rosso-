@@ -214,7 +214,12 @@ window.__AMOSTRA_META__={
   // ---- carregar JSON (mesmo site, sem CORS) ----
   // --- conversor de CSV da Caixa (mesmo formato do robô), feito no navegador ---
   const _k=s=>(s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
-  function _num(v){if(v==null)return null;const s=v.toString().trim().replace(/\./g,"").replace(",",".").replace(/[^0-9.\-]/g,"");if(s==="")return null;const n=parseFloat(s);return isNaN(n)?null:n;}
+  function _num(v){ // o ÚLTIMO separador (. ou ,) é o decimal — funciona p/ "37.585,97" e "66.45"
+    if(v==null)return null; let s=v.toString().trim().replace(/[^0-9.,]/g,""); if(!s)return null;
+    const d=Math.max(s.lastIndexOf("."),s.lastIndexOf(",")); if(d<0){const n=parseFloat(s);return isNaN(n)?null:n;}
+    const n=parseFloat(s.slice(0,d).replace(/[.,]/g,"")+"."+s.slice(d+1).replace(/[.,]/g,"")); return isNaN(n)?null:n;
+  }
+  const _simNao=v=>{if(v==null)return null;const k=_k(v);if(k.startsWith("sim"))return true;if(k.startsWith("nao"))return false;return null;};
   function _tipo(d){d=_k(d);const m=[["apartamento","Apartamento"],["casa","Casa"],["terreno","Terreno"],["loja","Loja"],["sala","Sala comercial"],["galpao","Galpão"],["sobrado","Sobrado"],["gleba","Gleba"],["predio","Prédio"],["chacara","Chácara"],["fazenda","Fazenda"],["kitnet","Kitnet"],["lote","Lote"],["imovel","Imóvel"]];for(const[a,b]of m)if(d.includes(a))return b;return "Imóvel";}
   function parseCaixaCSV(txt){
     const L=txt.split(/\r?\n/);
@@ -222,37 +227,41 @@ window.__AMOSTRA_META__={
     if(hi<0)hi=L.findIndex(l=>_k(l).includes("uf")&&_k(l).includes("cidade"));
     if(hi<0)return [];
     const cols=L[hi].split(";").map(_k),ix=n=>cols.findIndex(c=>c.includes(n));
-    const M={id:cols.findIndex(c=>c.includes("imovel"))>=0?cols.findIndex(c=>c.includes("imovel")):0,uf:ix("uf"),cidade:ix("cidade"),bairro:ix("bairro"),endereco:ix("endereco"),preco:cols.findIndex(c=>c.includes("preco")),avaliacao:cols.findIndex(c=>c.includes("avaliacao")),desconto:cols.findIndex(c=>c.includes("desconto")),descricao:ix("descricao"),modalidade:cols.findIndex(c=>c.includes("modalidade")),link:cols.findIndex(c=>c.includes("link"))};
+    const M={id:cols.findIndex(c=>c.includes("imovel"))>=0?cols.findIndex(c=>c.includes("imovel")):0,uf:ix("uf"),cidade:ix("cidade"),bairro:ix("bairro"),endereco:ix("endereco"),preco:cols.findIndex(c=>c.includes("preco")),avaliacao:cols.findIndex(c=>c.includes("avaliacao")),desconto:cols.findIndex(c=>c.includes("desconto")),financiamento:cols.findIndex(c=>c.includes("financiamento")),descricao:ix("descricao"),modalidade:cols.findIndex(c=>c.includes("modalidade")),link:cols.findIndex(c=>c.includes("link"))};
     const out=[];
-    for(let i=hi+1;i<L.length;i++){const ln=L[i];if(!ln||!ln.includes(";"))continue;const p=ln.split(";"),g=j=>(j>=0&&j<p.length?p[j].trim():"");const id=g(M.id).replace(/\D/g,"");if(!id)continue;const desc=g(M.descricao);out.push({id,uf:g(M.uf),cidade:g(M.cidade),bairro:g(M.bairro),endereco:g(M.endereco),preco:_num(g(M.preco)),avaliacao:_num(g(M.avaliacao)),desconto:_num(g(M.desconto)),descricao:desc,modalidade:g(M.modalidade),tipo:_tipo(desc)});}
+    for(let i=hi+1;i<L.length;i++){const ln=L[i];if(!ln||!ln.includes(";"))continue;const p=ln.split(";"),g=j=>(j>=0&&j<p.length?p[j].trim():"");const id=g(M.id).replace(/\D/g,"");if(!id)continue;const desc=g(M.descricao);out.push({id,uf:g(M.uf),cidade:g(M.cidade),bairro:g(M.bairro),endereco:g(M.endereco),preco:_num(g(M.preco)),avaliacao:_num(g(M.avaliacao)),desconto:_num(g(M.desconto)),financiamento:_simNao(g(M.financiamento)),descricao:desc,modalidade:g(M.modalidade),tipo:_tipo(desc)});}
     return out;
   }
   async function carregarCSV(uf){
-    const res=await fetch("raw-"+uf+".csv",{cache:"no-store"});
-    if(!res.ok) throw new Error("sem csv");
-    const buf=await res.arrayBuffer();
-    const txt=new TextDecoder("iso-8859-1").decode(buf); // listas da Caixa são latin1
-    if(!/cidade/i.test(txt)||txt.length<200) throw new Error("csv inválido");
-    return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified")};
+    // aceita tanto o nome original da Caixa quanto "raw-UF.csv"
+    const nomes=["Lista_imoveis_"+uf+".csv","raw-"+uf+".csv","lista_imoveis_"+uf+".csv"];
+    for(const nome of nomes){
+      try{
+        const res=await fetch(nome,{cache:"no-store"});
+        if(!res.ok) continue;
+        const buf=await res.arrayBuffer();
+        const txt=new TextDecoder("iso-8859-1").decode(buf); // listas da Caixa são latin1
+        if(/cidade/i.test(txt)&&txt.length>200) return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified")};
+      }catch(_){}
+    }
+    throw new Error("sem csv");
   }
   async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
 
   async function carregar(){
     try{
       let dataTxt="", quando=null;
-      // 1) PREFERIDO: JSON completo (gerado pelo coletor completo, com matrícula/financiamento/etc.)
-      {
+      // 1) PREFERIDO: CSV baixado pelo navegador (Lista_imoveis_RS.csv / _SC.csv)
+      try{
+        const [rs,sc]=await Promise.all([carregarCSV("RS"),carregarCSV("SC")]);
+        ALL=[...rs.lista,...sc.lista];
+        quando=rs.mod||sc.mod;
+      }catch(_){ ALL=[]; }
+      // 2) RESERVA: JSON (se algum dia houver coleta completa)
+      if(!ALL.length){
         const [rs,sc,meta]=await Promise.all([carregarJSON("imoveis-rs.json"),carregarJSON("imoveis-sc.json"),fetch("meta.json").then(r=>r.ok?r.json():null).catch(()=>null)]);
         ALL=[...rs,...sc];
         if(meta&&meta.atualizado) quando=meta.atualizado;
-      }
-      // 2) RESERVA: CSV bruto baixado do seu computador (raw-RS.csv / raw-SC.csv)
-      if(!ALL.length){
-        try{
-          const [rs,sc]=await Promise.all([carregarCSV("RS"),carregarCSV("SC")]);
-          ALL=[...rs.lista,...sc.lista];
-          quando=rs.mod||sc.mod;
-        }catch(_){ ALL=[]; }
       }
       // 3) ÚLTIMO RECURSO: amostra embutida (abrindo o arquivo localmente)
       if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; quando=(window.__AMOSTRA_META__||{}).atualizado; }
