@@ -1,0 +1,55 @@
+name: Atualizar imóveis Caixa
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 09:00 UTC = 06:00 (Brasília)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Baixar listas da Caixa (curl com sessão aquecida)
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          BASE="https://venda-imoveis.caixa.gov.br"
+          # 1) aquece a sessão para receber o cookie (igual a um navegador)
+          curl -sL -c cookies.txt -A "$UA" --connect-timeout 30 --max-time 90 \
+            "$BASE/sistema/busca-imovel.asp" -o /dev/null || true
+          sleep 5
+          # 2) baixa cada estado com até 5 tentativas
+          for UF in RS SC; do
+            for try in 1 2 3 4 5; do
+              curl -sL -b cookies.txt -A "$UA" -e "$BASE/sistema/busca-imovel.asp" \
+                --connect-timeout 30 --max-time 180 \
+                "$BASE/listaweb/Lista_imoveis_${UF}.csv" -o "raw-${UF}.csv" || true
+              SZ=$(wc -c < "raw-${UF}.csv" 2>/dev/null || echo 0)
+              echo ">> $UF tentativa $try -> $SZ bytes"
+              if [ "$SZ" -gt 5000 ]; then break; fi
+              rm -f "raw-${UF}.csv"
+              sleep $((try * 15))
+            done
+            sleep 8
+          done
+
+      - name: Converter para JSON
+        run: node atualizar-imoveis.js
+
+      - name: Publicar a lista atualizada
+        run: |
+          git config user.name "robo-imoveis"
+          git config user.email "robo@users.noreply.github.com"
+          git add imoveis-rs.json imoveis-sc.json meta.json
+          git commit -m "Atualiza imóveis Caixa ($(date +%F))" || echo "Sem mudanças hoje."
+          git push

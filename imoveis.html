@@ -115,7 +115,9 @@ window.__AMOSTRA_META__={
   .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
   .kv div{background:#0a2036;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:.85rem;color:#cdddec}
   .kv b{display:block;color:var(--ink);font-family:"Archivo";font-weight:800;font-size:1rem}
-  .sheet__desc{font-size:.92rem;color:#cdddec;background:#0a2036;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:18px}
+  .sheet__desc{font-size:.92rem;color:#cdddec;background:#0a2036;border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+  .binfo{font-size:.9rem;color:#cdddec;background:#0a2036;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 13px;margin-bottom:10px}
+  .binfo b{color:var(--gold)}
   .sheet__cta{display:flex;gap:10px;flex-wrap:wrap}
   .btn{display:inline-flex;align-items:center;gap:9px;font-family:"Archivo";font-weight:800;font-size:.92rem;padding:14px 22px;border-radius:11px;border:0;cursor:pointer;transition:transform .15s}
   .btn--wa{background:var(--orange);color:#fff;box-shadow:0 10px 26px -10px var(--orange);flex:1;justify-content:center}
@@ -210,22 +212,53 @@ window.__AMOSTRA_META__={
         loadmore=document.getElementById("loadmore"), countEl=document.getElementById("count");
 
   // ---- carregar JSON (mesmo site, sem CORS) ----
+  // --- conversor de CSV da Caixa (mesmo formato do robô), feito no navegador ---
+  const _k=s=>(s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+  function _num(v){if(v==null)return null;const s=v.toString().trim().replace(/\./g,"").replace(",",".").replace(/[^0-9.\-]/g,"");if(s==="")return null;const n=parseFloat(s);return isNaN(n)?null:n;}
+  function _tipo(d){d=_k(d);const m=[["apartamento","Apartamento"],["casa","Casa"],["terreno","Terreno"],["loja","Loja"],["sala","Sala comercial"],["galpao","Galpão"],["sobrado","Sobrado"],["gleba","Gleba"],["predio","Prédio"],["chacara","Chácara"],["fazenda","Fazenda"],["kitnet","Kitnet"],["lote","Lote"],["imovel","Imóvel"]];for(const[a,b]of m)if(d.includes(a))return b;return "Imóvel";}
+  function parseCaixaCSV(txt){
+    const L=txt.split(/\r?\n/);
+    let hi=L.findIndex(l=>{const k=_k(l);return k.includes("cidade")&&k.includes("preco");});
+    if(hi<0)hi=L.findIndex(l=>_k(l).includes("uf")&&_k(l).includes("cidade"));
+    if(hi<0)return [];
+    const cols=L[hi].split(";").map(_k),ix=n=>cols.findIndex(c=>c.includes(n));
+    const M={id:cols.findIndex(c=>c.includes("imovel"))>=0?cols.findIndex(c=>c.includes("imovel")):0,uf:ix("uf"),cidade:ix("cidade"),bairro:ix("bairro"),endereco:ix("endereco"),preco:cols.findIndex(c=>c.includes("preco")),avaliacao:cols.findIndex(c=>c.includes("avaliacao")),desconto:cols.findIndex(c=>c.includes("desconto")),descricao:ix("descricao"),modalidade:cols.findIndex(c=>c.includes("modalidade")),link:cols.findIndex(c=>c.includes("link"))};
+    const out=[];
+    for(let i=hi+1;i<L.length;i++){const ln=L[i];if(!ln||!ln.includes(";"))continue;const p=ln.split(";"),g=j=>(j>=0&&j<p.length?p[j].trim():"");const id=g(M.id).replace(/\D/g,"");if(!id)continue;const desc=g(M.descricao);out.push({id,uf:g(M.uf),cidade:g(M.cidade),bairro:g(M.bairro),endereco:g(M.endereco),preco:_num(g(M.preco)),avaliacao:_num(g(M.avaliacao)),desconto:_num(g(M.desconto)),descricao:desc,modalidade:g(M.modalidade),tipo:_tipo(desc)});}
+    return out;
+  }
+  async function carregarCSV(uf){
+    const res=await fetch("raw-"+uf+".csv",{cache:"no-store"});
+    if(!res.ok) throw new Error("sem csv");
+    const buf=await res.arrayBuffer();
+    const txt=new TextDecoder("iso-8859-1").decode(buf); // listas da Caixa são latin1
+    if(!/cidade/i.test(txt)||txt.length<200) throw new Error("csv inválido");
+    return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified")};
+  }
+  async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
+
   async function carregar(){
     try{
-      const [rs,sc,meta]=await Promise.all([
-        fetch("imoveis-rs.json").then(r=>r.ok?r.json():[]).catch(()=>[]),
-        fetch("imoveis-sc.json").then(r=>r.ok?r.json():[]).catch(()=>[]),
-        fetch("meta.json").then(r=>r.ok?r.json():null).catch(()=>null),
-      ]);
-      ALL=[...rs,...sc];
-      // fallback: abrindo localmente (file://) o fetch falha — usa a amostra embutida
-      if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; meta=meta||window.__AMOSTRA_META__; }
-      if(meta&&meta.atualizado){
-        const d=new Date(meta.atualizado);
-        document.getElementById("updatedTxt").textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" · "+ALL.length+" imóveis";
-      }else{
-        document.getElementById("updatedTxt").textContent=ALL.length+" imóveis disponíveis";
+      let dataTxt="", quando=null;
+      // 1) PREFERIDO: JSON completo (gerado pelo coletor completo, com matrícula/financiamento/etc.)
+      {
+        const [rs,sc,meta]=await Promise.all([carregarJSON("imoveis-rs.json"),carregarJSON("imoveis-sc.json"),fetch("meta.json").then(r=>r.ok?r.json():null).catch(()=>null)]);
+        ALL=[...rs,...sc];
+        if(meta&&meta.atualizado) quando=meta.atualizado;
       }
+      // 2) RESERVA: CSV bruto baixado do seu computador (raw-RS.csv / raw-SC.csv)
+      if(!ALL.length){
+        try{
+          const [rs,sc]=await Promise.all([carregarCSV("RS"),carregarCSV("SC")]);
+          ALL=[...rs.lista,...sc.lista];
+          quando=rs.mod||sc.mod;
+        }catch(_){ ALL=[]; }
+      }
+      // 3) ÚLTIMO RECURSO: amostra embutida (abrindo o arquivo localmente)
+      if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; quando=(window.__AMOSTRA_META__||{}).atualizado; }
+
+      if(quando){ const d=new Date(quando); document.getElementById("updatedTxt").textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" · "+ALL.length+" imóveis"; }
+      else{ document.getElementById("updatedTxt").textContent=ALL.length+" imóveis disponíveis"; }
       preencherFiltros();
       aplicar();
     }catch(e){
@@ -305,10 +338,51 @@ window.__AMOSTRA_META__={
 
   // ---- modal detalhe ----
   const modal=document.getElementById("modal"), sheet=document.getElementById("sheet");
+  // rótulos amigáveis e extração de dados da descrição
+  const CRECI={RS:"CRECI/RS 28565J",SC:"CRECI/SC 8152J"};
+  function modalidadeLabel(m){
+    if(!m) return "—"; const k=_k(m);
+    if(k.includes("direta")) return "Venda Direta Online";
+    if(k.includes("licitacao")) return "Licitação Aberta";
+    if(k.includes("2")&&(k.includes("praca")||k.includes("leilao"))) return "2ª Praça (Leilão)";
+    if(k.includes("1")&&(k.includes("praca")||k.includes("leilao"))) return "1ª Praça (Leilão)";
+    if(k.includes("online")) return "Venda Online";
+    if(k.includes("leilao")) return "Leilão (SFI)";
+    return m;
+  }
+  function aposRotulo(desc,rotulo,fins){
+    if(!desc) return ""; const i=desc.search(new RegExp(rotulo+"\\s*:","i")); if(i<0) return "";
+    let rest=desc.slice(i); rest=rest.slice(rest.indexOf(":")+1);
+    let cut=rest.length; (fins||[]).forEach(f=>{const j=rest.search(new RegExp(f,"i")); if(j>=0&&j<cut)cut=j;});
+    return rest.slice(0,cut).trim().replace(/\s+/g," ").replace(/[-–]\s*$/,"").trim();
+  }
+  function nomeCondominio(desc){
+    if(!desc) return ""; const first=desc.split(/\s[-–]\s/)[0].trim();
+    return (/cond|resid|edif|villa|village|loteamento|parque/i.test(first)&&first.length<90)?first:"";
+  }
+  const simNao=v=>v===true?"Sim":v===false?"Não":null;
+
   function abrir(i){
     const foto=fotoDe(i);
     const waMsg=`Olá Reginaldo! Tenho interesse no imóvel ${i.id} — ${i.tipo||"imóvel"} em ${i.cidade}/${i.uf} (${BRL(i.preco)}). Vi no seu site. Pode me ajudar a arrematar?`;
     const wa="https://wa.me/"+(WHATS[i.uf]||WHATS.RS)+"?text="+encodeURIComponent(waMsg);
+
+    const kv=[
+      `<div>Preço de venda<b>${BRL(i.preco)}</b></div>`,
+      `<div>Avaliação Caixa<b>${BRL(i.avaliacao)}</b></div>`,
+      `<div>Desconto<b>${i.desconto?Math.round(i.desconto)+"%":"—"}</b></div>`,
+      `<div>Modalidade<b style="font-size:.9rem">${modalidadeLabel(i.modalidade)}</b></div>`,
+    ];
+    if(i.matricula) kv.push(`<div>Matrícula<b>${i.matricula}</b></div>`);
+    if(i.comarca) kv.push(`<div>Comarca<b style="font-size:.9rem">${i.comarca}</b></div>`);
+    if(i.leilao1) kv.push(`<div>1ª Praça<b style="font-size:.95rem">${BRL(i.leilao1)}</b></div>`);
+    if(i.leilao2) kv.push(`<div>2ª Praça<b style="font-size:.95rem">${BRL(i.leilao2)}</b></div>`);
+    [["Financiamento",i.financiamento],["Usa FGTS",i.fgts],["Parcelamento",i.parcelamento]].forEach(([rot,val])=>{const s=simNao(val);if(s)kv.push(`<div>${rot}<b>${s}</b></div>`);});
+
+    const nomeC=nomeCondominio(i.descricao);
+    const cond=aposRotulo(i.descricao,"Condom[íi]nio",["Tributos","Despesas","Situa","Coment","Inscri"]);
+    const trib=aposRotulo(i.descricao,"Tributos",["Condom","Despesas","Situa","Coment","Inscri"]);
+
     sheet.innerHTML=`
       <div class="sheet__img">
         ${foto?`<img src="${foto}" referrerpolicy="no-referrer" alt="" onerror="this.style.display='none'">`:""}
@@ -318,17 +392,15 @@ window.__AMOSTRA_META__={
         <span class="ctype" style="color:var(--accent);font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase">${i.tipo||"Imóvel"} · ${i.uf}</span>
         <h2>${i.cidade}${i.bairro?" · "+i.bairro:""}</h2>
         <div class="sheet__addr">${i.endereco||""}</div>
-        <div class="kv">
-          <div>Preço de venda<b>${BRL(i.preco)}</b></div>
-          <div>Avaliação Caixa<b>${BRL(i.avaliacao)}</b></div>
-          <div>Desconto<b>${i.desconto?Math.round(i.desconto)+"%":"—"}</b></div>
-          <div>Modalidade<b style="font-size:.9rem">${i.modalidade||"—"}</b></div>
-        </div>
-        ${i.descricao?`<div class="sheet__desc">${i.descricao}</div>`:""}
+        <div class="kv">${kv.join("")}</div>
+        ${nomeC?`<div class="binfo"><b>Condomínio:</b> ${nomeC}</div>`:""}
+        ${cond?`<div class="binfo"><b>Despesas de condomínio:</b> ${cond}</div>`:""}
+        ${trib?`<div class="binfo"><b>Tributos (IPTU):</b> ${trib}</div>`:""}
+        ${i.descricao?`<div class="sheet__desc"><b style="color:var(--ink)">Descrição:</b> ${i.descricao}</div>`:""}
         <div class="sheet__cta">
           <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">📲 Tenho interesse — falar no WhatsApp</a>
         </div>
-        <div class="relat">★ Arrematando comigo, o Relatório Confidencial deste imóvel é gratuito. Código do imóvel na Caixa: ${i.id}.</div>
+        <div class="relat">★ Arrematando comigo, o Relatório Confidencial deste imóvel é gratuito.<br>Código Caixa: ${i.id} · Corretagem: <b style="color:var(--green)">${CRECI[i.uf]||"Reginaldo Rosso"}</b> (indique na proposta)</div>
       </div>`;
     modal.classList.add("open"); document.body.style.overflow="hidden";
     document.getElementById("mx").addEventListener("click",fechar);
