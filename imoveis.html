@@ -90,8 +90,17 @@ window.__AMOSTRA_META__={
   .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .card .pholder{position:absolute;inset:0;display:grid;place-items:center;color:#5b7da3;font-weight:600;font-size:1rem}
   .card .grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,25,40,.5) 0%,rgba(15,25,40,0) 26%,rgba(15,25,40,0) 40%,rgba(15,25,40,.92) 100%)}
-  .card .uf{position:absolute;top:12px;left:12px;background:rgba(23,38,56,.9);color:#fff;border-radius:7px;padding:4px 9px;font-size:.72rem;font-weight:700;letter-spacing:.05em;z-index:2}
-  .card .desc{position:absolute;top:12px;right:12px;background:var(--gold);color:var(--navy);border-radius:7px;padding:4px 9px;font-size:.74rem;font-weight:800;z-index:2}
+  .card .badges{position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:2}
+  .card .uf{background:rgba(23,38,56,.9);color:#fff;border-radius:7px;padding:4px 9px;font-size:.72rem;font-weight:700;letter-spacing:.05em}
+  .card .desc{background:var(--gold);color:var(--navy);border-radius:7px;padding:4px 9px;font-size:.74rem;font-weight:800}
+  .card .fav{position:absolute;top:9px;right:9px;z-index:3;width:38px;height:38px;border-radius:50%;border:0;background:rgba(23,38,56,.72);display:grid;place-items:center;cursor:pointer;transition:.15s;padding:0}
+  .card .fav svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2}
+  .card .fav:hover{background:rgba(23,38,56,.95);transform:scale(1.08)}
+  .card .fav.on{background:#fff}
+  .card .fav.on svg{fill:#e0566a;stroke:#e0566a}
+  .chip-fav[aria-pressed="true"]{background:#e0566a;border-color:#e0566a;color:#fff}
+  .chip-send{background:#25D366;border-color:#25D366;color:#fff;font-weight:700}
+  .chip-send:hover{background:#1ebe5a}
   .card .cinfo{position:absolute;top:46px;left:14px;right:14px;z-index:2;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5)}
   .card .ccity{font-weight:700;font-size:1.02rem;letter-spacing:.02em;text-transform:uppercase;line-height:1.15}
   .card .cbairro{font-size:.82rem;color:#e4ebf2;font-weight:500}
@@ -203,6 +212,8 @@ window.__AMOSTRA_META__={
       <button class="chip" data-min="100000" data-max="200000" aria-pressed="false">R$ 100–200 mil</button>
       <button class="chip" data-min="200000" data-max="400000" aria-pressed="false">R$ 200–400 mil</button>
       <button class="chip" data-mindesc="30" aria-pressed="false">Desconto 30%+</button>
+      <button class="chip chip-fav" id="chipFav" aria-pressed="false">♥ Favoritos (<span id="favN">0</span>)</button>
+      <button class="chip chip-send" id="sendFav" style="display:none">Enviar favoritos no WhatsApp</button>
       <span class="count" id="count"></span>
     </div>
   </div>
@@ -239,7 +250,31 @@ window.__AMOSTRA_META__={
   const PER_PAGE = 24;
 
   let ALL=[], view=[], shown=0;
-  const state={uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,ordem:"desc"};
+  const state={uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc"};
+
+  // ===== Favoritos (salvos no navegador do visitante) =====
+  const FAVKEY="rr_favs";
+  function getFavs(){try{return JSON.parse(localStorage.getItem(FAVKEY)||"[]")}catch(e){return[]}}
+  function setFavs(a){try{localStorage.setItem(FAVKEY,JSON.stringify(a))}catch(e){}}
+  function isFav(id){return getFavs().indexOf(id)>=0}
+  function toggleFav(id){const a=getFavs();const k=a.indexOf(id);if(k>=0)a.splice(k,1);else a.push(id);setFavs(a);return a;}
+  function favList(){const ids=getFavs();return ALL.filter(i=>ids.indexOf(i.id)>=0);}
+  function updateFavUI(){
+    const n=getFavs().length;
+    const el=document.getElementById("favN"); if(el) el.textContent=n;
+    const sb=document.getElementById("sendFav"); if(sb) sb.style.display=n?"inline-flex":"none";
+    const fc=document.getElementById("chipFav");
+    if(fc && n===0 && state.onlyFav){ state.onlyFav=false; fc.setAttribute("aria-pressed","false"); }
+  }
+  function sendFavs(){
+    const L=favList(); if(!L.length) return;
+    const ufc={RS:0,SC:0}; L.forEach(i=>{if(ufc[i.uf]!=null)ufc[i.uf]++;});
+    const uf=ufc.SC>ufc.RS?"SC":"RS";
+    let msg="Olá Reginaldo! Tenho interesse nestes imóveis que favoritei no site:\n\n";
+    L.forEach((i,n)=>{msg+=(n+1)+") "+(i.tipo||"Imóvel")+" · "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf+" — "+BRL(i.preco)+" (cód. "+i.id+")\n";});
+    msg+="\nPode me passar mais detalhes sobre eles?";
+    window.open("https://wa.me/"+(WHATS[uf]||WHATS.RS)+"?text="+encodeURIComponent(msg),"_blank");
+  }
 
   const grid=document.getElementById("grid"), loadingEl=document.getElementById("loading"),
         loadmore=document.getElementById("loadmore"), countEl=document.getElementById("count");
@@ -304,6 +339,7 @@ window.__AMOSTRA_META__={
       preencherFiltros();
       aplicarHash();
       aplicar();
+      updateFavUI();
     }catch(e){
       loadingEl.innerHTML="<h2>Não consegui carregar a lista agora.</h2><p>Atualize a página em instantes.</p>";
     }
@@ -335,6 +371,7 @@ window.__AMOSTRA_META__={
       if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
       if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
       if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
+      if(state.onlyFav && !isFav(i.id)) return false;
       if(state.q){
         const hay=norm(i.cidade+" "+i.bairro+" "+i.endereco+" "+i.descricao+" "+i.tipo);
         if(!norm(state.q).split(/\s+/).every(w=>hay.includes(w))) return false;
@@ -347,7 +384,7 @@ window.__AMOSTRA_META__={
       return (b.desconto??-1)-(a.desconto??-1);
     });
     shown=0; grid.innerHTML=""; loadingEl.style.display="none";
-    countEl.innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> imóvel"+(view.length===1?"":"is");
+    countEl.innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> "+(view.length===1?"imóvel":"imóveis");
     if(!view.length){
       grid.innerHTML="<div class='empty' style='grid-column:1/-1'><h2>Nenhum imóvel com esses filtros.</h2><p>Tente ampliar a busca ou limpar os filtros.</p></div>";
       loadmore.style.display="none"; return;
@@ -379,8 +416,13 @@ window.__AMOSTRA_META__={
         <div class="pholder">${i.tipo||'Imóvel'}</div>
         ${img}
         <div class="grad"></div>
-        <span class="uf">${i.uf}</span>
-        ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
+        <div class="badges">
+          <span class="uf">${i.uf}</span>
+          ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
+        </div>
+        <button class="fav${isFav(i.id)?' on':''}" aria-label="Favoritar" title="Favoritar">
+          <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.4 8.6 1.7 5 5 5c2 0 3.2 1.2 4 2.3C9.8 6.2 11 5 13 5c3.3 0 4.6 3.6 3 6.8C18.5 16.4 12 21 12 21z"/></svg>
+        </button>
         <div class="cinfo">
           <div class="ccity">${i.cidade||""}</div>
           ${i.bairro?`<div class="cbairro">${i.bairro}</div>`:""}
@@ -390,6 +432,13 @@ window.__AMOSTRA_META__={
           <div class="specs">${specsHTML(i)}</div>
           <div class="price">${BRL(i.preco)}${i.avaliacao&&i.avaliacao>i.preco?`<span class="old">${BRL(i.avaliacao)}</span>`:""}</div>
         </div>`;
+      el.querySelector(".fav").addEventListener("click",function(ev){
+        ev.stopPropagation();
+        const on=toggleFav(i.id).indexOf(i.id)>=0;
+        this.classList.toggle("on",on);
+        updateFavUI();
+        if(state.onlyFav) aplicar();
+      });
       el.addEventListener("click",()=>abrir(i));
       frag.appendChild(el);
     });
@@ -500,8 +549,16 @@ window.__AMOSTRA_META__={
     aplicar();
   }));
 
+  document.getElementById("chipFav").addEventListener("click",function(){
+    state.onlyFav=!state.onlyFav;
+    this.setAttribute("aria-pressed",state.onlyFav?"true":"false");
+    aplicar();
+  });
+  document.getElementById("sendFav").addEventListener("click",sendFavs);
+
   document.getElementById("clear").addEventListener("click",()=>{
-    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,ordem:"desc"});
+    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc"});
+    var _cf=document.getElementById("chipFav"); if(_cf)_cf.setAttribute("aria-pressed","false");
     document.getElementById("q").value="";["cidade","tipo","modalidade","financiamento"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("ordem").value="desc";
     document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
