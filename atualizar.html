@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f324c">
+<meta name="robots" content="noindex">
+<title>Painel de atualização — Reginaldo Rosso</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#1f324c;--navy2:#27405f;--navy-d:#172638;--gold:#c6a052;--gold-soft:#d9c79f;--cream:#e7dcc2;--bg:#eef1f4;--card:#fff;--ink:#1f324c;--ink2:#33485f;--muted:#6b7c8e;--line:#e2e7ec;--green:#1f9d57}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Montserrat',-apple-system,system-ui,Arial,sans-serif;color:var(--ink2);background:var(--bg);line-height:1.6}
+  a{color:inherit;text-decoration:none}
+  .top{background:linear-gradient(180deg,var(--navy2),var(--navy));color:#fff;padding:16px 20px}
+  .top .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  .top svg{width:38px;height:38px}
+  .top b{font-size:1.05rem}.top small{display:block;color:var(--gold-soft);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 20px 60px}
+  h1{color:var(--ink);font-size:1.5rem;margin:6px 0 4px}
+  .sub{color:var(--muted);margin-bottom:20px}
+  .status{background:#fff;border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:18px 20px;margin-bottom:22px}
+  .status .lbl{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .status .big{font-size:1.3rem;color:var(--navy);font-weight:800;margin-top:4px}
+  .status .n{color:var(--ink2);font-weight:600}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:16px}
+  .card h2{font-size:1.05rem;color:var(--navy);display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .num{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:.85rem;font-weight:700}
+  .btns{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-weight:700;font-size:.92rem;padding:12px 18px;border-radius:10px;cursor:pointer;border:0;transition:.15s}
+  .btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy2)}
+  .btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:#d8b56a}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--navy)}.btn-ghost:hover{border-color:var(--gold)}
+  .card p{margin-bottom:8px}
+  .warn{background:#fff7e6;border:1px solid #f0d9a8;border-radius:8px;padding:10px 13px;font-size:.88rem;color:#8a6d2f;margin-top:10px}
+  .warn b{color:#6b531f}
+  code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:.9em;color:var(--navy);font-weight:600}
+  .repo input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-family:inherit;font-size:.92rem;margin:6px 0 10px}
+  .tip{font-size:.82rem;color:var(--muted);margin-top:8px}
+  .ok{color:var(--green);font-weight:700}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <svg viewBox="0 0 64 64"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 23h5v5" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span><b>Painel de atualização</b><small>Uso interno · Reginaldo Rosso</small></span>
+</div></div>
+
+<div class="wrap">
+  <h1>Atualizar as listas de imóveis</h1>
+  <p class="sub">Use esta página quando a Caixa publicar uma lista nova. Guarde nos favoritos.</p>
+
+  <div class="status">
+    <div class="lbl">O site está exibindo agora</div>
+    <div class="big" id="stData">Verificando…</div>
+    <div class="n" id="stN"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">1</span> Baixar as listas atualizadas na Caixa</h2>
+    <p>Abra a página de download da Caixa e baixe as listas do <b>RS</b> e de <b>SC</b>. Você vai precisar passar pela verificação ("não sou um robô") — isso é normal e só você (humano) consegue.</p>
+    <div class="btns">
+      <a class="btn btn-gold" href="https://venda-imoveis.caixa.gov.br/sistema/download-lista.asp" target="_blank" rel="noopener">Abrir download da Caixa ↗</a>
+    </div>
+    <div class="warn">Na página da Caixa, escolha <b>Rio Grande do Sul</b>, baixe, depois repita escolhendo <b>Santa Catarina</b>.</div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">2</span> Conferir o nome dos arquivos</h2>
+    <p>Os arquivos precisam ter <b>exatamente</b> estes nomes (maiúsculas importam):</p>
+    <p><code>Lista_imoveis_RS.csv</code> &nbsp; e &nbsp; <code>Lista_imoveis_SC.csv</code></p>
+    <div class="warn"><b>Atenção:</b> se o navegador salvar como <code>Lista_imoveis_RS (1).csv</code>, <b>renomeie</b> tirando o "(1)". Esse é o erro mais comum — o arquivo com "(1)" não substitui o antigo no site.</div>
+  </div>
+
+  <div class="card repo">
+    <h2><span class="num">3</span> Subir no GitHub</h2>
+    <p>Cole aqui o link do seu repositório (só na primeira vez — fica salvo):</p>
+    <input id="repoUrl" placeholder="https://github.com/seu-usuario/seu-repositorio" />
+    <div class="btns">
+      <a class="btn btn-navy" id="repoBtn" href="https://github.com" target="_blank" rel="noopener">Abrir meu repositório ↗</a>
+    </div>
+    <p class="tip">No GitHub: <b>Add file → Upload files</b> → arraste os 2 CSVs → role até o fim → <b>Commit changes</b>. Ao arrastar com o mesmo nome, ele substitui o antigo (deve aparecer "files changed").</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">4</span> Conferir</h2>
+    <p>Espere ~1 minuto, recarregue esta página (<code>Cmd + Shift + R</code>) e veja se a data lá em cima mudou para a nova. Pronto — o portal já está atualizado.</p>
+    <div class="btns"><a class="btn btn-ghost" href="imoveis.html" target="_blank" rel="noopener">Abrir o portal ↗</a></div>
+  </div>
+
+  <div class="warn">💡 A lista de download da Caixa <b>não é diária</b> — ela é gerada de tempos em tempos. Só vale subir quando a "data de geração" for mais nova que a que está no site. Não adianta baixar todo dia: enquanto a Caixa não gerar uma nova, o arquivo é o mesmo.</div>
+</div>
+
+<script>
+  // mostra a data de geração que está no ar
+  (async function(){
+    try{
+      const r=await fetch("Lista_imoveis_RS.csv?t="+Date.now(),{cache:"no-store"});
+      const txt=new TextDecoder("iso-8859-1").decode(await r.arrayBuffer());
+      const mg=txt.match(/gera[çc][aã]o[^0-9]*(\d{2}\/\d{2}\/\d{4})/i);
+      const linhas=txt.split(/\r?\n/).filter(l=>l.includes(";")&&/^\s*\d/.test(l));
+      document.getElementById("stData").textContent = mg ? ("Lista gerada em "+mg[1]) : "Lista carregada";
+      // conta SC tambem
+      let n=linhas.length;
+      try{ const r2=await fetch("Lista_imoveis_SC.csv?t="+Date.now(),{cache:"no-store"}); const t2=new TextDecoder("iso-8859-1").decode(await r2.arrayBuffer()); n+=t2.split(/\r?\n/).filter(l=>l.includes(";")&&/^\s*\d/.test(l)).length; }catch(e){}
+      document.getElementById("stN").textContent = "≈ "+n+" imóveis no site";
+    }catch(e){ document.getElementById("stData").textContent="Abra esta página pelo site (reginaldorosso.com.br/atualizar.html)"; }
+  })();
+  // repo salvo no navegador
+  const ru=document.getElementById("repoUrl"), rb=document.getElementById("repoBtn");
+  const saved=localStorage.getItem("rr_repo"); if(saved){ ru.value=saved; rb.href=saved; }
+  ru.addEventListener("input",function(){ const v=ru.value.trim(); if(v){ localStorage.setItem("rr_repo",v); rb.href=v; } });
+</script>
+</body>
+</html>

@@ -332,11 +332,14 @@ window.__AMOSTRA_META__={
     const nomes=["Lista_imoveis_"+uf+".csv","raw-"+uf+".csv","lista_imoveis_"+uf+".csv"];
     for(const nome of nomes){
       try{
-        const res=await fetch(nome,{cache:"no-store"});
+        const res=await fetch(nome+"?t="+Date.now(),{cache:"no-store"});
         if(!res.ok) continue;
         const buf=await res.arrayBuffer();
         const txt=new TextDecoder("iso-8859-1").decode(buf); // listas da Caixa são latin1
-        if(/cidade/i.test(txt)&&txt.length>200) return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified")};
+        if(/cidade/i.test(txt)&&txt.length>200){
+          const mg=txt.match(/gera[çc][aã]o[^0-9]*(\d{2}\/\d{2}\/\d{4})/i);
+          return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified"),geracao:mg?mg[1]:null};
+        }
       }catch(_){}
     }
     throw new Error("sem csv");
@@ -345,12 +348,13 @@ window.__AMOSTRA_META__={
 
   async function carregar(){
     try{
-      let dataTxt="", quando=null;
+      let dataTxt="", quando=null, geracao=null;
       // 1) PREFERIDO: CSV baixado pelo navegador (Lista_imoveis_RS.csv / _SC.csv)
       try{
         const [rs,sc]=await Promise.all([carregarCSV("RS"),carregarCSV("SC")]);
         ALL=[...rs.lista,...sc.lista];
         quando=rs.mod||sc.mod;
+        geracao=rs.geracao||sc.geracao;
       }catch(_){ ALL=[]; }
       // 2) RESERVA: JSON (se algum dia houver coleta completa)
       if(!ALL.length){
@@ -361,8 +365,10 @@ window.__AMOSTRA_META__={
       // 3) ÚLTIMO RECURSO: amostra embutida (abrindo o arquivo localmente)
       if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; quando=(window.__AMOSTRA_META__||{}).atualizado; }
 
-      if(quando){ const d=new Date(quando); document.getElementById("updatedTxt").textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" · "+ALL.length+" imóveis"; }
-      else{ document.getElementById("updatedTxt").textContent=ALL.length+" imóveis disponíveis"; }
+      const elU=document.getElementById("updatedTxt");
+      if(geracao){ elU.textContent="Lista da Caixa gerada em "+geracao+" · "+ALL.length+" imóveis"; }
+      else if(quando){ const d=new Date(quando); elU.textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" · "+ALL.length+" imóveis"; }
+      else{ elU.textContent=ALL.length+" imóveis disponíveis"; }
       preencherFiltros();
       aplicarHash();
       aplicar();
