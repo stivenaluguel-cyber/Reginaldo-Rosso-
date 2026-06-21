@@ -72,7 +72,7 @@ window.__AMOSTRA_META__={
   .updated .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
 
   .filters{position:sticky;top:69px;z-index:30;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
-  .fbar{display:grid;grid-template-columns:1.4fr repeat(4,1fr) auto;gap:10px}
+  .fbar{display:grid;grid-template-columns:1.3fr repeat(5,1fr) auto;gap:10px}
   .field label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 5px 2px;font-weight:700}
   .field input,.field select{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-weight:500;font-size:.92rem;padding:11px 12px;outline:none}
   .field input:focus,.field select:focus{border-color:var(--gold)}
@@ -187,6 +187,7 @@ window.__AMOSTRA_META__={
       <div class="field"><label for="cidade">Cidade</label><select id="cidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
+      <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
         <option value="desc">Maior desconto</option>
         <option value="precoasc">Menor preço</option>
@@ -238,7 +239,7 @@ window.__AMOSTRA_META__={
   const PER_PAGE = 24;
 
   let ALL=[], view=[], shown=0;
-  const state={uf:"",q:"",cidade:"",tipo:"",modalidade:"",min:null,max:null,mindesc:null,ordem:"desc"};
+  const state={uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,ordem:"desc"};
 
   const grid=document.getElementById("grid"), loadingEl=document.getElementById("loading"),
         loadmore=document.getElementById("loadmore"), countEl=document.getElementById("count");
@@ -329,6 +330,8 @@ window.__AMOSTRA_META__={
       if(state.cidade && i.cidade!==state.cidade) return false;
       if(state.tipo && i.tipo!==state.tipo) return false;
       if(state.modalidade && i.modalidade!==state.modalidade) return false;
+      if(state.financiamento==="sim" && i.financiamento!==true) return false;
+      if(state.financiamento==="nao" && i.financiamento!==false) return false;
       if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
       if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
       if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
@@ -478,6 +481,7 @@ window.__AMOSTRA_META__={
   document.getElementById("cidade").addEventListener("change",e=>{state.cidade=e.target.value;aplicar()});
   document.getElementById("tipo").addEventListener("change",e=>{state.tipo=e.target.value;aplicar()});
   document.getElementById("modalidade").addEventListener("change",e=>{state.modalidade=e.target.value;aplicar()});
+  document.getElementById("financiamento").addEventListener("change",e=>{state.financiamento=e.target.value;aplicar()});
   document.getElementById("ordem").addEventListener("change",e=>{state.ordem=e.target.value;aplicar()});
 
   document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
@@ -497,8 +501,8 @@ window.__AMOSTRA_META__={
   }));
 
   document.getElementById("clear").addEventListener("click",()=>{
-    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",min:null,max:null,mindesc:null,ordem:"desc"});
-    document.getElementById("q").value="";["cidade","tipo","modalidade"].forEach(id=>document.getElementById(id).value="");
+    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,ordem:"desc"});
+    document.getElementById("q").value="";["cidade","tipo","modalidade","financiamento"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("ordem").value="desc";
     document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
     document.querySelector('.chip[data-uf=""]').setAttribute("aria-pressed","true");
