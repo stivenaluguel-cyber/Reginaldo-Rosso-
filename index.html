@@ -119,6 +119,18 @@
   /* contato CTA */
   .cta{background:var(--bg);text-align:center}
   .cta .fones-cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .leadform-wrap{max-width:620px;margin:30px auto 0}
+  .lf-or{color:var(--muted);font-size:.9rem;margin-bottom:16px;font-weight:500}
+  .leadform{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:0 14px 40px rgba(31,50,76,.1);text-align:left}
+  .lf-row{display:flex;gap:12px;margin-bottom:12px}
+  .leadform input,.leadform select,.leadform textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-family:inherit;font-size:.95rem;color:var(--ink);background:#fff;outline:none}
+  .leadform input:focus,.leadform select:focus,.leadform textarea:focus{border-color:var(--gold)}
+  .leadform textarea{margin-bottom:14px;resize:vertical;min-height:80px}
+  .leadform .btn{width:100%;justify-content:center}
+  .lf-msg{margin-top:14px;font-size:.92rem;font-weight:600;text-align:center;display:none}
+  .lf-msg.ok{display:block;color:#176b3d}
+  .lf-msg.err{display:block;color:#b4232a}
+  @media(max-width:620px){.lf-row{flex-direction:column;gap:12px}}
 
   /* footer */
   footer{background:var(--navy-d);color:#aebccb;padding:54px 22px 26px;font-size:.9rem}
@@ -294,6 +306,27 @@
       <a class="btn btn-wa" href="https://wa.me/5551991104976?text=Ol%C3%A1%20Reginaldo!%20Vi%20seu%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20no%20RS." target="_blank" rel="noopener">WhatsApp RS — (51) 99110-4976</a>
       <a class="btn btn-wa" href="https://wa.me/5548991642332?text=Ol%C3%A1%20Reginaldo!%20Vi%20seu%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20em%20SC." target="_blank" rel="noopener">WhatsApp SC — (48) 99164-2332</a>
     </div>
+
+    <div class="leadform-wrap">
+      <p class="lf-or">ou deixe seu contato que eu retorno pra você</p>
+      <form class="leadform" id="leadForm">
+        <div class="lf-row">
+          <input name="nome" placeholder="Seu nome" required>
+          <input name="telefone" placeholder="WhatsApp / Telefone" required>
+        </div>
+        <div class="lf-row">
+          <input name="email" type="email" placeholder="Seu e-mail (opcional)">
+          <select name="estado"><option value="">Estado de interesse</option><option>Rio Grande do Sul</option><option>Santa Catarina</option></select>
+        </div>
+        <textarea name="mensagem" placeholder="Tem alguma cidade ou imóvel em mente? (opcional)" rows="3"></textarea>
+        <input type="hidden" name="access_key" value="efe281ee-c450-4faa-bfe0-dbb185f349ab">
+        <input type="hidden" name="subject" value="Novo lead pelo site reginaldorosso.com.br">
+        <input type="hidden" name="from_name" value="Site Reginaldo Rosso">
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off">
+        <button type="submit" class="btn btn-gold" id="lfBtn">Quero receber oportunidades</button>
+        <p class="lf-msg" id="lfMsg"></p>
+      </form>
+    </div>
   </div>
 </section>
 
@@ -339,6 +372,34 @@
     location.href='imoveis.html'+(qs?('#'+qs):'');
   });
   document.getElementById('bBusca').addEventListener('keydown',function(ev){if(ev.key==='Enter')document.getElementById('bGo').click();});
+
+  // ===== Formulário de lead (Web3Forms — grátis, 250 envios/mês) =====
+  // >>> Pegue sua chave grátis em web3forms.com (só informar seu e-mail) e cole
+  //     no campo <input name="access_key" value="..."> do formulário acima.
+  //     Enquanto estiver "SUA_CHAVE_AQUI", o formulário envia pelo seu WhatsApp.
+  const WA_FALLBACK = "5551991104976";
+  (function(){
+    var f=document.getElementById('leadForm'); if(!f) return;
+    var btn=document.getElementById('lfBtn'), msg=document.getElementById('lfMsg');
+    f.addEventListener('submit',async function(ev){
+      ev.preventDefault();
+      var d=new FormData(f);
+      var chave=(d.get('access_key')||"").toString();
+      if(chave.indexOf('SUA_CHAVE_AQUI')>=0 || !chave){
+        var txt='Olá Reginaldo! Quero receber oportunidades de imóveis Caixa.\n\nNome: '+(d.get('nome')||'')+'\nTelefone: '+(d.get('telefone')||'')+'\nE-mail: '+(d.get('email')||'')+'\nEstado: '+(d.get('estado')||'')+'\nMensagem: '+(d.get('mensagem')||'');
+        window.open('https://wa.me/'+WA_FALLBACK+'?text='+encodeURIComponent(txt),'_blank');
+        return;
+      }
+      btn.disabled=true; var old=btn.textContent; btn.textContent='Enviando...';
+      try{
+        var r=await fetch('https://api.web3forms.com/submit',{method:'POST',body:d,headers:{'Accept':'application/json'}});
+        var j=await r.json();
+        if(!j.success) throw new Error('falhou');
+        f.reset(); msg.className='lf-msg ok'; msg.textContent='✓ Recebido! Em breve eu entro em contato com você.';
+      }catch(e){ msg.className='lf-msg err'; msg.textContent='Não consegui enviar agora — me chame no WhatsApp, por favor.'; }
+      btn.disabled=false; btn.textContent=old;
+    });
+  })();
 </script>
 </body>
 </html>
