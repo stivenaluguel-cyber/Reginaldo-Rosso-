@@ -138,9 +138,11 @@ window.__AMOSTRA_META__={
   .binfo b{color:var(--navy)}
   .sheet__cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:inherit;font-weight:700;font-size:.92rem;padding:14px 22px;border-radius:11px;border:0;cursor:pointer;transition:transform .15s}
-  .btn--wa{background:#25D366;color:#fff;flex:1}
+  .btn--wa{background:#25D366;color:#fff;flex:1 1 100%}
   .btn--wa:hover{transform:translateY(-2px)}
-  .btn--ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+  .btn--ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line);flex:1}
+  .btn--share{background:var(--navy);color:#fff;flex:1}
+  .btn--share:hover{background:var(--navy2)}
   .btn--ghost:hover{border-color:var(--gold)}
   .relat{margin-top:14px;font-size:.84rem;color:#176b3d;background:#e8f6ee;border:1px solid #bfe6cf;border-radius:10px;padding:11px 13px}
   .relat b{color:#176b3d}
@@ -358,7 +360,20 @@ window.__AMOSTRA_META__={
     const uf=p.get("uf"); if(uf){state.uf=uf;document.querySelectorAll(".chip[data-uf]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.uf===uf?"true":"false"));}
     const tp=p.get("tipo"); if(tp){state.tipo=tp;const sel=document.getElementById("tipo");if(sel&&[...sel.options].some(o=>o.value===tp))sel.value=tp;}
     const q=p.get("q"); if(q){state.q=q;const qi=document.getElementById("q");if(qi)qi.value=q;}
+    const id=p.get("id"); if(id){const im=ALL.find(x=>x.id===id); if(im) setTimeout(()=>abrir(im),80);}
   }
+  async function shareImovel(i){
+    const base=location.origin+location.pathname;
+    const url=base+"#id="+i.id;
+    const titulo=(i.tipo||"Imóvel")+" em "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf;
+    const txt=titulo+" — "+BRL(i.preco)+(i.desconto?" ("+Math.round(i.desconto)+"% OFF)":"")+"\nImóvel da Caixa com o corretor Reginaldo Rosso:\n"+url;
+    try{
+      if(navigator.share){ await navigator.share({title:titulo,text:txt,url:url}); return; }
+    }catch(e){ return; } // usuário cancelou o compartilhamento
+    try{ await navigator.clipboard.writeText(txt); flashShare("Link copiado!"); }
+    catch(e){ window.prompt("Copie o link deste imóvel:", url); }
+  }
+  function flashShare(msg){const b=document.getElementById("mshare");if(b){const o=b.innerHTML;b.innerHTML="✓ "+msg;setTimeout(()=>{b.innerHTML=o;},2200);}}
 
   function aplicar(){
     view=ALL.filter(i=>{
@@ -513,12 +528,14 @@ window.__AMOSTRA_META__={
         <div class="sheet__cta">
           <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">📲 Tenho interesse — falar no WhatsApp</a>
           <a class="btn btn--ghost" href="${i.link||(BASE_CAIXA+i.id)}" target="_blank" rel="noopener">📄 Ver ficha oficial na Caixa</a>
+          <button class="btn btn--share" id="mshare">🔗 Compartilhar</button>
         </div>
         <div class="binfo" style="border-left-color:var(--gold);margin-top:12px"><b>Na ficha oficial da Caixa você confere:</b> matrícula, FGTS, parcelamento, tributos/condomínio (quem paga) e valores de 1ª e 2ª praça.</div>
         <div class="relat">★ Arrematando comigo, o Relatório Confidencial deste imóvel é gratuito.<br>Código Caixa: ${i.id} · Corretagem: <b style="color:var(--green)">${CRECI[i.uf]||"Reginaldo Rosso"}</b> (indique na proposta)</div>
       </div>`;
     modal.classList.add("open"); document.body.style.overflow="hidden";
     document.getElementById("mx").addEventListener("click",fechar);
+    var _sh=document.getElementById("mshare"); if(_sh) _sh.addEventListener("click",()=>shareImovel(i));
   }
   function fechar(){modal.classList.remove("open");document.body.style.overflow=""}
   modal.addEventListener("click",e=>{if(e.target===modal)fechar()});
