@@ -12,6 +12,11 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f324c">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
 <title>Mapa dos imóveis da Caixa em RS e SC | Reginaldo Rosso</title>
 <meta name="description" content="Veja no mapa onde estão os imóveis da Caixa à venda no Rio Grande do Sul e Santa Catarina. Clique na cidade e veja os imóveis disponíveis.">
 <link rel="canonical" href="https://reginaldorosso.com.br/mapa.html">
@@ -206,7 +211,7 @@
     const contagem={}; // chave "CIDADE|UF" -> {cidade,uf,n}
     for(const f of FONTES){
       try{
-        const r=await fetch(f.u,{cache:"no-store"}); if(!r.ok) continue;
+        const r=await fetch(f.u+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) continue;
         const buf=await r.arrayBuffer(); const txt=new TextDecoder("iso-8859-1").decode(buf);
         parseCidades(txt).forEach(cid=>{ const k=cid+"|"+f.uf; (contagem[k]=contagem[k]||{cidade:cid,uf:f.uf,n:0}).n++; });
       }catch(e){}
