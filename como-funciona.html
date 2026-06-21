@@ -88,6 +88,29 @@
   .btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:#d8b56a}
   .btn-ghost{border:1.5px solid rgba(255,255,255,.4);color:#fff}.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
 
+  .sim{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;margin:14px 0 6px;box-shadow:0 10px 30px rgba(31,50,76,.08)}
+  .sim h3{margin:0 0 4px;color:var(--navy);font-size:1.15rem}
+  .sim .sub{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+  .sim .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .sim label{display:block;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:5px}
+  .sim .inp{position:relative}
+  .sim .inp>span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600}
+  .sim input{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 12px 12px 38px;font-family:inherit;font-size:1rem;font-weight:600;color:var(--ink);outline:none}
+  .sim input:focus{border-color:var(--gold)}
+  .sim .res{margin-top:18px;background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:12px;padding:20px;color:#fff;text-align:center}
+  .sim .res .big{font-size:2rem;font-weight:800;color:#fff;line-height:1.1}
+  .sim .res .pct{color:var(--gold-soft);font-weight:700;margin-top:2px}
+  .sim .res small{display:block;color:#cdd8e4;font-size:.78rem;margin-top:6px}
+  .sim details{margin-top:16px}
+  .sim summary{cursor:pointer;color:var(--navy);font-weight:700;font-size:.92rem}
+  .sim .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px}
+  .sim .pin{position:relative}
+  .sim .pin input{padding:12px 30px 12px 12px}
+  .sim .pin>small{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:600}
+  .sim .tot{margin-top:14px;font-size:.95rem;color:var(--ink2);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;line-height:1.6}
+  .sim .tot b{color:var(--navy)}
+  .sim .disc{font-size:.78rem;color:var(--muted);margin-top:12px}
+  @media(max-width:560px){.sim .grid2,.sim .grid3{grid-template-columns:1fr}}
   footer{background:var(--navy-d);color:#9fb0c0;padding:34px 22px;font-size:.84rem;line-height:1.7;text-align:center;margin-top:30px}
   footer b{color:#fff}
   .wafloat{position:fixed;right:22px;bottom:22px;width:60px;height:60px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:60}
@@ -181,6 +204,31 @@
     <li>Possíveis <b>débitos</b> de condomínio ou tributos — sempre confira na ficha quem é responsável</li>
   </ul>
 
+  <h2>Simulador: quanto você economiza</h2>
+  <div class="sim">
+    <h3>Calcule a economia e o custo estimado</h3>
+    <div class="sub">Informe o valor de avaliação e o valor do lance. O cálculo é feito no seu navegador, na hora.</div>
+    <div class="grid2">
+      <div><label>Valor de avaliação</label><div class="inp"><span>R$</span><input id="simAval" type="number" inputmode="numeric" placeholder="200000"></div></div>
+      <div><label>Seu lance / preço</label><div class="inp"><span>R$</span><input id="simLance" type="number" inputmode="numeric" placeholder="120000"></div></div>
+    </div>
+    <div class="res">
+      <div class="big" id="simEcon">R$ 0</div>
+      <div class="pct" id="simPct">0% de desconto</div>
+      <small>economia em relação ao valor de avaliação</small>
+    </div>
+    <details>
+      <summary>+ incluir custos estimados (ITBI, cartório, comissão)</summary>
+      <div class="grid3">
+        <div><label>ITBI</label><div class="pin"><input id="simItbi" type="number" value="2" step="0.1"><small>%</small></div></div>
+        <div><label>Cartório/registro</label><div class="pin"><input id="simReg" type="number" value="1.5" step="0.1"><small>%</small></div></div>
+        <div><label>Comissão leiloeiro</label><div class="pin"><input id="simCom" type="number" value="5" step="0.1"><small>%</small></div></div>
+      </div>
+      <div class="tot" id="simTot">Preencha a avaliação e o lance para ver o custo total estimado.</div>
+    </details>
+    <div class="disc">Os percentuais são estimativas editáveis — o ITBI varia por município e a comissão/condições constam no edital. Confirme sempre os valores oficiais; não é um cálculo financeiro definitivo.</div>
+  </div>
+
   <h2>Cuidados (e como eu te protejo)</h2>
   <p>Comprar bem é comprar informado. Os pontos que mais geram dor de cabeça são a <b>situação de ocupação</b> do imóvel, <b>dívidas</b> que podem vir junto e o <b>estado de conservação</b>. É exatamente por isso que existe o meu <b>Relatório Confidencial do Arrematante</b>: antes de você dar um lance, eu levanto matrícula, ônus, ocupação, débitos e viabilidade — para você decidir com base em dados, não no escuro.</p>
 
@@ -205,6 +253,29 @@
 <script>
   document.getElementById('burger').addEventListener('click',function(){document.getElementById('mobile').classList.toggle('open');});
   document.querySelectorAll('#mobile a').forEach(function(a){a.addEventListener('click',function(){document.getElementById('mobile').classList.remove('open');});});
+
+  // ===== Simulador de economia =====
+  (function(){
+    const $=id=>document.getElementById(id);
+    const av=$('simAval'),la=$('simLance'),it=$('simItbi'),rg=$('simReg'),cm=$('simCom');
+    if(!av) return;
+    const brl=n=>'R$ '+Math.round(n).toLocaleString('pt-BR');
+    function calc(){
+      const a=parseFloat(av.value)||0, l=parseFloat(la.value)||0;
+      let econ=a-l; if(econ<0)econ=0;
+      $('simEcon').textContent=brl(econ);
+      $('simPct').textContent=((a>0&&l>0)?((1-l/a)*100):0).toFixed(1).replace('.',',')+'% de desconto';
+      const taxas=((parseFloat(it.value)||0)+(parseFloat(rg.value)||0)+(parseFloat(cm.value)||0))/100;
+      if(l>0){
+        const custos=l*taxas, total=l+custos, eco2=a>0?a-total:0;
+        let txt='Custos estimados: <b>'+brl(custos)+'</b> · Custo total do arremate: <b>'+brl(total)+'</b>';
+        if(a>0) txt+= eco2>0 ? ' · Mesmo com os custos, você ainda economiza <b>'+brl(eco2)+'</b> vs. a avaliação.' : ' · Com os custos, fica <b>'+brl(-eco2)+'</b> acima da avaliação.';
+        $('simTot').innerHTML=txt;
+      } else { $('simTot').textContent='Preencha a avaliação e o lance para ver o custo total estimado.'; }
+    }
+    [av,la,it,rg,cm].forEach(el=>el.addEventListener('input',calc));
+    calc();
+  })();
 </script>
 </body>
 </html>
