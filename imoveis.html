@@ -25,6 +25,14 @@ window.__AMOSTRA_META__={
   ============================================================
 -->
 <meta charset="UTF-8" />
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-S00J9QCC99"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-S00J9QCC99');
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#1f324c" />
 <title>Imóveis Caixa à venda no RS e SC — Reginaldo Rosso</title>
@@ -289,6 +297,7 @@ window.__AMOSTRA_META__={
     let msg="Olá Reginaldo! Tenho interesse nestes imóveis que favoritei no site:\n\n";
     L.forEach((i,n)=>{msg+=(n+1)+") "+(i.tipo||"Imóvel")+" · "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf+" — "+BRL(i.preco)+" (cód. "+i.id+")\n";});
     msg+="\nPode me passar mais detalhes sobre eles?";
+    if(window.gtag) gtag("event","generate_lead",{method:"favoritos",value:L.length});
     window.open("https://wa.me/"+(WHATS[uf]||WHATS.RS)+"?text="+encodeURIComponent(msg),"_blank");
   }
 
@@ -382,6 +391,7 @@ window.__AMOSTRA_META__={
     const titulo=(i.tipo||"Imóvel")+" em "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf;
     const txt=titulo+" — "+BRL(i.preco)+(i.desconto?" ("+Math.round(i.desconto)+"% OFF)":"")+"\nImóvel da Caixa com o corretor Reginaldo Rosso:\n"+url;
     try{
+      if(window.gtag) gtag("event","share",{item_id:i.id});
       if(navigator.share){ await navigator.share({title:titulo,text:txt,url:url}); return; }
     }catch(e){ return; } // usuário cancelou o compartilhamento
     try{ await navigator.clipboard.writeText(txt); flashShare("Link copiado!"); }
@@ -465,6 +475,7 @@ window.__AMOSTRA_META__={
         ev.stopPropagation();
         const on=toggleFav(i.id).indexOf(i.id)>=0;
         this.classList.toggle("on",on);
+        if(on && window.gtag) gtag("event","add_to_wishlist",{item_id:i.id});
         updateFavUI();
         if(state.onlyFav) aplicar();
       });
@@ -550,6 +561,7 @@ window.__AMOSTRA_META__={
     modal.classList.add("open"); document.body.style.overflow="hidden";
     document.getElementById("mx").addEventListener("click",fechar);
     var _sh=document.getElementById("mshare"); if(_sh) _sh.addEventListener("click",()=>shareImovel(i));
+    if(window.gtag) gtag("event","view_item",{item_id:i.id,item_name:(i.cidade||"")+"/"+i.uf});
   }
   function fechar(){modal.classList.remove("open");document.body.style.overflow=""}
   modal.addEventListener("click",e=>{if(e.target===modal)fechar()});
