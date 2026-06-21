@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baixar listas da Caixa — Reginaldo Rosso</title>
+<style>
+  :root{--bg:#08182B;--surface:#0F2840;--line:#22405E;--accent:#3BB4CE;--gold:#E8B04B;--orange:#F07A1E;--ink:#EAF2F9;--muted:#93AAC2}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,Arial,sans-serif;line-height:1.5;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:560px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:30px 28px}
+  h1{font-size:1.5rem;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 22px;font-size:.95rem}
+  .step{display:flex;gap:13px;align-items:flex-start;margin:0 0 14px}
+  .n{flex:0 0 30px;height:30px;border-radius:50%;background:var(--accent);color:#03131c;font-weight:800;display:grid;place-items:center;margin-top:3px}
+  .step p{margin:0;font-size:.95rem;color:#cdddec}
+  .btns{display:grid;gap:12px;margin:8px 0 6px}
+  a.btn{display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.05rem;padding:16px;border-radius:12px;transition:transform .15s}
+  a.btn:hover{transform:translateY(-2px)}
+  .rs{background:var(--orange);color:#fff}
+  .sc{background:var(--gold);color:#3a2a05}
+  .gh{background:transparent;color:var(--ink);border:1.5px solid var(--line);font-size:.95rem;padding:13px}
+  .gh:hover{border-color:var(--accent);color:var(--accent)}
+  .note{background:#0a2036;border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;font-size:.86rem;color:var(--muted);margin-top:18px}
+  .note b{color:var(--gold)}
+  .foot{text-align:center;color:var(--muted);font-size:.8rem;margin-top:18px}
+</style>
+
+<div class="card">
+  <h1>📥 Atualizar imóveis da Caixa</h1>
+  <p class="sub">Baixe as listas oficiais (RS e SC) e suba no GitHub. Leva ~3 minutos.</p>
+
+  <div class="step"><div class="n">1</div><p>Clique nos dois botões abaixo. Se aparecer uma verificação (CAPTCHA), é só resolver — você é humano, passa fácil. Os arquivos vão para a pasta <b>Downloads</b>.</p></div>
+
+  <div class="btns">
+    <a class="btn rs" href="https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_RS.csv" target="_blank" rel="noopener">⬇️ Baixar lista do Rio Grande do Sul</a>
+    <a class="btn sc" href="https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SC.csv" target="_blank" rel="noopener">⬇️ Baixar lista de Santa Catarina</a>
+  </div>
+
+  <div class="step" style="margin-top:18px"><div class="n">2</div><p>Suba os 2 arquivos (<b>Lista_imoveis_RS.csv</b> e <b>Lista_imoveis_SC.csv</b>) no seu repositório, substituindo os antigos.</p></div>
+
+  <div class="btns">
+    <a class="btn gh" href="https://github.com" target="_blank" rel="noopener">🔗 Abrir o GitHub para subir os arquivos</a>
+  </div>
+
+  <div class="step" style="margin-top:18px"><div class="n">3</div><p>Abra <b>reginaldorosso.com.br/imoveis.html</b> e dê <b>Cmd + Shift + R</b>. Pronto — lista atualizada!</p></div>
+
+  <div class="note"><b>Se o arquivo abrir como texto na tela</b> em vez de baixar: clique com o botão direito na página → "Salvar como…" e salve com o nome <b>Lista_imoveis_RS.csv</b> (ou SC). O importante é o nome ficar exatamente assim.</div>
+
+  <div class="foot">Reginaldo Rosso · Imóveis Caixa RS & SC · uso pessoal</div>
+</div>
