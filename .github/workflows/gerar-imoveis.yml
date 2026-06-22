@@ -1,0 +1,35 @@
+name: Gerar Páginas de Imóveis
+
+on:
+  push:
+    paths:
+      - '**.csv'
+      - 'imoveis-rs.json'
+      - 'imoveis-sc.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Gerar páginas HTML e sitemap
+        run: node gerar-imoveis.js
+
+      - name: Publicar páginas geradas
+        run: |
+          git config user.name "robo-imoveis"
+          git config user.email "robo@users.noreply.github.com"
+          git add -A
+          git commit -m "Atualiza páginas de imóveis ($(date +%F))" || echo "Sem mudanças."
+          git push
