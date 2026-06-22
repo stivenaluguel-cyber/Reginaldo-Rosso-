@@ -96,6 +96,7 @@ function pagina(i){
 <link rel="stylesheet" href="imovel.css">
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
 <!-- generated-v2 -->
+<!-- v2 -->
 </head>
 <body>
 <header><div class="topbar">
