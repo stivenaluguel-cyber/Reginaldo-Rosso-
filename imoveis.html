@@ -399,7 +399,7 @@ window.__AMOSTRA_META__={
     const id=p.get("id"); if(id){const im=ALL.find(x=>x.id===id); if(im) setTimeout(()=>abrir(im),80);}
   }
   async function shareImovel(i){
-    const url=location.origin+"/imovel/"+i.id+".html";
+    const url=location.origin+"/"+i.id+".html";
     const titulo=(i.tipo||"Imóvel")+" em "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf;
     const txt=titulo+" — "+BRL(i.preco)+(i.desconto?" ("+Math.round(i.desconto)+"% OFF)":"")+"\nImóvel da Caixa com o corretor Reginaldo Rosso:\n"+url;
     try{
@@ -565,7 +565,7 @@ window.__AMOSTRA_META__={
         <div class="sheet__cta">
           <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">📲 Tenho interesse — falar no WhatsApp</a>
           <a class="btn btn--ghost" href="${i.link||(BASE_CAIXA+i.id)}" target="_blank" rel="noopener">📄 Ver ficha oficial na Caixa</a>
-          <a class="btn btn--ghost" href="/imovel/${i.id}.html">🔎 Ver página completa</a>
+          <a class="btn btn--ghost" href="/${i.id}.html">🔎 Ver página completa</a>
           <button class="btn btn--share" id="mshare">🔗 Compartilhar</button>
         </div>
         <div class="binfo" style="border-left-color:var(--gold);margin-top:12px"><b>Na ficha oficial da Caixa você confere:</b> matrícula, FGTS, parcelamento, tributos/condomínio (quem paga) e valores de 1ª e 2ª praça.</div>
