@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Gera uma página HTML por imóvel a partir dos CSVs da Caixa.
    Uso: node gerar-imoveis.js
-   Lê Lista_imoveis_RS.csv e Lista_imoveis_SC.csv (latin1), escreve em /imovel/<id>.html
+   Lê Lista_imoveis_RS.csv e Lista_imoveis_SC.csv (latin1), escreve em /<id>.html
    e regenera o sitemap.xml. Sem dependências externas. */
 const fs = require("fs");
 const path = require("path");
@@ -9,7 +9,7 @@ const path = require("path");
 const BASE = "https://reginaldorosso.com.br";
 const GA = "G-S00J9QCC99";
 const WHATS = { RS: "5551991104976", SC: "5548991642332" };
-const OUT_DIR = path.join(__dirname, "imovel");
+const OUT_DIR = __dirname;
 
 function num(s){ if(s==null)return 0; let t=String(s).replace(/[^\d.,-]/g,""); if(!t)return 0;
   const lc=Math.max(t.lastIndexOf(","),t.lastIndexOf(".")); if(lc>=0){const dec=t.slice(lc+1); if(dec.length<=2){t=t.slice(0,lc).replace(/[.,]/g,"")+"."+dec;}else{t=t.replace(/[.,]/g,"");}} else t=t.replace(/[.,]/g,"");
@@ -54,7 +54,7 @@ function parse(file, uf){
 
 function pagina(i){
   const foto = "https://venda-imoveis.caixa.gov.br/fotos/F"+i.id+"21.jpg";
-  const url = BASE+"/imovel/"+i.id+".html";
+  const url = BASE+"/"+i.id+".html";
   const cidade = cap(i.cidade), bairro = cap(i.bairro);
   const titulo = i.tipo+" em "+cidade+(bairro?" - "+bairro:"")+"/"+i.uf;
   const descNum = (i.desconto>0?Math.round(i.desconto)+"% de desconto: de "+brl(i.avaliacao)+" por "+brl(i.preco):brl(i.preco));
@@ -93,12 +93,12 @@ function pagina(i){
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../imovel.css">
+<link rel="stylesheet" href="imovel.css">
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
 </head>
 <body>
 <header><div class="topbar">
-  <a class="brand" href="../index.html">
+  <a class="brand" href="index.html">
     <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 23h5v5" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="42" width="4" height="8" fill="#c6a052"/><rect x="26" y="38" width="4" height="12" fill="#c6a052"/><rect x="34" y="40" width="4" height="10" fill="#c6a052"/></svg>
     <span class="bt"><b>Reginaldo Rosso</b><small>Imóveis Caixa · RS &amp; SC</small></span>
   </a>
@@ -108,7 +108,7 @@ function pagina(i){
   </div>
 </div></header>
 
-<div class="crumb"><a href="../index.html">Início</a> › <a href="../imoveis.html">Imóveis Caixa</a> › <a href="../imoveis.html#q=${encodeURIComponent(i.cidade)}">${esc(cidade)}</a> › <span>cód. ${esc(i.id)}</span></div>
+<div class="crumb"><a href="index.html">Início</a> › <a href="../imoveis.html">Imóveis Caixa</a> › <a href="../imoveis.html#q=${encodeURIComponent(i.cidade)}">${esc(cidade)}</a> › <span>cód. ${esc(i.id)}</span></div>
 
 <main class="det">
   <div class="ph">
@@ -170,19 +170,14 @@ function pagina(i){
 // ===== execução =====
 const imoveis = [...parse(path.join(__dirname,"Lista_imoveis_RS.csv"),"RS"), ...parse(path.join(__dirname,"Lista_imoveis_SC.csv"),"SC")];
 if(!imoveis.length){ console.error("Nenhum imóvel lido — verifique os CSVs."); process.exit(1); }
-if(!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR,{recursive:true});
-// limpa páginas antigas
-for(const f of fs.readdirSync(OUT_DIR)) if(f.endsWith(".html")) fs.unlinkSync(path.join(OUT_DIR,f));
-let n=0;
-for(const i of imoveis){ fs.writeFileSync(path.join(OUT_DIR,i.id+".html"), pagina(i)); n++; }
 
 // sitemap com páginas principais + todos os imóveis
 const hoje = new Date().toISOString().slice(0,10);
 const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html"];
 let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 for(const u of fixas) sm += `  <url><loc>${BASE}${u}</loc><lastmod>${hoje}</lastmod><changefreq>${u==="/imoveis.html"?"daily":"weekly"}</changefreq><priority>${u==="/"?"1.0":"0.8"}</priority></url>\n`;
-for(const i of imoveis) sm += `  <url><loc>${BASE}/imovel/${i.id}.html</loc><lastmod>${hoje}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n`;
+for(const i of imoveis) sm += `  <url><loc>${BASE}/${i.id}.html</loc><lastmod>${hoje}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n`;
 sm += "</urlset>\n";
 fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
 
-console.log("Geradas "+n+" páginas de imóveis em /imovel/ e sitemap com "+(n+fixas.length)+" URLs.");
+console.log("Geradas "+n+" páginas de imóveis em / e sitemap com "+(n+fixas.length)+" URLs.");
