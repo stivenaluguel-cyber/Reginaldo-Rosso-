@@ -1,0 +1,39 @@
+name: Gerar paginas de imoveis
+
+# Dispara automaticamente quando você sobe um CSV novo.
+# Também pode rodar manualmente: aba Actions → "Gerar paginas de imoveis" → Run workflow.
+on:
+  push:
+    paths:
+      - 'Lista_imoveis_RS.csv'
+      - 'Lista_imoveis_SC.csv'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Instalar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Gerar as páginas dos imóveis
+        run: node gerar-imoveis.js
+
+      - name: Salvar as páginas geradas no repositório
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add imovel/ sitemap.xml
+          git diff --staged --quiet && echo "Nenhuma mudanca detectada" || git commit -m "Atualiza paginas de imoveis [$(date '+%d/%m/%Y %H:%M')]"
+          git push origin main
