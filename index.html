@@ -62,10 +62,12 @@
   nav.menu{display:flex;gap:20px;margin-left:8px;flex:1}
   nav.menu a{color:var(--cream);font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:6px 0;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
   nav.menu a:hover{color:#fff;border-color:var(--gold)}
-  .fones{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
-  .fones a{color:var(--gold-soft);font-size:.92rem;font-weight:600;display:flex;align-items:center;gap:7px;letter-spacing:.02em}
+  .fones{display:flex;flex-direction:row;gap:16px;align-items:flex-start}
+  .fones-person{display:flex;flex-direction:column;gap:1px;align-items:flex-end}
+  .fones-name{color:var(--gold);font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}
+  .fones a{color:var(--gold-soft);font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px;letter-spacing:.01em}
   .fones a:hover{color:#fff}
-  .fones svg{width:15px;height:15px;fill:var(--gold)}
+  .fones svg{width:13px;height:13px;fill:var(--gold)}
   .burger{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:6px}
   .burger span{width:26px;height:2px;background:var(--cream);display:block}
   .mobile{display:none;background:var(--navy-d)}
@@ -147,7 +149,10 @@
 
   /* contato CTA */
   .cta{background:var(--bg);text-align:center}
-  .cta .fones-cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .cta .fones-cta{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .fones-cta-group{display:flex;flex-direction:column;gap:10px;align-items:center}
+  .fones-cta-label{font-size:.72rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+  .btn-wa-sc{background:#1a9d4e!important}
   .leadform-wrap{max-width:620px;margin:30px auto 0}
   .lf-or{color:var(--muted);font-size:.9rem;margin-bottom:16px;font-weight:500}
   .leadform{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:0 14px 40px rgba(31,50,76,.1);text-align:left}
@@ -206,8 +211,16 @@
       <a href="#contato">Contato</a>
     </nav>
     <div class="fones">
-      <a href="tel:5551991104976"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 99110-4976 · RS</a>
-      <a href="tel:5548991642332"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99164-2332 · SC</a>
+      <div class="fones-person">
+        <span class="fones-name">Allan</span>
+        <a href="tel:5551991104976"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 99110-4976 · RS</a>
+        <a href="tel:5548991642332"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99164-2332 · SC</a>
+      </div>
+      <div class="fones-person">
+        <span class="fones-name">Reginaldo</span>
+        <a href="tel:5551982017867"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 98201-7867 · RS</a>
+        <a href="tel:5548999359022"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99935-9022 · SC</a>
+      </div>
     </div>
     <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
@@ -218,8 +231,10 @@
     <a href="como-funciona.html">Como funciona</a>
     <a href="#relatorio">Relatório</a>
     <a href="#contato">Contato</a>
-    <a class="mf" href="tel:5551991104976">📞 (51) 99110-4976 · RS</a>
-    <a class="mf" href="tel:5548991642332">📞 (48) 99164-2332 · SC</a>
+    <a class="mf" href="tel:5551991104976">📞 Allan (51) 99110-4976 · RS</a>
+    <a class="mf" href="tel:5548991642332">📞 Allan (48) 99164-2332 · SC</a>
+    <a class="mf" href="tel:5551982017867">📞 Reginaldo (51) 98201-7867 · RS</a>
+    <a class="mf" href="tel:5548999359022">📞 Reginaldo (48) 99935-9022 · SC</a>
   </div>
 </header>
 
@@ -329,11 +344,19 @@
     <div class="stitle">
       <div class="k">Fale comigo</div>
       <h2>Vamos encontrar o seu próximo imóvel</h2>
-      <p>Me chame no WhatsApp do seu estado. Atendo Rio Grande do Sul e Santa Catarina.</p>
+      <p>Me chame no WhatsApp. Atendo Rio Grande do Sul e Santa Catarina.</p>
     </div>
     <div class="fones-cta">
-      <a class="btn btn-wa" href="https://wa.me/5551991104976?text=Ol%C3%A1%20Reginaldo!%20Vi%20seu%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20no%20RS." target="_blank" rel="noopener">WhatsApp RS — (51) 99110-4976</a>
-      <a class="btn btn-wa" href="https://wa.me/5548991642332?text=Ol%C3%A1%20Reginaldo!%20Vi%20seu%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20em%20SC." target="_blank" rel="noopener">WhatsApp SC — (48) 99164-2332</a>
+      <div class="fones-cta-group">
+        <span class="fones-cta-label">Allan</span>
+        <a class="btn btn-wa" href="https://wa.me/5551991104976?text=Ol%C3%A1%20Allan!%20Vi%20o%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20no%20RS." target="_blank" rel="noopener">WhatsApp RS — (51) 99110-4976</a>
+        <a class="btn btn-wa btn-wa-sc" href="https://wa.me/5548991642332?text=Ol%C3%A1%20Allan!%20Vi%20o%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20em%20SC." target="_blank" rel="noopener">WhatsApp SC — (48) 99164-2332</a>
+      </div>
+      <div class="fones-cta-group">
+        <span class="fones-cta-label">Reginaldo</span>
+        <a class="btn btn-wa" href="https://wa.me/5551982017867?text=Ol%C3%A1%20Reginaldo!%20Vi%20seu%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20no%20RS." target="_blank" rel="noopener">WhatsApp RS — (51) 98201-7867</a>
+        <a class="btn btn-wa btn-wa-sc" href="https://wa.me/5548999359022?text=Ol%C3%A1%20Reginaldo!%20Vi%20seu%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20em%20SC." target="_blank" rel="noopener">WhatsApp SC — (48) 99935-9022</a>
+      </div>
     </div>
 
     <div class="leadform-wrap">
@@ -376,10 +399,11 @@
     </div>
     <div>
       <h4>Contato</h4>
-      <a href="https://wa.me/5551991104976" target="_blank" rel="noopener">WhatsApp RS — (51) 99110-4976</a>
-      <a href="https://wa.me/5548991642332" target="_blank" rel="noopener">WhatsApp SC — (48) 99164-2332</a>
-      <a href="https://sagestao.com" target="_blank" rel="noopener">Criciúma · SC</a>
-    </div>
+      <a href="https://wa.me/5551991104976" target="_blank" rel="noopener"><a href="https://wa.me/5551991104976" target="_blank" rel="noopener">Allan — (51) 99110-4976 · RS</a>
+        <a href="https://wa.me/5548991642332" target="_blank" rel="noopener">Allan — (48) 99164-2332 · SC</a>
+        <a href="https://wa.me/5551982017867" target="_blank" rel="noopener">Reginaldo — (51) 98201-7867 · RS</a>
+        <a href="https://wa.me/5548999359022" target="_blank" rel="noopener">Reginaldo — (48) 99935-9022 · SC</a>
+      </div>
   </div>
   <div class="fbot">
     Reginaldo Rosso — Corretor de Imóveis · CRECI/RS 28565J · CRECI/SC 8152J<br>
@@ -387,7 +411,7 @@
   </div>
 </footer>
 
-<a class="wafloat" href="https://wa.me/5551991104976" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94zm11.38-5.46c-.07-.12-.27-.2-.57-.35s-1.76-.87-2.03-.97-.47-.15-.67.15-.77.96-.94 1.16-.35.22-.65.07a8.1 8.1 0 01-2.38-1.47 9 9 0 01-1.65-2.05c-.17-.3 0-.45.13-.6.13-.13.3-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52s-.67-1.6-.91-2.2c-.24-.58-.49-.5-.67-.5l-.57-.01c-.2 0-.52.07-.79.37s-1.04 1.01-1.04 2.46 1.06 2.86 1.21 3.06c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.49 1.69.63.71.22 1.35.19 1.86.12.57-.09 1.76-.72 2-1.41.25-.7.25-1.29.18-1.42z"/></svg></a>
+<a class="wafloat" href="https://wa.me/5551991104976?text=Ol%C3%A1%20Allan!%20Vi%20o%20site%20e%20quero%20saber%20mais%20sobre%20im%C3%B3veis%20da%20Caixa%20no%20RS." target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
 
 <script>
   document.getElementById('burger').addEventListener('click',function(){document.getElementById('mobile').classList.toggle('open');});
