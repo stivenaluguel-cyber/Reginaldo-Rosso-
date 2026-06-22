@@ -182,4 +182,6 @@ for(const i of imoveis) sm += `  <url><loc>${BASE}/${i.id}.html</loc><lastmod>${
 sm += "</urlset>\n";
 fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
 
+for(const i of imoveis) fs.writeFileSync(path.join(OUT_DIR, i.id+".html"), pagina(i));
+
 console.log("Geradas "+imoveis.length+" páginas de imóveis em / e sitemap com "+(imoveis.length+fixas.length)+" URLs.")
