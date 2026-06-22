@@ -383,14 +383,14 @@ window.__AMOSTRA_META__={
     }
   }
 
-  function preencherFiltros(){
-    const cidades=[...new Set(ALL.map(i=>i.cidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
+  function preencherFiltros(ufFiltro){
+    const base = ufFiltro ? ALL.filter(i=>i.uf===ufFiltro) : ALL;
+    const cidades=[...new Set(base.map(i=>i.cidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
     const tipos=[...new Set(ALL.map(i=>i.tipo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
     const mods=[...new Set(ALL.map(i=>i.modalidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
-    const fill=(id,arr)=>{const s=document.getElementById(id);arr.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;s.appendChild(o)})};
+    const fill=(id,arr)=>{const s=document.getElementById(id);const cur=s.value;s.innerHTML="";const defOpt=document.createElement("option");defOpt.value="";defOpt.textContent=s.id==="cidade"?"Todas":s.id==="tipo"?"Todos":"Todas";s.appendChild(defOpt);arr.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;s.appendChild(o)});if(arr.includes(cur))s.value=cur;else s.value="";};
     fill("cidade",cidades);fill("tipo",tipos);fill("modalidade",mods);
-  }
-  function aplicarHash(){
+}function aplicarHash(){
     if(!location.hash) return;
     const p=new URLSearchParams(location.hash.slice(1));
     const uf=p.get("uf"); if(uf){state.uf=uf;document.querySelectorAll(".chip[data-uf]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.uf===uf?"true":"false"));}
@@ -590,22 +590,23 @@ window.__AMOSTRA_META__={
   document.getElementById("ordem").addEventListener("change",e=>{state.ordem=e.target.value;aplicar()});
 
   document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
-    if(c.dataset.uf!==undefined){
-      document.querySelectorAll(".chip[data-uf]").forEach(x=>x.setAttribute("aria-pressed","false"));
-      c.setAttribute("aria-pressed","true"); state.uf=c.dataset.uf;
-    }else if(c.dataset.min!==undefined){
-      const on=c.getAttribute("aria-pressed")==="true";
-      document.querySelectorAll(".chip[data-min]").forEach(x=>x.setAttribute("aria-pressed","false"));
-      if(on){state.min=null;state.max=null;}
-      else{c.setAttribute("aria-pressed","true");state.min=+c.dataset.min;state.max=+c.dataset.max;}
-    }else if(c.dataset.mindesc!==undefined){
-      const on=c.getAttribute("aria-pressed")==="true";
-      c.setAttribute("aria-pressed",on?"false":"true"); state.mindesc=on?null:+c.dataset.mindesc;
-    }
-    aplicar();
-  }));
-
-  document.getElementById("chipFav").addEventListener("click",function(){
+if(c.dataset.uf!==undefined){
+document.querySelectorAll(".chip[data-uf]").forEach(x=>x.setAttribute("aria-pressed","false"));
+c.setAttribute("aria-pressed","true"); state.uf=c.dataset.uf;
+state.cidade=""; document.getElementById("cidade").value="";
+preencherFiltros(state.uf);
+}else if(c.dataset.min!==undefined){
+const on=c.getAttribute("aria-pressed")==="true";
+document.querySelectorAll(".chip[data-min]").forEach(x=>x.setAttribute("aria-pressed","false"));
+if(on){state.min=null;state.max=null;}
+else{c.setAttribute("aria-pressed","true");state.min=+c.dataset.min;state.max=+c.dataset.max;}
+}else if(c.dataset.mindesc!==undefined){
+const on=c.getAttribute("aria-pressed")==="true";
+c.setAttribute("aria-pressed",on?"false":"true"); state.mindesc=on?null:+c.dataset.mindesc;
+}
+aplicar();
+}));
+document.getElementById("chipFav").addEventListener("click",function(){
     state.onlyFav=!state.onlyFav;
     this.setAttribute("aria-pressed",state.onlyFav?"true":"false");
     aplicar();
@@ -613,16 +614,16 @@ window.__AMOSTRA_META__={
   document.getElementById("sendFav").addEventListener("click",sendFavs);
 
   document.getElementById("clear").addEventListener("click",()=>{
-    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc"});
-    var _cf=document.getElementById("chipFav"); if(_cf)_cf.setAttribute("aria-pressed","false");
-    document.getElementById("q").value="";["cidade","tipo","modalidade","financiamento"].forEach(id=>document.getElementById(id).value="");
-    document.getElementById("ordem").value="desc";
-    document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
-    document.querySelector('.chip[data-uf=""]').setAttribute("aria-pressed","true");
-    aplicar();
-  });
-
-  var _bg=document.getElementById("burger");
+Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc"});
+var _cf=document.getElementById("chipFav"); if(_cf)_cf.setAttribute("aria-pressed","false");
+document.getElementById("q").value="";["cidade","tipo","modalidade","financiamento"].forEach(id=>document.getElementById(id).value="");
+document.getElementById("ordem").value="desc";
+document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
+document.querySelector('.chip[data-uf=""]').setAttribute("aria-pressed","true");
+preencherFiltros("");
+aplicar();
+});
+_bg=document.getElementById("burger");
   if(_bg){_bg.addEventListener("click",function(){document.getElementById("mobile").classList.toggle("open");});
     document.querySelectorAll("#mobile a").forEach(function(a){a.addEventListener("click",function(){document.getElementById("mobile").classList.remove("open");});});}
   carregar();
