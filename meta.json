@@ -1,9 +1,8 @@
 {
-  "atualizado": "2026-06-19T12:14:10.915Z",
-  "total": 18,
+  "atualizado": "2026-06-22T14:37:31.089Z",
+  "total": 640,
   "porEstado": {
-    "RS": 10,
-    "SC": 8
-  },
-  "exemplo": true
+    "RS": 640,
+    "SC": 0
+  }
 }
