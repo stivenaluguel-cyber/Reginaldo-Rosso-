@@ -95,6 +95,7 @@ function pagina(i){
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="imovel.css">
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
+<!-- generated-v2 -->
 </head>
 <body>
 <header><div class="topbar">
