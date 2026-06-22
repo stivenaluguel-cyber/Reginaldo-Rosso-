@@ -6,6 +6,7 @@ on:
       - '**.csv'
       - 'imoveis-rs.json'
       - 'imoveis-sc.json'
+      - 'gerar-imoveis.js'
   workflow_dispatch:
 
 permissions:
@@ -22,6 +23,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Limpar páginas antigas
+        run: |
+          find . -maxdepth 1 -name '[0-9]*.html' -delete || true
+          echo "Páginas antigas removidas."
 
       - name: Gerar páginas HTML e sitemap
         run: node gerar-imoveis.js
