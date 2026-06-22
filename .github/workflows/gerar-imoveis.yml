@@ -7,6 +7,9 @@ on:
       - 'imoveis-rs.json'
       - 'imoveis-sc.json'
       - 'gerar-imoveis.js'
+  workflow_run:
+    workflows: ["Atualizar imóveis Caixa"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -22,7 +25,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Gerar páginas HTML e sitemap
         run: node gerar-imoveis.js
@@ -31,6 +34,7 @@ jobs:
         run: |
           git config user.name "robo-imoveis"
           git config user.email "robo@users.noreply.github.com"
+          git pull --rebase origin main
           git add -A
           git diff --cached --stat
           git commit -m "Atualiza páginas de imóveis ($(date +%F))" || echo "Sem mudanças."
