@@ -108,7 +108,7 @@ function pagina(i){
   </div>
 </div></header>
 
-<div class="crumb"><a href="index.html">Início</a> › <a href="../imoveis.html">Imóveis Caixa</a> › <a href="../imoveis.html#q=${encodeURIComponent(i.cidade)}">${esc(cidade)}</a> › <span>cód. ${esc(i.id)}</span></div>
+<div class="crumb"><a href="index.html">Início</a> › <a href="imoveis.html">Imóveis Caixa</a> › <a href="../imoveis.html#q=${encodeURIComponent(i.cidade)}">${esc(cidade)}</a> › <span>cód. ${esc(i.id)}</span></div>
 
 <main class="det">
   <div class="ph">
@@ -142,7 +142,7 @@ function pagina(i){
       <button class="btn share" id="sh">🔗 Compartilhar</button>
     </div>
     <div class="note">Matrícula, FGTS, parcelamento, tributos/condomínio e valores de 1ª e 2ª praça constam na ficha oficial da Caixa. Eu confiro tudo com você antes de qualquer lance — e preparo seu <b>Relatório Confidencial</b> sem custo.</div>
-    <p class="back"><a href="../imoveis.html">← Ver todos os imóveis</a></p>
+    <p class="back"><a href="imoveis.html">← Ver todos os imóveis</a></p>
   </div>
 </main>
 
