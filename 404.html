@@ -80,7 +80,7 @@
   // Detecta se é um imóvel específico pelo URL e personaliza a página
   (function(){
     const path = location.pathname;
-    const m = path.match(/\/imovel\/(\d+)\.html/);
+    const m = path.match(/\/(\d{6,12})\.html/);
     if(m){
       const id = m[1];
       document.getElementById('titulo').textContent = 'Este imóvel não está mais disponível';
