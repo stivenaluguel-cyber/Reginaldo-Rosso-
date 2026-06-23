@@ -30,6 +30,8 @@ header{background:linear-gradient(180deg,var(--navy2),var(--navy));box-shadow:0 
 .specs span{font-size:.9rem;color:var(--ink2);font-weight:600;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 11px}
 .price{font-size:2rem;font-weight:800;color:var(--navy);margin-bottom:18px}
 .price .old{display:block;font-size:.85rem;color:var(--muted);font-weight:600;text-decoration:line-through;margin-top:2px}
+.price-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.price-row .price{margin-bottom:0}
 
 .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .kv div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px}
@@ -44,6 +46,7 @@ header{background:linear-gradient(180deg,var(--navy2),var(--navy));box-shadow:0 
 .btn.wa{background:#25D366;color:#fff;flex:1 1 100%}.btn.wa:hover{transform:translateY(-2px)}
 .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line);flex:1}.btn.ghost:hover{border-color:var(--gold)}
 .btn.share{background:var(--navy);color:#fff;flex:1}.btn.share:hover{background:var(--navy2)}
+.btn.roi-btn{background:var(--gold);color:var(--navy);flex:1;white-space:nowrap}.btn.roi-btn:hover{background:var(--cream);transform:translateY(-2px)}
 
 .note{font-size:.86rem;color:#176b3d;background:#e8f6ee;border:1px solid #bfe6cf;border-radius:10px;padding:12px 14px;margin-top:14px}
 .note b{color:#176b3d}
