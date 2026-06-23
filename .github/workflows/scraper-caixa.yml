@@ -36,8 +36,10 @@ jobs:
           cat > scraper/.env << ENVEOF
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }}
-          AWS_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION=us-east-005
+          S3_ENDPOINT_URL=https://s3.us-east-005.backblazeb2.com
           S3_BUCKET_NAME=reginaldo-rosso-docs
           CAPTCHA_PROVIDER=capsolver
           CAPSOLVER_API_KEY=${{ secrets.CAPSOLVER_API_KEY }}
