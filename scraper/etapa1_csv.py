@@ -95,20 +95,14 @@ def download_csv():
 
 def _is_valid_id(id_str):
     """Verifica se o ID e um numero de imovel valido (apenas digitos e hifens)."""
-    import re
-    return bool(re.match(r'^[\d][\d\-]{2,}
-    removed_ids = db_ids - csv_ids
-    if removed_ids:
-        logger.info(f"Marcando {len(removed_ids)} imoveis como Indisponivel")
-        mark_unavailable(list(removed_ids))
-    new_ids = csv_ids - db_ids
-    logger.info(
-        f"Resumo: {len(csv_ids)} no CSV | {len(db_ids)} no banco | "
-        f"{len(removed_ids)} removidos | {len(new_ids)} novos"
-    )
-    return list(new_ids), df
-
-
+    s = str(id_str).strip()
+    # IDs validos: apenas digitos e hifens, com pelo menos 3 chars, comeca com digito
+    if len(s) < 3:
+        return False
+    if not s[0].isdigit():
+        return False
+    # Permitir apenas digitos e hifens
+    return all(c.isdigit() or c == '-' for c in s)
 def run_etapa1():
     """Executa a Etapa 1 completa. Retorna (novos_ids, df_csv)."""
     init_db()
