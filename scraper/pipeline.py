@@ -27,7 +27,7 @@ from etapa2_scraper import scrape_imovel
 from db import upsert_imovel
 
 # ── Logging ───────────────────────────────────────────────────────
-LOG_DIR = Path("/var/log/caixa-scraper")
+LOG_DIR = Path(__file__).parent / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 def setup_logging():
