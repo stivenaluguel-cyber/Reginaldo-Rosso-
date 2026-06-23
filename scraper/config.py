@@ -14,7 +14,7 @@ S3_ENDPOINT_URL       = os.getenv("S3_ENDPOINT_URL", "https://s3.us-east-005.bac
 S3_BUCKET_NAME        = os.getenv("S3_BUCKET_NAME", "reginaldo-rosso-docs")
 
 # mantido por compatibilidade (nao utilizado com B2)
-CF_ACCOUNT_ID         = os.getenv("CF_ACCOUNT_ID", "")
+CF_ACCOUNT_ID = os.getenv("CF_ACCOUNT_ID", "")
 
 # -- CAPTCHA ---
 CAPTCHA_PROVIDER   = os.getenv("CAPTCHA_PROVIDER", "capsolver")
@@ -22,11 +22,24 @@ CAPSOLVER_API_KEY  = os.getenv("CAPSOLVER_API_KEY", "")
 TWOCAPTCHA_API_KEY = os.getenv("TWOCAPTCHA_API_KEY", "")
 
 # -- Pipeline ---
-MAX_WORKERS  = int(os.getenv("MAX_WORKERS", "3"))
-MAX_RETRIES  = int(os.getenv("MAX_RETRIES", "3"))
-HEADLESS     = os.getenv("HEADLESS", "true").lower() == "true"
-TIMEOUT_MS   = int(os.getenv("TIMEOUT_MS", "60000"))
+MAX_WORKERS = int(os.getenv("MAX_WORKERS", "2"))
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "3"))
+HEADLESS    = os.getenv("HEADLESS", "true").lower() == "true"
+TIMEOUT_MS  = int(os.getenv("TIMEOUT_MS", "60000"))
 
 # -- URLs ---
-CAIXA_BASE_URL = "https://venda-imoveis.caixa.gov.br"
-CAIXA_CSV_URL  = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{estado}.csv"
+CAIXA_BASE_URL    = "https://venda-imoveis.caixa.gov.br"
+CAIXA_CSV_URL     = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{estado}.csv"
+
+# Aliases usados pelos modulos etapa1_csv e etapa2_scraper
+URL_CSV_CAIXA    = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SP.csv"
+URL_BASE_DETALHE = "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.aspx?hdnOrigem=index&hdnimovel="
+
+# -- Navegador ---
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/124.0.0.0 Safari/537.36"
+)
+LOCALE   = "pt-BR"
+TIMEZONE = "America/Sao_Paulo"
