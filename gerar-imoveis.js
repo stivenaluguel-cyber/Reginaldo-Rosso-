@@ -64,7 +64,7 @@ function pagina(i){
   // ROI calculator URL — pre-fill with property data
   const tipoLeilao = /vendas*(on[s-]?line|direta)/i.test(i.modalidade||"") ? "venda_direta" : "extrajudicial";
   const comissaoLeiloeiro = tipoLeilao === "venda_direta" ? 0 : 5;
-  const roiUrl = "../calculadora.html?tipoLeilao="+tipoLeilao+"&valorAvaliacao="+Math.round(i.avaliacao)+"&precoVenda="+Math.round(i.preco)+"&comissaoLeiloeiro="+comissaoLeiloeiro;
+  const roiUrl = "../calculadora.html?tipoLeilao="+tipoLeilao+"&valorLance="+Math.round(i.preco)+"&valorAvaliacao="+Math.round(i.avaliacao)+"&precoVenda="+Math.round(i.preco)+"&comissaoLeiloeiro="+comissaoLeiloeiro;
   const sp = specs(i.descricao);
   const specsHTML = sp.length? '<div class="specs">'+sp.map(s=>'<span>'+esc(s)+'</span>').join("")+'</div>' : '';
   const ld = { "@context":"https://schema.org","@type":"Product","name":titulo,"image":foto,
