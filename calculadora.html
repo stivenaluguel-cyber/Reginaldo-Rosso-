@@ -456,242 +456,231 @@ Calculadora de ROI meramente informativa. Os valores são estimativas e não con
 
 // Burger menu
 document.getElementById('burger').addEventListener('click',function(){
-  document.getElementById('mobile').classList.toggle('open');
+document.getElementById('mobile').classList.toggle('open');
 });
 document.querySelectorAll('#mobile a').forEach(function(a){
-  a.addEventListener('click',function(){document.getElementById('mobile').classList.remove('open');});
+a.addEventListener('click',function(){document.getElementById('mobile').classList.remove('open');});
 });
 
 // Toggle pagamento
-const pagToggle = document.getElementById('pagToggle');
-const finFields = document.getElementById('finFields');
-let tipoPag = 'avista';
+var pagToggle = document.getElementById('pagToggle');
+var finFields = document.getElementById('finFields');
+var tipoPag = 'avista';
 pagToggle.querySelectorAll('button').forEach(function(btn){
-  btn.addEventListener('click',function(){
-    pagToggle.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    tipoPag = btn.dataset.pag;
-    finFields.classList.toggle('show', tipoPag !== 'avista');
-  });
+btn.addEventListener('click',function(){
+pagToggle.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});
+btn.classList.add('active');
+tipoPag = btn.dataset.pag;
+finFields.classList.toggle('show', tipoPag !== 'avista');
 });
+});
+
+// Ocultar comissão leiloeiro em Venda Direta
+window.atualizarCamposLeilao = function(){
+var tipo = document.getElementById('tipoLeilao').value;
+var fieldCom = document.getElementById('fieldComissaoLeiloeiro');
+if(fieldCom){
+if(tipo === 'venda_direta'){
+document.getElementById('comissaoLeiloeiro').value = 0;
+fieldCom.style.opacity = '0.4';
+fieldCom.style.pointerEvents = 'none';
+} else {
+if(parseFloat(document.getElementById('comissaoLeiloeiro').value) === 0){
+document.getElementById('comissaoLeiloeiro').value = 5;
+}
+fieldCom.style.opacity = '1';
+fieldCom.style.pointerEvents = '';
+}
+}
+};
+document.getElementById('tipoLeilao').addEventListener('change', window.atualizarCamposLeilao);
+window.atualizarCamposLeilao();
 
 // Formatação BRL
 function fBRL(v){
-  return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 function fPct(v){
-  return v.toFixed(2).replace('.',',')+'%';
-}
-function fSign(v){
-  return (v>=0?'+':'-')+' '+fBRL(v);
+return v.toFixed(2).replace('.',',')+'%';
 }
 
 // Leitura de input numérico
 function num(id){
-  const v = parseFloat(document.getElementById(id).value);
-  return isNaN(v) ? 0 : v;
+var v = parseFloat(document.getElementById(id).value);
+return isNaN(v) ? 0 : v;
 }
 
 // Cálculo principal
 function calcular(lanceForcado){
-  const lance       = lanceForcado !== undefined ? lanceForcado : num('valorLance');
-  const avaliacao   = num('valorAvaliacao');
-  const precoVenda  = num('precoVenda');
-  const itbiPct     = num('itbi') / 100;
-  const regPct      = num('registro') / 100;
-  const comLeilPct  = num('comissaoLeiloeiro') / 100;
-  const debitos     = num('debitos');
-  const condAtras   = num('condominioAtrasado');
-  const reforma     = num('reforma');
-  const desocupacao = num('desocupacao');
-  const condMensal  = num('condominioMensal');
-  const iptuAnual   = num('iptuAnual');
-  const corrVendaPct= num('corretagemVenda') / 100;
-  const irPct       = num('irGanho') / 100;
-  const outrasValor = num('outrasDesp');
+var lance = lanceForcado !== undefined ? lanceForcado : num('valorLance');
+var avaliacao = num('valorAvaliacao');
+var precoVenda = num('precoVenda');
+var itbiPct = num('itbi') / 100;
+var regPct = num('registro') / 100;
+var comLeilPct = num('comissaoLeiloeiro') / 100;
+var debitos = num('debitos');
+var condAtras = num('condominioAtrasado');
+var reforma = num('reforma');
+var desocupacao = num('desocupacao');
+var condMensal = num('condominioMensal');
+var iptuAnual = num('iptuAnual');
+var corrVendaPct = num('corretagemVenda') / 100;
+var irPct = num('irGanho') / 100;
+var outrasValor = num('outrasDesp');
 
-  // Custo de aquisição fixo (não depende do tempo)
-  const itbi         = lance * itbiPct;
-  const reg          = lance * regPct;
-  const comLeil      = lance * comLeilPct;
-  const custosFixos  = lance + itbi + reg + comLeil + debitos + condAtras + reforma + desocupacao;
+var itbi = lance * itbiPct;
+var reg = lance * regPct;
+var comLeil = lance * comLeilPct;
+var custosFixos = lance + itbi + reg + comLeil + debitos + condAtras + reforma + desocupacao;
 
-  // Receita bruta de venda
-  const recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance * 1.3);
+var recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance * 1.3);
 
-  // Despesas de venda
-  const corrVenda    = recVenda * corrVendaPct;
-  const ganho        = Math.max(0, recVenda - lance);
-  const ir           = ganho * irPct;
-  const outras = outrasValor;
-  const despVenda    = corrVenda + ir + outras;
+var corrVenda = recVenda * corrVendaPct;
+var ganho = Math.max(0, recVenda - lance);
+var ir = ganho * irPct;
+var outras = outrasValor;
+var despVenda = corrVenda + ir + outras;
 
-  // Custo de manutenção mensal (condomínio + IPTU/12)
-  const custoMensal  = condMensal + (iptuAnual / 12);
+var custoMensal = condMensal + (iptuAnual / 12);
 
-  // Função de resultado para N meses
-  function res(meses){
-    const manutencao = custoMensal * meses;
-    const totalCusto = custosFixos + manutencao + despVenda;
-    const resultado  = recVenda - totalCusto;
-    const roi        = custosFixos > 0 ? (resultado / custosFixos) * 100 : 0;
-    const taxaMensal = custosFixos > 0 && meses > 0
-      ? (Math.pow(1 + roi/100, 1/meses) - 1) * 100
-      : 0;
-    return { meses, totalCusto, resultado, roi, taxaMensal };
-  }
+function res(meses){
+var manutencao = custoMensal * meses;
+var totalCusto = custosFixos + manutencao + despVenda;
+var resultado = recVenda - totalCusto;
+var roi = custosFixos > 0 ? (resultado / custosFixos) * 100 : 0;
+var taxaMensal = custosFixos > 0 && meses > 0
+? (Math.pow(1 + roi/100, 1/meses) - 1) * 100 : 0;
+return { meses: meses, totalCusto: totalCusto, resultado: resultado, roi: roi, taxaMensal: taxaMensal };
+}
 
-  return { custosFixos, recVenda, despVenda, custoMensal, itbi, reg, comLeil, debitos, condAtras, reforma, desocupacao, corrVenda, ir, outras, res };
+return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, outras: outras, res: res };
 }
 
 // Colorir célula ROI
 function roiCell(roi, roiMin){
-  const val = fPct(roi);
-  if(roi >= roiMin) return '<span class="cell-ok">'+val+'</span>';
-  if(roi > 0)       return '<span class="cell-warn">'+val+'</span>';
-  return               '<span class="cell-bad">'+val+'</span>';
+var val = fPct(roi);
+if(roi >= roiMin) return '<span class="cell-ok">'+val+'</span>';
+if(roi > 0) return '<span class="cell-warn">'+val+'</span>';
+return '<span class="cell-bad">'+val+'</span>';
 }
 
 // Gerar tabela de lances
 function gerarTabela(roiMin){
-  const lancePrincipal = num('valorLance');
-  const calc = calcular(lancePrincipal);
-  if(lancePrincipal <= 0) return;
-
-  const passo = lancePrincipal * 0.05; // incrementos de 5%
-  const meses = [3, 6, 9, 12, 18, 24];
-  const tbody = document.getElementById('lanceTbody');
-  tbody.innerHTML = '';
-
-  // Faixa: 60% até 130% do lance principal, em passos de ~5%
-  const inicio = Math.round(lancePrincipal * 0.60 / passo) * passo;
-  const fim    = Math.round(lancePrincipal * 1.30 / passo) * passo;
-
-  for(let v = inicio; v <= fim + 1; v += passo){
-    const c = calcular(v);
-    const tr = document.createElement('tr');
-    if(Math.abs(v - lancePrincipal) < passo * 0.1) tr.classList.add('highlight');
-    let html = '<td>'+(v===lancePrincipal?'<strong>':'')+ fBRL(v) + (v===lancePrincipal?' ★</strong>':'') +'</td>';
-    meses.forEach(function(m){
-      const r = c.res(m);
-      html += '<td>'+roiCell(r.roi, roiMin)+'</td>';
-    });
-    tr.innerHTML = html;
-    tbody.appendChild(tr);
-  }
+var lancePrincipal = num('valorLance');
+if(lancePrincipal <= 0) return;
+var passo = lancePrincipal * 0.05;
+var meses = [3, 6, 9, 12, 18, 24];
+var tbody = document.getElementById('lanceTbody');
+tbody.innerHTML = '';
+var inicio = Math.round(lancePrincipal * 0.60 / passo) * passo;
+var fim = Math.round(lancePrincipal * 1.30 / passo) * passo;
+for(var v = inicio; v <= fim + 1; v += passo){
+var c = calcular(v);
+var tr = document.createElement('tr');
+if(Math.abs(v - lancePrincipal) < passo * 0.1) tr.classList.add('highlight');
+var html = '<td>'+(Math.abs(v-lancePrincipal)<passo*0.1?'<strong>':'')+fBRL(v)+(Math.abs(v-lancePrincipal)<passo*0.1?' ★</strong>':'')+'</td>';
+meses.forEach(function(m){
+var r = c.res(m);
+html += '<td>'+roiCell(r.roi, roiMin)+'</td>';
+});
+tr.innerHTML = html;
+tbody.appendChild(tr);
+}
 }
 
 // Botão simular
 document.getElementById('btnCalc').addEventListener('click',function(){
-  const lance = num('valorLance');
-  if(lance <= 0){
-    alert('Informe o Valor do Lance para simular.');
-    return;
-  }
-  const roiMin = parseFloat(document.getElementById('roiMin').value) || 15;
-  const c = calcular();
-  const r12 = c.res(12);
+var lance = num('valorLance');
+if(lance <= 0){ alert('Informe o Valor do Lance para simular.'); return; }
+var roiMin = parseFloat(document.getElementById('roiMin').value) || 15;
+var c = calcular();
+var r12 = c.res(12);
 
-  // KPIs
-  const el = function(id){ return document.getElementById(id); };
-  el('kpiResultadoVal').textContent = fBRL(r12.resultado);
-  el('kpiResultadoSub').textContent = 'em 12 meses';
-  el('kpiRoiVal').textContent = fPct(r12.roi);
-  el('kpiRoiSub').textContent = 'em 12 meses';
-  el('kpiMensalVal').textContent = fPct(r12.taxaMensal);
-  el('kpiCustoVal').textContent = fBRL(c.custosFixos);
+function el(id){ return document.getElementById(id); }
+el('kpiResultadoVal').textContent = fBRL(r12.resultado);
+el('kpiResultadoSub').textContent = 'em 12 meses';
+el('kpiRoiVal').textContent = fPct(r12.roi);
+el('kpiRoiSub').textContent = 'em 12 meses';
+el('kpiMensalVal').textContent = fPct(r12.taxaMensal);
+el('kpiCustoVal').textContent = fBRL(c.custosFixos);
 
-  // colorir KPI ROI
-  const kpiRoi = document.getElementById('kpiRoi');
-  kpiRoi.className = 'kpi ' + (r12.roi >= roiMin ? 'ok' : r12.roi > 0 ? 'warn' : 'bad');
-  const kpiRes = document.getElementById('kpiResultado');
-  kpiRes.className = 'kpi gold-accent ' + (r12.resultado >= 0 ? 'ok' : 'bad');
+el('kpiRoi').className = 'kpi ' + (r12.roi >= roiMin ? 'ok' : r12.roi > 0 ? 'warn' : 'bad');
+el('kpiResultado').className = 'kpi gold-accent ' + (r12.resultado >= 0 ? 'ok' : 'bad');
 
-  // Detalhamento de custos
-  const linhas = [
-    ['Lance (valor pago)', fBRL(lance), true],
-    ['ITBI', fBRL(c.itbi), false],
-    ['Registro em cartório', fBRL(c.reg), false],
-    ['Comissão leiloeiro', fBRL(c.comLeil), false],
-    ['Débitos assumidos', fBRL(c.debitos), false],
-    ['Condomínio em atraso', fBRL(c.condAtras), false],
-    ['Reforma / adequação', fBRL(c.reforma), false],
-    ['Custo desocupação', fBRL(c.desocupacao), false],
-    ['Manutenção mensal (12 m)', fBRL(c.custoMensal * 12), false],
-    ['<strong>Total investido (12 m)</strong>', '<strong>'+fBRL(c.custosFixos + c.custoMensal*12)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
-    ['Receita de venda', fBRL(c.recVenda), false],
-    ['(-) Corretagem venda', fBRL(c.corrVenda), false],
-    ['(-) IR ganho de capital', fBRL(c.ir), false],
-    ['(-) Outras despesas', fBRL(c.outras), false],
-    ['<strong>Resultado líquido (12 m)</strong>', '<strong style="color:'+(r12.resultado>=0?'var(--green)':'var(--red)')+'">'+fBRL(r12.resultado)+'</strong>', true, 'border-top:2px solid var(--line)'],
-  ];
-  const detalhe = document.getElementById('detalheBody');
-  detalhe.innerHTML = linhas.map(function(l){
-    const style = l[3] ? ' style="'+l[3]+'"' : '';
-    return '<div'+style+' style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.88rem'+(l[2]?';font-weight:700':'')+'">'
-      +'<span>'+l[0]+'</span><span>'+l[1]+'</span></div>';
-  }).join('');
+var linhas = [
+['Lance (valor pago)', fBRL(lance), true],
+['ITBI', fBRL(c.itbi), false],
+['Registro em cartório', fBRL(c.reg), false],
+['Comissão leiloeiro', fBRL(c.comLeil), false],
+['Débitos assumidos', fBRL(c.debitos), false],
+['Condomínio em atraso', fBRL(c.condAtras), false],
+['Reforma / adequação', fBRL(c.reforma), false],
+['Custo desocupação', fBRL(c.desocupacao), false],
+['Manutenção mensal (12 m)', fBRL(c.custoMensal * 12), false],
+['<strong>Total investido (12 m)</strong>', '<strong>'+fBRL(c.custosFixos + c.custoMensal*12)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
+['Receita de venda', fBRL(c.recVenda), false],
+['(-) Corretagem venda', fBRL(c.corrVenda), false],
+['(-) IR ganho de capital', fBRL(c.ir), false],
+['(-) Outras despesas', fBRL(c.outras), false],
+['<strong>Resultado líquido (12 m)</strong>', '<strong style="color:'+(r12.resultado>=0?'var(--green)':'var(--red)')+'">'+fBRL(r12.resultado)+'</strong>', true, 'border-top:2px solid var(--line)'],
+];
+el('detalheBody').innerHTML = linhas.map(function(l){
+var style = l[3] ? ' style="'+l[3]+'"' : '';
+return '<div'+style+' style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.88rem'+(l[2]?';font-weight:700':'')+'">'
++'<span>'+l[0]+'</span><span>'+l[1]+'</span></div>';
+}).join('');
 
-  // Tabela de lances
-  gerarTabela(roiMin);
-
-  // Mostrar resultados
-  el('emptyState').style.display = 'none';
-  el('resultsArea').style.display = 'block';
-
-  // Scroll suave para resultados no mobile
-  if(window.innerWidth < 920){
-    el('resultsArea').scrollIntoView({behavior:'smooth',block:'start'});
-  }
-
-  // GA event
-  if(window.gtag) gtag('event','use_calculator',{currency:'BRL',value:lance});
+gerarTabela(roiMin);
+el('emptyState').style.display = 'none';
+el('resultsArea').style.display = 'block';
+if(window.innerWidth < 920){
+el('resultsArea').scrollIntoView({behavior:'smooth',block:'start'});
+}
+if(window.gtag) gtag('event','use_calculator',{currency:'BRL',value:lance});
 });
 
-// Atualizar tabela quando ROI mínimo mudar (se resultados já estiverem visíveis)
 document.getElementById('roiMin').addEventListener('change',function(){
-  if(document.getElementById('resultsArea').style.display !== 'none'){
-    const roi = parseFloat(this.value) || 15;
-    gerarTabela(roi);
-  }
+if(document.getElementById('resultsArea').style.display !== 'none'){
+gerarTabela(parseFloat(this.value) || 15);
+}
 });
 
 // ── Compartilhar simulação ──────────────────────────────────────────────────
-function compartilhar(modo){
-const params = new URLSearchParams();
-const campos = ['tipoLeilao','valorLance','valorAvaliacao','precoVenda','itbi','registro','comissaoLeiloeiro','debitos','condominioAtrasado','reforma','desocupacao','condominioMensal','iptuAnual','corretagemVenda','irGanho','outrasDesp','roiMin'];
+window.compartilhar = function(modo){
+var params = new URLSearchParams();
+var campos = ['tipoLeilao','valorLance','valorAvaliacao','precoVenda','itbi','registro','comissaoLeiloeiro','debitos','condominioAtrasado','reforma','desocupacao','condominioMensal','iptuAnual','corretagemVenda','irGanho','outrasDesp','roiMin'];
 campos.forEach(function(id){
-const el = document.getElementById(id);
-if(el && el.value) params.set(id, el.value);
+var el2 = document.getElementById(id);
+if(el2 && el2.value) params.set(id, el2.value);
 });
-const url = window.location.origin + window.location.pathname + '?' + params.toString();
+var url = window.location.origin + window.location.pathname + '?' + params.toString();
 if(modo === 'link'){
 if(navigator.clipboard){
 navigator.clipboard.writeText(url).then(function(){
-const d = document.getElementById('shareCopied');
-d.style.display = 'block';
-setTimeout(function(){d.style.display='none';}, 3000);
+var d = document.getElementById('shareCopied');
+if(d){ d.style.display='block'; setTimeout(function(){d.style.display='none';},3000); }
 });
 } else {
 prompt('Copie o link:', url);
 }
 } else {
-const lance = document.getElementById('valorLance').value || '0';
-const roi = document.getElementById('kpiRoiVal') ? document.getElementById('kpiRoiVal').textContent : '';
-const msg = 'Simulei um imóvel de leilão na calculadora do Reginaldo Rosso!\n\nLance: R$ '+Number(lance).toLocaleString('pt-BR')+'\nROI projetado (12m): '+roi+'\n\nVeja os detalhes: '+url;
+var lance = document.getElementById('valorLance').value || '0';
+var roiEl = document.getElementById('kpiRoiVal');
+var roi = roiEl ? roiEl.textContent : '';
+var msg = 'Simulei um imóvel de leilão na calculadora do Reginaldo Rosso!\n\nLance: R$ '+Number(lance).toLocaleString('pt-BR')+'\nROI projetado (12m): '+roi+'\n\nVeja os detalhes: '+url;
 window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
-}
+};
 
 // ── Carregar parâmetros da URL (link compartilhado) ──────────────────────────
 (function(){
-const p = new URLSearchParams(window.location.search);
+var p = new URLSearchParams(window.location.search);
 if(!p.has('valorLance')) return;
 ['tipoLeilao','valorLance','valorAvaliacao','precoVenda','itbi','registro','comissaoLeiloeiro','debitos','condominioAtrasado','reforma','desocupacao','condominioMensal','iptuAnual','corretagemVenda','irGanho','outrasDesp','roiMin'].forEach(function(id){
-const el = document.getElementById(id);
-if(el && p.has(id)) el.value = p.get(id);
+var el3 = document.getElementById(id);
+if(el3 && p.has(id)) el3.value = p.get(id);
 });
-atualizarCamposLeilao();
+window.atualizarCamposLeilao();
 setTimeout(function(){ document.getElementById('btnCalc').click(); }, 300);
 })();
 </script>
