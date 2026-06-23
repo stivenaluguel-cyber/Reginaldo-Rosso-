@@ -93,9 +93,47 @@ def download_csv():
     return result
 
 
+def _is_valid_id(id_str):
+    """Verifica se o ID e um numero de imovel valido (apenas digitos e hifens)."""
+    import re
+    return bool(re.match(r'^[\d][\d\-]{2,}
+    removed_ids = db_ids - csv_ids
+    if removed_ids:
+        logger.info(f"Marcando {len(removed_ids)} imoveis como Indisponivel")
+        mark_unavailable(list(removed_ids))
+    new_ids = csv_ids - db_ids
+    logger.info(
+        f"Resumo: {len(csv_ids)} no CSV | {len(db_ids)} no banco | "
+        f"{len(removed_ids)} removidos | {len(new_ids)} novos"
+    )
+    return list(new_ids), df
+
+
+def run_etapa1():
+    """Executa a Etapa 1 completa. Retorna (novos_ids, df_csv)."""
+    init_db()
+    df = download_csv()
+    new_ids, df = crosscheck(df)
+    return new_ids, df
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    ids, df = run_etapa1()
+    print(f"Novos IDs para enriquecimento: {len(ids)}")
+    if ids:
+        print("Primeiros 5:", ids[:5])
+, str(id_str).strip()))
+
+
 def crosscheck(df):
     """Cruza CSV com banco. Marca indisponiveis. Retorna (novos_ids, df)."""
-    csv_ids = set(df["numero_imovel"].tolist())
+    # Filtrar apenas IDs validos (numericos)
+    all_ids = set(df["numero_imovel"].tolist())
+    csv_ids = {i for i in all_ids if _is_valid_id(i)}
+    invalid = len(all_ids) - len(csv_ids)
+    if invalid > 0:
+        logger.warning(f"Ignorando {invalid} IDs invalidos (nao-numericos)")
     db_ids = get_all_ids()
     removed_ids = db_ids - csv_ids
     if removed_ids:
