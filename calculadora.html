@@ -255,7 +255,7 @@ footer a:hover{color:var(--gold)}
 <label>Registro (%)</label>
 <div class="suffix"><input type="number" id="registro" value="1" min="0" max="5" step="0.1"></div>
 </div>
-<div class="field">
+<div class="field" id="fieldComissaoLeiloeiro">
 <label>Comissão Leiloeiro (%)</label>
 <div class="suffix"><input type="number" id="comissaoLeiloeiro" value="5" min="0" max="10" step="0.5"></div>
 </div>
@@ -299,7 +299,7 @@ footer a:hover{color:var(--gold)}
 <div class="field-row triple">
 <div class="field">
 <label>Corretagem Venda (%)</label>
-<div class="suffix"><input type="number" id="corretagemVenda" value="5" min="0" max="10" step="0.5"></div>
+<div class="suffix"><input type="number" id="corretagemVenda" value="6" min="0" max="10" step="0.5"></div>
 </div>
 <div class="field">
 <label>Imposto de Renda (%)</label>
@@ -307,9 +307,9 @@ footer a:hover{color:var(--gold)}
 <span class="hint">Ganho de capital PF</span>
 </div>
 <div class="field">
-<label>Outras Despesas (%)</label>
-<div class="suffix"><input type="number" id="outrasDesp" value="1" min="0" max="10" step="0.5"></div>
-<span class="hint">Sobre preço de venda</span>
+<label>Outras Despesas (R$)</label>
+<div class="prefix"><input type="number" id="outrasDesp" placeholder="0" min="0" step="100"></div>
+<span class="hint">Cartório, taxas, etc.</span>
 </div>
 </div>
 
@@ -317,7 +317,6 @@ footer a:hover{color:var(--gold)}
 <div class="tabs-toggle" id="pagToggle">
 <button class="active" data-pag="avista">À Vista</button>
 <button data-pag="financiamento">Financiamento</button>
-<button data-pag="parcelamento">Parcelamento Direto</button>
 </div>
 <div class="fin-fields" id="finFields">
 <div class="field-row triple">
@@ -415,6 +414,20 @@ Simular Investimento
 <div class="card-body" id="detalheBody"></div>
 </div>
 
+<div id="shareBlock" style="background:#fff;border-radius:14px;padding:18px 20px;margin-top:16px;box-shadow:0 4px 16px rgba(31,50,76,.08);text-align:center">
+<p style="font-size:.82rem;color:var(--muted);margin-bottom:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase">Compartilhar simulação</p>
+<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+<button onclick="compartilhar('link')" style="display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:#fff;border:0;border-radius:9px;padding:11px 18px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer">
+<svg style="width:16px;height:16px;fill:#fff" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+Copiar link
+</button>
+<button onclick="compartilhar('whatsapp')" style="display:inline-flex;align-items:center;gap:7px;background:#25D366;color:#fff;border:0;border-radius:9px;padding:11px 18px;font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer">
+<svg style="width:16px;height:16px;fill:#fff" viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg>
+WhatsApp
+</button>
+</div>
+<div id="shareCopied" style="display:none;margin-top:8px;font-size:.8rem;color:var(--green);font-weight:700">✓ Link copiado!</div>
+</div>
 <div style="background:#fff;border-radius:14px;padding:20px;margin-top:16px;box-shadow:0 4px 16px rgba(31,50,76,.08);text-align:center">
 <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">Quer uma análise completa deste imóvel?</p>
 <a href="https://wa.me/5551982017867?text=Ol%C3%A1%20Reginaldo!%20Quero%20o%20Relat%C3%B3rio%20Confidencial%20de%20um%20im%C3%B3vel%20de%20leil%C3%A3o." target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;border-radius:9px;padding:12px 22px;font-weight:700;font-size:.92rem">
@@ -495,7 +508,7 @@ function calcular(lanceForcado){
   const iptuAnual   = num('iptuAnual');
   const corrVendaPct= num('corretagemVenda') / 100;
   const irPct       = num('irGanho') / 100;
-  const outrasPct   = num('outrasDesp') / 100;
+  const outrasValor = num('outrasDesp');
 
   // Custo de aquisição fixo (não depende do tempo)
   const itbi         = lance * itbiPct;
@@ -510,7 +523,7 @@ function calcular(lanceForcado){
   const corrVenda    = recVenda * corrVendaPct;
   const ganho        = Math.max(0, recVenda - lance);
   const ir           = ganho * irPct;
-  const outras       = recVenda * outrasPct;
+  const outras = outrasValor;
   const despVenda    = corrVenda + ir + outras;
 
   // Custo de manutenção mensal (condomínio + IPTU/12)
@@ -642,6 +655,45 @@ document.getElementById('roiMin').addEventListener('change',function(){
     gerarTabela(roi);
   }
 });
+
+// ── Compartilhar simulação ──────────────────────────────────────────────────
+function compartilhar(modo){
+const params = new URLSearchParams();
+const campos = ['tipoLeilao','valorLance','valorAvaliacao','precoVenda','itbi','registro','comissaoLeiloeiro','debitos','condominioAtrasado','reforma','desocupacao','condominioMensal','iptuAnual','corretagemVenda','irGanho','outrasDesp','roiMin'];
+campos.forEach(function(id){
+const el = document.getElementById(id);
+if(el && el.value) params.set(id, el.value);
+});
+const url = window.location.origin + window.location.pathname + '?' + params.toString();
+if(modo === 'link'){
+if(navigator.clipboard){
+navigator.clipboard.writeText(url).then(function(){
+const d = document.getElementById('shareCopied');
+d.style.display = 'block';
+setTimeout(function(){d.style.display='none';}, 3000);
+});
+} else {
+prompt('Copie o link:', url);
+}
+} else {
+const lance = document.getElementById('valorLance').value || '0';
+const roi = document.getElementById('kpiRoiVal') ? document.getElementById('kpiRoiVal').textContent : '';
+const msg = 'Simulei um imóvel de leilão na calculadora do Reginaldo Rosso!\n\nLance: R$ '+Number(lance).toLocaleString('pt-BR')+'\nROI projetado (12m): '+roi+'\n\nVeja os detalhes: '+url;
+window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+}
+
+// ── Carregar parâmetros da URL (link compartilhado) ──────────────────────────
+(function(){
+const p = new URLSearchParams(window.location.search);
+if(!p.has('valorLance')) return;
+['tipoLeilao','valorLance','valorAvaliacao','precoVenda','itbi','registro','comissaoLeiloeiro','debitos','condominioAtrasado','reforma','desocupacao','condominioMensal','iptuAnual','corretagemVenda','irGanho','outrasDesp','roiMin'].forEach(function(id){
+const el = document.getElementById(id);
+if(el && p.has(id)) el.value = p.get(id);
+});
+atualizarCamposLeilao();
+setTimeout(function(){ document.getElementById('btnCalc').click(); }, 300);
+})();
 </script>
 </body>
 </html>
