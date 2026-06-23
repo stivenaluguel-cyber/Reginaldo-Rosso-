@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from playwright.async_api import async_playwright
 from config import MAX_WORKERS
-import etapa1_csv
+from etapa1_csv import _executar as etapa1_executar
 from etapa2_scraper import scrape_imovel
 from db import upsert_imovel
 
@@ -83,9 +83,9 @@ async def run_pipeline():
     logger.info(f"=== Pipeline iniciado em {start.strftime('%Y-%m-%d %H:%M:%S')} ===")
 
     try:
-        # Etapa 1: Download CSV + crosscheck
+        # Etapa 1: Download CSV + crosscheck (usa await direto, sem asyncio.run aninhado)
         logger.info("--- Etapa 1: Download CSV e crosscheck ---")
-        resultado = etapa1_csv.run()
+        resultado = await etapa1_executar()
         ids_novos = resultado.get("ids_novos", [])
         total_csv = resultado.get("total_csv", 0)
         estados_ok = resultado.get("estados_ok", [])
@@ -117,7 +117,7 @@ def main():
     setup_logging()
 
     if args.etapa == 1:
-        resultado = etapa1_csv.run()
+        resultado = asyncio.run(etapa1_executar())
         print(f"Novos IDs: {len(resultado.get('ids_novos', []))}")
         print(f"Total CSV: {resultado.get('total_csv', 0)}")
         print(f"Estados ok: {resultado.get('estados_ok', [])}")
