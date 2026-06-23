@@ -1,17 +1,11 @@
 """
-Pipeline Principal — Caixa Econômica Federal Scraper
-======================================================
+Pipeline Principal - Caixa Economica Federal Scraper
 Orquestra as duas etapas:
-  1. Etapa 1: Download CSV + crosscheck
-  2. Etapa 2: Playwright scraping dos novos imóveis (paralelo com semáforo)
+1. Etapa 1: Download CSV + crosscheck (Playwright stealth, 27 estados)
+2. Etapa 2: Playwright scraping dos novos imoveis (paralelo com semaforo)
 
-Agendamento (Horário de Brasília / UTC-3):
-  04:00, 07:00, 08:30, 09:30, 12:00, 18:00, 19:00
-
-Uso:
-  python pipeline.py              # roda pipeline completo
-  python pipeline.py --etapa 1    # só CSV
-  python pipeline.py --etapa 2 --id 8444408348713  # scrape manual de 1 ID
+Agendamento (Horario de Brasilia / UTC-3):
+04:00, 07:00, 08:30, 09:30, 12:00, 18:00, 19:00
 """
 import asyncio
 import argparse
@@ -22,11 +16,11 @@ from datetime import datetime
 from pathlib import Path
 from playwright.async_api import async_playwright
 from config import MAX_WORKERS
-from etapa1_csv import run_etapa1
+import etapa1_csv
 from etapa2_scraper import scrape_imovel
 from db import upsert_imovel
 
-# ── Logging ───────────────────────────────────────────────────────
+# -- Logging -------------------------------------------------------
 LOG_DIR = Path(__file__).parent / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -37,13 +31,9 @@ def setup_logging():
     )
     root = logging.getLogger()
     root.setLevel(logging.INFO)
-
-    # Console
     ch = logging.StreamHandler(sys.stdout)
     ch.setFormatter(fmt)
     root.addHandler(ch)
-
-    # Arquivo com rotacao diaria
     fh = logging.handlers.TimedRotatingFileHandler(
         LOG_DIR / "pipeline.log", when="midnight", backupCount=14, encoding="utf-8"
     )
@@ -52,10 +42,10 @@ def setup_logging():
 
 logger = logging.getLogger(__name__)
 
-# ── Etapa 2 paralela ──────────────────────────────────────────────
-async def run_etapa2(new_ids: list):
-    """Scraping paralelo com semáforo para controlar concorrência."""
-    if not new_ids:
+# -- Etapa 2 paralela ----------------------------------------------
+async def run_etapa2(ids_novos: list):
+    """Scraping paralelo com semaforo para controlar concorrencia."""
+    if not ids_novos:
         logger.info("Nenhum ID novo para enriquecer.")
         return
 
@@ -81,25 +71,34 @@ async def run_etapa2(new_ids: list):
                     fail_count += 1
                     logger.warning(f"[FALHA] {numero_imovel}")
 
-        tasks = [process_one(nid) for nid in new_ids]
+        tasks = [process_one(nid) for nid in ids_novos]
         await asyncio.gather(*tasks, return_exceptions=True)
         await browser.close()
 
-    logger.info(f"Etapa 2 concluída: {ok_count} OK | {fail_count} falhas | {len(new_ids)} total")
+    logger.info(f"Etapa 2 concluida: {ok_count} OK | {fail_count} falhas | {len(ids_novos)} total")
 
-# ── Pipeline completo ─────────────────────────────────────────────
+# -- Pipeline completo ---------------------------------------------
 async def run_pipeline():
     start = datetime.now()
     logger.info(f"=== Pipeline iniciado em {start.strftime('%Y-%m-%d %H:%M:%S')} ===")
 
     try:
-        # Etapa 1
+        # Etapa 1: Download CSV + crosscheck
         logger.info("--- Etapa 1: Download CSV e crosscheck ---")
-        new_ids, df_csv = run_etapa1()
+        resultado = etapa1_csv.run()
+        ids_novos = resultado.get("ids_novos", [])
+        total_csv = resultado.get("total_csv", 0)
+        estados_ok = resultado.get("estados_ok", [])
+        estados_falha = resultado.get("estados_falha", [])
+        logger.info(
+            f"Etapa 1 concluida: {total_csv} imoveis no CSV | "
+            f"{len(ids_novos)} novos | "
+            f"estados ok={len(estados_ok)} | falha={len(estados_falha)}"
+        )
 
-        # Etapa 2
-        logger.info(f"--- Etapa 2: Enriquecendo {len(new_ids)} imóveis novos ---")
-        await run_etapa2(new_ids)
+        # Etapa 2: Enriquecer imoveis novos
+        logger.info(f"--- Etapa 2: Enriquecendo {len(ids_novos)} imoveis novos ---")
+        await run_etapa2(ids_novos)
 
     except Exception as e:
         logger.exception(f"Erro fatal no pipeline: {e}")
@@ -108,18 +107,20 @@ async def run_pipeline():
         elapsed = (datetime.now() - start).total_seconds()
         logger.info(f"=== Pipeline finalizado em {elapsed:.0f}s ===")
 
-# ── CLI ───────────────────────────────────────────────────────────
+# -- CLI -----------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Pipeline Scraper Caixa")
-    parser.add_argument("--etapa", type=int, choices=[1, 2], help="Executar apenas etapa 1 ou 2")
-    parser.add_argument("--id", type=str, help="ID específico para etapa 2 manual")
+    parser.add_argument("--etapa", type=int, choices=[1, 2])
+    parser.add_argument("--id", type=str)
     args = parser.parse_args()
 
     setup_logging()
 
     if args.etapa == 1:
-        ids, _ = run_etapa1()
-        print(f"Novos IDs: {len(ids)}")
+        resultado = etapa1_csv.run()
+        print(f"Novos IDs: {len(resultado.get('ids_novos', []))}")
+        print(f"Total CSV: {resultado.get('total_csv', 0)}")
+        print(f"Estados ok: {resultado.get('estados_ok', [])}")
     elif args.etapa == 2 and args.id:
         async def _single():
             dados = await scrape_imovel(args.id)
@@ -127,7 +128,7 @@ def main():
                 upsert_imovel(dados)
                 print(f"OK: {dados}")
             else:
-                print("Falha ao scrape o imóvel")
+                print("Falha ao scrape o imovel")
         asyncio.run(_single())
     else:
         asyncio.run(run_pipeline())
