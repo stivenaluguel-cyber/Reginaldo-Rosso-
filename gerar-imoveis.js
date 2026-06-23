@@ -61,6 +61,10 @@ function pagina(i){
   const metaDesc = (titulo+". "+descNum+". Imóvel da Caixa com Reginaldo Rosso, corretor credenciado em RS e SC.").slice(0,300);
   const wa = "https://wa.me/"+(WHATS[i.uf]||WHATS.RS)+"?text="+encodeURIComponent("Olá Reginaldo! Tenho interesse no imóvel cód. "+i.id+" — "+titulo+" ("+brl(i.preco)+"). Link: "+url);
   const fichaCaixa = i.link || ("https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="+i.id);
+  // ROI calculator URL — pre-fill with property data
+  const tipoLeilao = /vendas*(on[s-]?line|direta)/i.test(i.modalidade||"") ? "venda_direta" : "extrajudicial";
+  const comissaoLeiloeiro = tipoLeilao === "venda_direta" ? 0 : 5;
+  const roiUrl = "../calculadora.html?tipoLeilao="+tipoLeilao+"&valorAvaliacao="+Math.round(i.avaliacao)+"&precoVenda="+Math.round(i.preco)+"&comissaoLeiloeiro="+comissaoLeiloeiro;
   const sp = specs(i.descricao);
   const specsHTML = sp.length? '<div class="specs">'+sp.map(s=>'<span>'+esc(s)+'</span>').join("")+'</div>' : '';
   const ld = { "@context":"https://schema.org","@type":"Product","name":titulo,"image":foto,
@@ -123,7 +127,10 @@ function pagina(i){
     <h1>${esc(cidade)}${bairro?` · ${esc(bairro)}`:""}</h1>
     <div class="addr">${esc(i.endereco||"")}</div>
     ${specsHTML}
-    <div class="price">${brl(i.preco)}${i.avaliacao>i.preco?`<span class="old">avaliação ${brl(i.avaliacao)}</span>`:""}</div>
+    <div class="price-row">
+      <div class="price">${brl(i.preco)}${i.avaliacao>i.preco?`<span class="old">avaliação ${brl(i.avaliacao)}</span>`:""}</div>
+      <a class="btn roi-btn" href="${roiUrl}" title="Calcular ROI deste imóvel">📊 Calcular ROI</a>
+    </div>
 
     <div class="kv">
       <div><span>Preço de venda</span><b>${brl(i.preco)}</b></div>
