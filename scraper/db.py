@@ -63,19 +63,23 @@ def get_all_ids() -> set:
             return {row[0] for row in cur.fetchall()}
 
 def mark_unavailable(ids: list):
-    """Marca IDs que saíram do CSV como Indisponível."""
+    """Marca IDs que sairam do CSV como Indisponivel."""
     if not ids:
         return
     with get_connection() as conn:
         with conn.cursor() as cur:
-            psycopg2.extras.execute_values(
-                cur,
-                "UPDATE imoveis_caixa SET status='Indisponivel', updated_at=NOW() WHERE numero_imovel IN %s",
-                [(i,) for i in ids],
-                template="(%s)"
-            )
-    logger.info(f"Marcados {len(ids)} imóveis como Indisponível.")
-
+            # Processar em lotes de 500 para evitar SQL muito longo
+            batch_size = 500
+            total = 0
+            for i in range(0, len(ids), batch_size):
+                batch = ids[i:i + batch_size]
+                cur.execute(
+                    "UPDATE imoveis_caixa SET status='Indisponivel', updated_at=NOW() "
+                    "WHERE numero_imovel = ANY(%s)",
+                    (batch,)
+                )
+                total += cur.rowcount
+    logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
 def upsert_imovel(data: dict):
     """
     Insere ou atualiza um imóvel.
