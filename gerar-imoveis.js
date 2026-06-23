@@ -62,7 +62,7 @@ function pagina(i){
   const wa = "https://wa.me/"+(WHATS[i.uf]||WHATS.RS)+"?text="+encodeURIComponent("Olá Reginaldo! Tenho interesse no imóvel cód. "+i.id+" — "+titulo+" ("+brl(i.preco)+"). Link: "+url);
   const fichaCaixa = i.link || ("https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="+i.id);
   // ROI calculator URL — pre-fill with property data
-  const tipoLeilao = /vendas*(on[s-]?line|direta)/i.test(i.modalidade||"") ? "venda_direta" : "extrajudicial";
+  const tipoLeilao = /venda\s*(on[\s-]?line|direta)/i.test(i.modalidade||"") ? "venda_direta" : "extrajudicial";
   const comissaoLeiloeiro = tipoLeilao === "venda_direta" ? 0 : 5;
   const roiUrl = "../calculadora.html?tipoLeilao="+tipoLeilao+"&valorLance="+Math.round(i.preco)+"&valorAvaliacao="+Math.round(i.avaliacao)+"&precoVenda="+Math.round(i.preco)+"&comissaoLeiloeiro="+comissaoLeiloeiro;
   const sp = specs(i.descricao);
