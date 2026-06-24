@@ -127,6 +127,34 @@ def get_uf_por_ids(ids: list) -> dict:
             )
             return {row[0]: row[1] for row in cur.fetchall()}
 
+def get_pendentes_matricula_com_uf(ufs, limit=5000) -> list:
+    """Retorna (numero_imovel, uf) de imoveis ativos SEM matricula ainda.
+    Foco exclusivo no download da matricula (rapido via httpx, sem Playwright)."""
+    if not ufs:
+        return []
+    ufs = [u.upper() for u in ufs]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel, uf FROM imoveis_caixa "
+                "WHERE status = 'Disponivel' AND uf = ANY(%s) "
+                "AND matricula_s3_url IS NULL "
+                "ORDER BY updated_at "
+                "LIMIT %s",
+                (ufs, limit),
+            )
+            return [(row[0], row[1]) for row in cur.fetchall()]
+
+def set_matricula_url(numero_imovel: str, s3_url: str):
+    """Atualiza apenas a matricula_s3_url de um imovel (update leve)."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE imoveis_caixa SET matricula_s3_url=%s, updated_at=NOW() "
+                "WHERE numero_imovel=%s",
+                (s3_url, str(numero_imovel)),
+            )
+
 def mark_unavailable(ids: list):
     """Marca IDs que sairam do CSV como Indisponivel."""
     if not ids:
