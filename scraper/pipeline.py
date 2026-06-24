@@ -1,7 +1,7 @@
 """
 Pipeline Principal - Caixa Economica Federal Scraper
 Orquestra as duas etapas:
-1. Etapa 1: Download CSV + crosscheck (Playwright stealth, 27 estados)
+1. Etapa 1: Download CSV + crosscheck (Playwright stealth, RS/SC)
 2. Etapa 2: Playwright scraping dos novos imoveis (paralelo com semaforo)
 
 Agendamento (Horario de Brasilia / UTC-3):
@@ -18,7 +18,7 @@ from playwright.async_api import async_playwright
 from config import MAX_WORKERS
 from etapa1_csv import _executar as etapa1_executar
 from etapa2_scraper import scrape_imovel
-from db import upsert_imovel, get_pendentes_enriquecimento
+from db import upsert_imovel, get_pendentes_com_uf, get_uf_por_ids
 
 # -- Logging -------------------------------------------------------
 LOG_DIR = Path(__file__).parent / "logs"
@@ -43,11 +43,21 @@ def setup_logging():
 logger = logging.getLogger(__name__)
 
 # -- Etapa 2 paralela ----------------------------------------------
-async def run_etapa2(ids_novos: list):
-    """Scraping paralelo com semaforo para controlar concorrencia."""
-    if not ids_novos:
-        logger.info("Nenhum ID novo para enriquecer.")
+async def run_etapa2(lote: list):
+    """Scraping paralelo com semaforo para controlar concorrencia.
+    lote: lista de (numero_imovel, uf) ou numero_imovel (str)
+    """
+    if not lote:
+        logger.info("Nenhum ID para enriquecer.")
         return
+
+    # Normaliza para lista de (numero_imovel, uf)
+    pares = []
+    for item in lote:
+        if isinstance(item, (list, tuple)) and len(item) >= 2:
+            pares.append((str(item[0]), item[1]))
+        else:
+            pares.append((str(item), None))
 
     semaphore = asyncio.Semaphore(MAX_WORKERS)
     ok_count = 0
@@ -59,23 +69,23 @@ async def run_etapa2(ids_novos: list):
             args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
         )
 
-        async def process_one(numero_imovel: str):
+        async def process_one(numero_imovel: str, uf: str):
             nonlocal ok_count, fail_count
             async with semaphore:
-                dados = await scrape_imovel(numero_imovel, browser=browser)
+                dados = await scrape_imovel(numero_imovel, uf=uf, browser=browser)
                 if dados:
                     upsert_imovel(dados)
                     ok_count += 1
-                    logger.info(f"[OK] {numero_imovel}")
+                    logger.info(f"[OK] {numero_imovel} UF={uf}")
                 else:
                     fail_count += 1
                     logger.warning(f"[FALHA] {numero_imovel}")
 
-        tasks = [process_one(nid) for nid in ids_novos]
+        tasks = [process_one(nid, uf) for nid, uf in pares]
         await asyncio.gather(*tasks, return_exceptions=True)
         await browser.close()
 
-    logger.info(f"Etapa 2 concluida: {ok_count} OK | {fail_count} falhas | {len(ids_novos)} total")
+    logger.info(f"Etapa 2 concluida: {ok_count} OK | {fail_count} falhas | {len(pares)} total")
 
 # -- Pipeline completo ---------------------------------------------
 async def run_pipeline():
@@ -83,7 +93,7 @@ async def run_pipeline():
     logger.info(f"=== Pipeline iniciado em {start.strftime('%Y-%m-%d %H:%M:%S')} ===")
 
     try:
-        # Etapa 1: Download CSV + crosscheck (usa await direto, sem asyncio.run aninhado)
+        # Etapa 1: Download CSV + crosscheck
         logger.info("--- Etapa 1: Download CSV e crosscheck ---")
         resultado = await etapa1_executar()
         ids_novos = resultado.get("ids_novos", [])
@@ -96,33 +106,43 @@ async def run_pipeline():
             f"estados ok={len(estados_ok)} | falha={len(estados_falha)}"
         )
 
-        # Etapa 2: Enriquecer imoveis novos (limitado por lote para nao estourar timeout)
+        # Busca UF dos ids_novos no banco para passar ao scraper
         import os
         batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "1000"))
         ids_lote = ids_novos[:batch_limit] if batch_limit > 0 else ids_novos
-        # Tambem reprocessa imoveis ja existentes que ficaram sem
-        # area/matricula (ex.: enriquecimento anterior falhou). Foco RS/SC.
+
+        # Monta pares (numero_imovel, uf) para ids_novos
+        uf_map = {}
+        if ids_lote:
+            try:
+                uf_map = get_uf_por_ids(ids_lote)
+            except Exception as e:
+                logger.warning(f"Nao foi possivel buscar UFs dos novos IDs: {e}")
+        pares_lote = [(nid, uf_map.get(nid)) for nid in ids_lote]
+
+        # Reprocessa imoveis pendentes de enriquecimento (sem area/matricula)
         focos = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
-        vagas = batch_limit - len(ids_lote) if batch_limit > 0 else 100000
+        vagas = batch_limit - len(pares_lote) if batch_limit > 0 else 100000
         if vagas > 0 and focos:
             try:
-                pendentes = get_pendentes_enriquecimento(focos, limit=vagas)
-            except Exception as _e:
-                logger.warning(f"Falha ao buscar pendentes de enriquecimento: {_e}")
+                pendentes = get_pendentes_com_uf(focos, limit=vagas)
+            except Exception as e:
+                logger.warning(f"Falha ao buscar pendentes: {e}")
                 pendentes = []
-            ja = set(ids_lote)
-            extras = [p for p in pendentes if p not in ja]
+            ja = {p[0] for p in pares_lote}
+            extras = [p for p in pendentes if p[0] not in ja]
             if extras:
                 logger.info(
                     f"Etapa 2: +{len(extras)} imoveis pendentes de enriquecimento "
-                    f"(sem area/matricula) em {focos} serao reprocessados"
+                    f"(sem area/matricula) em {focos}"
                 )
-                ids_lote = ids_lote + extras
+                pares_lote = pares_lote + extras
+
         logger.info(
-            f"--- Etapa 2: Enriquecendo {len(ids_lote)} de {len(ids_novos)} imoveis novos "
-            f"(limite/run={batch_limit}; restante sera processado nas proximas execucoes) ---"
+            f"--- Etapa 2: Enriquecendo {len(pares_lote)} imoveis "
+            f"(limite/run={batch_limit}) ---"
         )
-        await run_etapa2(ids_lote)
+        await run_etapa2(pares_lote)
 
     except Exception as e:
         logger.exception(f"Erro fatal no pipeline: {e}")
@@ -136,6 +156,7 @@ def main():
     parser = argparse.ArgumentParser(description="Pipeline Scraper Caixa")
     parser.add_argument("--etapa", type=int, choices=[1, 2])
     parser.add_argument("--id", type=str)
+    parser.add_argument("--uf", type=str, default=None)
     args = parser.parse_args()
 
     setup_logging()
@@ -147,7 +168,7 @@ def main():
         print(f"Estados ok: {resultado.get('estados_ok', [])}")
     elif args.etapa == 2 and args.id:
         async def _single():
-            dados = await scrape_imovel(args.id)
+            dados = await scrape_imovel(args.id, uf=args.uf)
             if dados:
                 upsert_imovel(dados)
                 print(f"OK: {dados}")
