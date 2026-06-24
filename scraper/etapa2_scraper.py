@@ -33,7 +33,7 @@ from config import (
 )
 from captcha import solve_captcha, inject_captcha_token
 from s3_uploader import upload_bytes
-from db import upsert_imovel  # noqa: F401
+from db import upsert_imovel, set_matricula_url  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
@@ -321,6 +321,82 @@ async def _extrair_dados_playwright(page, numero_imovel):
         logger.warning(f"[diag {numero_imovel}] erro extração playwright: {e}")
 
     return dados
+
+# ---------------------------------------------------------------------------
+# 4b. FASE RAPIDA: download de matriculas em massa (httpx, sem Playwright)
+# ---------------------------------------------------------------------------
+async def _baixar_uma_matricula(client, semaphore, numero_imovel, uf):
+    """Baixa a matricula de 1 imovel via URL deterministica e faz upload p/ B2.
+    Retorna (numero_imovel, s3_url) ou (numero_imovel, None)."""
+    if not uf:
+        return (numero_imovel, None)
+    uf_upper = uf.strip().upper()
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Referer": "https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp",
+        "Accept": "application/pdf,*/*",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+    }
+    urls = [
+        f"{_PDF_EDITAIS}/matricula/{uf_upper}/{numero_imovel}.pdf",
+        f"{_PDF_EDITAIS}/edital/{uf_upper}/{numero_imovel}.pdf",
+    ]
+    async with semaphore:
+        for url in urls:
+            try:
+                r = await client.get(url, headers=headers)
+                ctype = r.headers.get("content-type", "").lower()
+                if r.status_code == 200 and "pdf" in ctype and r.content:
+                    try:
+                        s3_url = upload_bytes(r.content, str(numero_imovel))
+                        return (numero_imovel, s3_url)
+                    except Exception as e:
+                        logger.warning(f"[massa {numero_imovel}] upload B2 falhou: {e}")
+                        return (numero_imovel, None)
+            except Exception as e:
+                logger.debug(f"[massa {numero_imovel}] erro {url}: {e}")
+                continue
+    return (numero_imovel, None)
+
+
+async def baixar_matriculas_em_massa(pares, concurrency=16):
+    """Baixa matriculas de muitos imoveis em paralelo via httpx (sem Playwright).
+    pares: lista de (numero_imovel, uf). Atualiza matricula_s3_url no banco.
+    Retorna (ok, falhas)."""
+    if not pares:
+        logger.info("Fase matriculas: nenhum imovel pendente.")
+        return (0, 0)
+    logger.info(f"Fase matriculas: baixando {len(pares)} matriculas (concurrency={concurrency})")
+    semaphore = asyncio.Semaphore(concurrency)
+    ok = 0
+    falhas = 0
+    limits = httpx.Limits(max_connections=concurrency * 2, max_keepalive_connections=concurrency)
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True, limits=limits) as client:
+        tasks = [
+            _baixar_uma_matricula(client, semaphore, str(nid), uf)
+            for nid, uf in pares
+        ]
+        for i in range(0, len(tasks), 200):
+            chunk = tasks[i:i + 200]
+            resultados = await asyncio.gather(*chunk, return_exceptions=True)
+            for res in resultados:
+                if isinstance(res, Exception):
+                    falhas += 1
+                    continue
+                numero_imovel, s3_url = res
+                if s3_url:
+                    try:
+                        set_matricula_url(numero_imovel, s3_url)
+                        ok += 1
+                    except Exception as e:
+                        logger.warning(f"[massa {numero_imovel}] db update falhou: {e}")
+                        falhas += 1
+                else:
+                    falhas += 1
+            logger.info(f"Fase matriculas: progresso {min(i+200,len(tasks))}/{len(tasks)} | ok={ok} falhas={falhas}")
+    logger.info(f"Fase matriculas concluida: {ok} baixadas | {falhas} sem matricula/erro")
+    return (ok, falhas)
+
 
 # ---------------------------------------------------------------------------
 # 5. Funcao principal
