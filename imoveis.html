@@ -679,6 +679,21 @@ window.__AMOSTRA_META__={
       var total = (m.total!=null) ? m.total : "";
       alvo.__desejado = "Lista da Caixa gerada em " + data + " \u00b7 " + total + " im\u00f3veis";
       aplicar();
+      // Corrige o contador inicial "#count" (sem filtro ativo) com o total real.
+      try{
+        function ajustarCount(){
+          var c=document.getElementById("count");
+          if(!c) return;
+          var t=(m.total!=null)?m.total:null;
+          if(t==null) return;
+          // So ajusta se nenhum filtro/busca estiver ativo (evita quebrar a contagem filtrada)
+          var busca=document.querySelector('input[type="search"], #q, .search input');
+          var temBusca = busca && busca.value && busca.value.trim().length>0;
+          if(!temBusca){ c.textContent = t + " im\u00f3veis"; }
+        }
+        window.addEventListener("load", function(){ setTimeout(ajustarCount, 400); setTimeout(ajustarCount, 1400); });
+        setTimeout(ajustarCount, 600);
+      }catch(e){}
       // Observa mudancas no texto e reaplica se algo sobrescrever
       try{
         var obs = new MutationObserver(function(){ aplicar(); });
