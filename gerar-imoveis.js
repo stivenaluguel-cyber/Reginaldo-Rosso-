@@ -351,5 +351,27 @@ async function carregarImoveisDoBanco(){
   sm += "</urlset>\n";
   fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
 
-  console.log("Geradas "+n+" paginas em /imovel/ ("+comDetalhe+" com ficha completa) e sitemap com "+(n+fixas.length)+" URLs.");
+// === Gera JSONs consumidos por imoveis.html (lista + meta) =================
+  // Formato identico ao esperado pela pagina: array de imoveis por estado.
+  function imovelParaJson(im){
+    return {
+      id: im.id, uf: im.uf, cidade: im.cidade, bairro: im.bairro,
+      endereco: im.endereco, preco: im.preco, avaliacao: im.avaliacao,
+      desconto: im.desconto, descricao: im.descricao,
+      modalidade: im.modalidade, tipo: im.tipo, link: im.link
+    };
+  }
+  const imoveisRS = imoveis.filter(im=>im.uf==="RS").map(imovelParaJson);
+  const imoveisSC = imoveis.filter(im=>im.uf==="SC").map(imovelParaJson);
+  fs.writeFileSync(path.join(__dirname,"imoveis-rs.json"), JSON.stringify(imoveisRS));
+  fs.writeFileSync(path.join(__dirname,"imoveis-sc.json"), JSON.stringify(imoveisSC));
+  const meta = {
+    atualizado: new Date().toISOString(),
+    total: imoveis.length,
+    porEstado: { RS: imoveisRS.length, SC: imoveisSC.length }
+  };
+  fs.writeFileSync(path.join(__dirname,"meta.json"), JSON.stringify(meta));
+  console.log("JSONs atualizados: imoveis-rs("+imoveisRS.length+"), imoveis-sc("+imoveisSC.length+"), meta(total="+imoveis.length+").");
+
+    console.log("Geradas "+n+" paginas em /imovel/ ("+comDetalhe+" com ficha completa) e sitemap com "+(n+fixas.length)+" URLs.");
 })();
