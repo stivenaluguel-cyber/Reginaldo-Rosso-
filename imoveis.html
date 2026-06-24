@@ -102,7 +102,7 @@ window.__AMOSTRA_META__={
   .btn-refresh.spin svg{animation:spin .9s linear infinite}
 
   .filters{position:sticky;top:69px;z-index:30;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
-  .fbar{display:grid;grid-template-columns:1.3fr repeat(7,1fr) auto;gap:10px}
+  .fbar{display:grid;grid-template-columns:1.3fr repeat(4,1fr) 1.3fr 1.3fr 1fr auto;gap:10px}
   .field label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 5px 2px;font-weight:700}
   .field input,.field select{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-weight:500;font-size:.92rem;padding:11px 12px;outline:none}
   .field input:focus,.field select:focus{border-color:var(--gold)}
@@ -257,8 +257,8 @@ window.__AMOSTRA_META__={
       <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option></select></div>
-<div class="field"><label for="dtrib">Débitos Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option></select></div>
-<div class="field"><label for="dcond">Débitos Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option></select></div>
+<div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option></select></div>
+<div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
         <option value="precoasc">Preço: menor → maior</option>
         <option value="precodesc">Preço: maior → menor</option>
