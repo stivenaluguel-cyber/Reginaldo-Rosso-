@@ -112,31 +112,61 @@ def _parse_csv(conteudo, estado):
     imoveis = []
     try:
         df = None
-        # O CSV da Caixa usa separador ; e encoding latin-1
-        # Linha 0 = titulo, Linha 1 = cabecalho, Linhas 2+ = dados
-        for enc in ("latin-1", "utf-8", "cp1252"):
-            for sr in (1, 0):
+        # O CSV da Caixa usa separador ; e encoding latin-1.
+        # Estrutura real: pode haver linha(s) em branco, depois uma linha de
+        # titulo ("Lista de Imoveis da Caixa;...;Data de geracao:;...") e so
+        # entao o cabecalho real (" N do imovel;UF;Cidade;...").
+        # Por isso detectamos a linha do cabecalho dinamicamente.
+        texto = None
+        for _enc in ("latin-1", "utf-8", "cp1252"):
+            try:
+                texto = conteudo.decode(_enc)
+                break
+            except Exception:
+                continue
+        if texto is None:
+            texto = conteudo.decode("latin-1", errors="ignore")
+
+        linhas = texto.splitlines()
+        header_idx = None
+        for _i, _ln in enumerate(linhas):
+            _low = _ln.lower()
+            _tem_imovel = ("imóvel" in _low) or ("imovel" in _low)
+            if _tem_imovel and ("uf" in _low) and ("cidade" in _low) and _ln.count(";") >= 5:
+                header_idx = _i
+                break
+
+        if header_idx is not None:
+            corpo = "\n".join(linhas[header_idx:])
+            try:
+                df = pd.read_csv(io.StringIO(corpo), sep=";", header=0, dtype=str)
+            except Exception as _e:
+                logger.warning(f"etapa1: {estado}: read_csv por header_idx falhou: {_e}")
+                df = None
+
+        # Fallback: tentar skiprows variados validando o cabecalho
+        if df is None:
+            for sr in (2, 1, 0):
                 try:
                     df_test = pd.read_csv(
                         io.BytesIO(conteudo),
-                        encoding=enc,
                         sep=";",
-                        dtype=str,
-                        on_bad_lines="skip",
-                        skip_blank_lines=True,
+                        header=0,
+                        encoding="latin-1",
                         skiprows=sr,
+                        dtype=str,
                     )
-                    if len(df_test.columns) >= 3:
+                    _cols = " ".join(str(c).lower() for c in df_test.columns)
+                    if (("imóvel" in _cols) or ("imovel" in _cols)) and ("uf" in _cols):
                         df = df_test
                         break
                 except Exception:
-                    pass
-            if df is not None:
-                break
+                    continue
 
-        if df is None or df.empty:
-            logger.warning(f"etapa1: parse {estado}: nao foi possivel criar DataFrame")
+        if df is None:
+            logger.warning(f"etapa1: {estado}: nao foi possivel criar DataFrame")
             return []
+
 
         # Normalizar nomes de colunas
         df.columns = [str(c).strip() for c in df.columns]
