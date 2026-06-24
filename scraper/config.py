@@ -33,7 +33,7 @@ CAIXA_CSV_URL     = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{
 
 # Aliases usados pelos modulos etapa1_csv e etapa2_scraper
 URL_CSV_CAIXA    = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SP.csv"
-URL_BASE_DETALHE = "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.aspx?hdnOrigem=index&hdnimovel="
+URL_BASE_DETALHE = "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="
 
 # -- Navegador ---
 USER_AGENT = (
