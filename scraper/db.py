@@ -98,6 +98,35 @@ def get_pendentes_enriquecimento(ufs, limit=1000) -> list:
             return [row[0] for row in cur.fetchall()]
 
 
+def get_pendentes_com_uf(ufs, limit=1000) -> list:
+    """Retorna lista de (numero_imovel, uf) para imoveis pendentes de enriquecimento."""
+    if not ufs:
+        return []
+    ufs = [u.upper() for u in ufs]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel, uf FROM imoveis_caixa "
+                "WHERE status = 'Disponivel' AND uf = ANY(%s) "
+                "AND (scraped_at IS NULL OR area_total IS NULL OR matricula_s3_url IS NULL) "
+                "ORDER BY (scraped_at IS NOT NULL), updated_at "
+                "LIMIT %s",
+                (ufs, limit),
+            )
+            return [(row[0], row[1]) for row in cur.fetchall()]
+
+def get_uf_por_ids(ids: list) -> dict:
+    """Retorna {numero_imovel: uf} para os IDs informados."""
+    if not ids:
+        return {}
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel, uf FROM imoveis_caixa WHERE numero_imovel = ANY(%s)",
+                (ids,),
+            )
+            return {row[0]: row[1] for row in cur.fetchall()}
+
 def mark_unavailable(ids: list):
     """Marca IDs que sairam do CSV como Indisponivel."""
     if not ids:
