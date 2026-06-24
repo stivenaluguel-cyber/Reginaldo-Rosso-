@@ -654,22 +654,38 @@ window.__AMOSTRA_META__={
 </script>
 
 <script>
-/* Atualiza o rotulo "Lista da Caixa gerada em ..." a partir do meta.json (sempre atual). */
+/* Mantem o rotulo "Lista da Caixa gerada em ..." sincronizado com meta.json (sempre atual).
+   Usa MutationObserver para resistir a sobrescritas de outros scripts da pagina. */
 (function(){
   function fmtBR(iso){
     try{ var d=new Date(iso); if(isNaN(d)) return null;
       return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
     }catch(e){ return null; }
   }
+  var alvo = null;
+  function aplicar(){
+    if(!alvo) return;
+    if(alvo.textContent !== alvo.__desejado){
+      alvo.textContent = alvo.__desejado;
+    }
+  }
   fetch("meta.json?t="+Date.now(),{cache:"no-store"})
     .then(function(r){ return r.json(); })
     .then(function(m){
       if(!m) return;
-      var el=document.getElementById("updatedTxt");
-      if(!el) return;
-      var data=fmtBR(m.atualizado)||"";
-      var total=(m.total!=null)?m.total:"";
-      el.textContent="Lista da Caixa gerada em "+data+" \u00b7 "+total+" im\u00f3veis";
+      alvo = document.getElementById("updatedTxt");
+      if(!alvo) return;
+      var data = fmtBR(m.atualizado) || "";
+      var total = (m.total!=null) ? m.total : "";
+      alvo.__desejado = "Lista da Caixa gerada em " + data + " \u00b7 " + total + " im\u00f3veis";
+      aplicar();
+      // Observa mudancas no texto e reaplica se algo sobrescrever
+      try{
+        var obs = new MutationObserver(function(){ aplicar(); });
+        obs.observe(alvo, { childList:true, characterData:true, subtree:true });
+        // garante uma reaplicacao apos o load completo
+        window.addEventListener("load", function(){ setTimeout(aplicar, 300); setTimeout(aplicar, 1200); });
+      }catch(e){}
     })
     .catch(function(){});
 })();
