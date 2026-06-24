@@ -188,7 +188,7 @@ const mais = [];
 // ---- documentos ----
 const docs = [];
    if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" download target="_blank" rel="noopener">&#128196; Baixar Matricula (PDF)</a>']);
-   else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; Matrícula</a>']);
+   else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; MatrÃ­cula</a>']);
    const docsHTML = '<div class="docs"><h2>Documentos</h2><div class="docs-row">'+docs.join("")+'</div></div>';
 
 const temDetalhe = (fgts!=null||fin!=null||tributos||condominio||matriculaUrl||areaPriv);
@@ -403,7 +403,9 @@ async function carregarImoveisDoBanco(){
          modalidade: im.modalidade, tipo: im.tipo, link: im.link,
          // financiamento: usa a mesma hierarquia de resolucao para o JSON
          // null = sem dados (frontend deve tratar como desconhecido, nao "nao aceita")
-         financiamento: im.financiamento != null ? im.financiamento : null
+         financiamento: im.financiamento != null ? im.financiamento : null,
+         debito_tributos: im.debito_tributos || null,
+         debito_condominio: im.debito_condominio || null
     };
  }
    const imoveisRS = imoveis.filter(im=>im.uf==="RS").map(imovelParaJson);
