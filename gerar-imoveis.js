@@ -268,20 +268,73 @@ if(window.gtag)gtag('event','view_item',{item_id:'${i.id}',item_name:${JSON.stri
 </html>`;
 }
 
+// === Lista primaria a partir do banco Neon (fonte de verdade atualizada) ====
+// Le imoveis Disponiveis de RS/SC direto do banco, no mesmo formato do parse(CSV).
+// Assim a lista e a data refletem sempre o ultimo scraper, sem depender de CSV no repo.
+async function carregarImoveisDoBanco(){
+  const url = process.env.DATABASE_URL;
+  if(!url){ return null; }
+  let Client;
+  try { ({ Client } = require("pg")); }
+  catch(e){ return null; }
+  const cli = new Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+  try {
+    await cli.connect();
+    const r = await cli.query(
+      "SELECT numero_imovel, uf, cidade, bairro, endereco, preco_avaliacao, preco_minimo, " +
+      "modalidade, descricao, area_total, area_privativa, debito_tributos, debito_condominio, " +
+      "aceita_fgts, aceita_financiamento, matricula_s3_url, status, scraped_at " +
+      "FROM imoveis_caixa " +
+      "WHERE status='Disponivel' AND uf IN ('RS','SC') " +
+      "AND cidade IS NOT NULL AND preco_minimo IS NOT NULL " +
+      "ORDER BY uf, cidade"
+    );
+    const lista = r.rows.map(row => {
+      const id = String(row.numero_imovel).replace(/\D/g,"");
+      const preco = Number(row.preco_minimo)||0;
+      const aval = Number(row.preco_avaliacao)||0;
+      const desconto = (aval>0 && preco>0 && aval>preco) ? Math.round((1 - preco/aval)*100) : 0;
+      const im = {
+        id, uf: row.uf, cidade: row.cidade||"", bairro: row.bairro||"",
+        endereco: row.endereco||"", preco, avaliacao: aval, desconto,
+        financiamento: row.aceita_financiamento===true,
+        descricao: row.descricao||"", modalidade: row.modalidade||"",
+        tipo: tipoDe(row.descricao||""),
+        link: "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="+id
+      };
+      im._det = row;
+      return im;
+    });
+    console.log("Banco: "+lista.length+" imoveis Disponiveis (RS/SC) carregados como fonte primaria.");
+    return lista;
+  } catch(e){
+    console.log("Falha ao carregar lista do banco ("+e.message+") - usara CSV como fallback.");
+    return null;
+  } finally {
+    try { await cli.end(); } catch(_){}
+  }
+}
+
 // ===== execucao =====
 (async () => {
-  const imoveis = [
-    ...parse(path.join(__dirname,"Lista_imoveis_RS.csv"),"RS"),
-    ...parse(path.join(__dirname,"Lista_imoveis_SC.csv"),"SC")
-  ];
-  if(!imoveis.length){ console.error("Nenhum imovel lido - verifique os CSVs."); process.exit(1); }
-
-  // enriquecer com dados detalhados do banco (Etapa 2)
-  const det = await carregarDetalhesDoBanco();
+  // FONTE PRIMARIA: banco Neon (lista atualizada do ultimo scraper).
+  // FALLBACK: CSVs do repo, caso o banco esteja indisponivel.
+  let imoveis = await carregarImoveisDoBanco();
   let comDetalhe = 0;
-  for(const im of imoveis){
-    const d = det[String(im.id).replace(/\D/g,"")];
-    if(d){ im._det = d; comDetalhe++; }
+  if(imoveis && imoveis.length){
+    comDetalhe = imoveis.filter(im=>im._det).length;
+  } else {
+    console.log("Usando CSVs do repo como fonte (banco indisponivel ou vazio).");
+    imoveis = [
+      ...parse(path.join(__dirname,"Lista_imoveis_RS.csv"),"RS"),
+      ...parse(path.join(__dirname,"Lista_imoveis_SC.csv"),"SC")
+    ];
+    if(!imoveis.length){ console.error("Nenhum imovel lido - verifique os CSVs."); process.exit(1); }
+    const det = await carregarDetalhesDoBanco();
+    for(const im of imoveis){
+      const d = det[String(im.id).replace(/\D/g,"")];
+      if(d){ im._det = d; comDetalhe++; }
+    }
   }
   console.log("Imoveis: "+imoveis.length+" | com ficha detalhada do banco: "+comDetalhe);
 
