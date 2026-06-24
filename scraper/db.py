@@ -158,7 +158,13 @@ def upsert_imovel(data: dict):
     ]
     values = [data.get(c) for c in cols]
     placeholders = ', '.join(['%s'] * len(cols))
-    update_set = ', '.join([f"{c}=EXCLUDED.{c}" for c in cols if c != 'numero_imovel'])
+    # Colunas que preservam valor existente se EXCLUDED for NULL (evita sobrescrever dados do CSV)
+    preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
+    update_set = ', '.join(
+        [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
+         else f"{c}=EXCLUDED.{c}"
+         for c in cols if c != 'numero_imovel']
+    )
 
     sql = f"""
         INSERT INTO imoveis_caixa ({', '.join(cols)})
@@ -190,7 +196,13 @@ def upsert_imoveis_bulk(lista, batch_size=500):
         'area_total','area_privativa','debito_tributos','debito_condominio',
         'aceita_fgts','aceita_financiamento','matricula_s3_url','scraped_at'
     ]
-    update_set = ', '.join([f"{c}=EXCLUDED.{c}" for c in cols if c != 'numero_imovel'])
+    # Colunas que preservam valor existente se EXCLUDED for NULL
+    preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
+    update_set = ', '.join(
+        [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
+         else f"{c}=EXCLUDED.{c}"
+         for c in cols if c != 'numero_imovel']
+    )
     sql = f"""
         INSERT INTO imoveis_caixa ({', '.join(cols)})
         VALUES %s
