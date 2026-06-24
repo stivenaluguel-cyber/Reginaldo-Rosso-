@@ -111,7 +111,7 @@ function pagina(i){
 
   // ---- dados detalhados (banco) ----
   const fgts = simNao(det.aceita_fgts);
-  const fin = simNao(det.aceita_financiamento);
+  const fin = simNao(det.aceita_financiamento) ?? (i.financiamento!=null ? (i.financiamento?"Sim":"Nao") : null);
   const tributos = det.debito_tributos || null;
   const condominio = det.debito_condominio || null;
   const areaPriv = det.area_privativa || null;
