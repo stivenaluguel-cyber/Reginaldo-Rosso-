@@ -56,6 +56,14 @@ CHROME_HEADERS = {
     "Cache-Control": "max-age=0",
 }
 
+CSV_HEADERS = {
+    **CHROME_HEADERS,
+    "Accept": "text/csv,text/plain,application/octet-stream,*/*;q=0.8",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Site": "same-origin",
+    "Referer": "https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.aspx",
+}
+
 
 def _is_csv_valido(conteudo: bytes) -> bool:
     if not conteudo or len(conteudo) < 50:
@@ -67,10 +75,24 @@ def _is_csv_valido(conteudo: bytes) -> bool:
     stripped = texto.strip()
     if stripped.startswith("<") or "<!DOCTYPE" in texto or "<html" in texto.lower():
         return False
+    if "captcha" in texto.lower() or "recaptcha" in texto.lower():
+        return False
     primeira_linha = texto.split("\n")[0].lower()
     keywords = ["numero", "imovel", "rua", "cidade", "preco", "valor", "uf", "estado",
-                "modalidade", "bairro", "descricao", "avalia"]
+                "modalidade", "bairro", "descricao", "avalia", "endereco", "logradouro"]
     return any(kw in primeira_linha for kw in keywords)
+
+
+def _log_conteudo_invalido(conteudo: bytes, estado: str, estrategia: str):
+    """Loga preview do conteudo invalido para debug."""
+    if not conteudo:
+        logger.info(f"etapa1: {estrategia} {estado}: resposta vazia")
+        return
+    try:
+        preview = conteudo[:300].decode("latin-1", errors="replace").replace("\n", " ").replace("\r", "")[:150]
+        logger.info(f"etapa1: {estrategia} {estado} conteudo invalido ({len(conteudo)}B): {preview!r}")
+    except Exception:
+        logger.info(f"etapa1: {estrategia} {estado}: {len(conteudo)} bytes (nao decodificavel)")
 
 
 def _parse_csv(conteudo: bytes, estado: str) -> list:
@@ -128,7 +150,6 @@ def _parse_csv(conteudo: bytes, estado: str) -> list:
             return []
 
         CAMPOS_FLOAT = {"preco_avaliacao", "preco_minimo"}
-
         for _, row in df.iterrows():
             id_val = str(row.get(id_col, "")).strip()
             if not id_val or id_val.lower() in ("nan", "none", "") or not any(c.isdigit() for c in id_val):
@@ -156,39 +177,20 @@ def _parse_csv(conteudo: bytes, estado: str) -> list:
     return imoveis
 
 
-async def _download_via_httpx(estado: str) -> Optional[bytes]:
+async def _download_via_httpx(estado: str, session: httpx.AsyncClient) -> Optional[bytes]:
+    """Estrategia 0: httpx com HTTP/2, reutilizando sessao para cookies."""
     url = CAIXA_CSV_URL.format(estado=estado)
-    proxies = PROXY_URL if PROXY_URL else None
     try:
-        async with httpx.AsyncClient(
-            http2=True,
-            follow_redirects=True,
-            timeout=30.0,
-            verify=True,
-            proxies=proxies,
-        ) as client:
-            try:
-                home = await client.get(CAIXA_HOME_URL, headers={**CHROME_HEADERS})
-                cookies = dict(home.cookies)
-                await asyncio.sleep(random.uniform(0.8, 2.0))
-            except Exception:
-                cookies = {}
-            resp = await client.get(
-                url,
-                headers={**CHROME_HEADERS,
-                         "Referer": CAIXA_HOME_URL,
-                         "Sec-Fetch-Site": "same-origin"},
-                cookies=cookies,
-            )
-            if resp.status_code == 200:
-                data = resp.content
-                if _is_csv_valido(data):
-                    logger.info(f"etapa1: {estado} OK via httpx ({len(data)} bytes, {resp.http_version})")
-                    return data
-                else:
-                    logger.debug(f"etapa1: httpx {estado} HTTP 200 mas nao CSV")
+        resp = await session.get(url, headers=CSV_HEADERS)
+        if resp.status_code == 200:
+            data = resp.content
+            if _is_csv_valido(data):
+                logger.info(f"etapa1: {estado} OK via httpx ({len(data)} bytes)")
+                return data
             else:
-                logger.debug(f"etapa1: httpx {estado} status={resp.status_code}")
+                _log_conteudo_invalido(data, estado, "httpx")
+        else:
+            logger.debug(f"etapa1: httpx {estado} status={resp.status_code}")
     except Exception as e:
         logger.debug(f"etapa1: httpx {estado}: {e}")
     return None
@@ -204,9 +206,10 @@ async def _download_via_curl(estado: str) -> Optional[bytes]:
         "-H", f"User-Agent: {USER_AGENT}",
         "-H", "Accept: text/csv,text/plain,*/*",
         "-H", "Accept-Language: pt-BR,pt;q=0.9",
-        "-H", f"Referer: {CAIXA_HOME_URL}",
+        "-H", f"Referer: https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.aspx",
         "--cookie-jar", "/tmp/caixa_cookies.txt",
         "--cookie", "/tmp/caixa_cookies.txt",
+        "--http2",
     ]
     if PROXY_URL:
         cmd += ["--proxy", PROXY_URL]
@@ -224,7 +227,7 @@ async def _download_via_curl(estado: str) -> Optional[bytes]:
                 logger.info(f"etapa1: {estado} OK via curl ({len(data)} bytes)")
                 return data
             else:
-                logger.debug(f"etapa1: curl {estado} HTTP 200 mas nao CSV")
+                _log_conteudo_invalido(data, estado, "curl")
         else:
             logger.debug(f"etapa1: curl {estado} status={code}")
     except Exception as e:
@@ -296,8 +299,8 @@ async def _download_via_interceptacao(context, estado: str) -> Optional[bytes]:
                         pass
         page.on("response", on_response)
         try:
-            await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=30000)
-            await asyncio.sleep(random.uniform(1.5, 3.0))
+            await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=25000)
+            await asyncio.sleep(random.uniform(1.0, 2.5))
         except Exception:
             pass
         try:
@@ -310,6 +313,8 @@ async def _download_via_interceptacao(context, estado: str) -> Optional[bytes]:
                     data = f.read()
                 if _is_csv_valido(data):
                     csv_bytes = data
+                else:
+                    _log_conteudo_invalido(data, estado, "playwright-download")
         except Exception:
             if not csv_bytes:
                 try:
@@ -318,6 +323,8 @@ async def _download_via_interceptacao(context, estado: str) -> Optional[bytes]:
                         body = await resp.body()
                         if _is_csv_valido(body):
                             csv_bytes = body
+                        else:
+                            _log_conteudo_invalido(body, estado, "playwright-goto")
                 except Exception:
                     pass
     except Exception as e:
@@ -333,7 +340,7 @@ async def _download_via_fetch_browser(context, estado: str) -> Optional[bytes]:
     csv_bytes = None
     try:
         try:
-            await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=30000)
+            await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=25000)
             await asyncio.sleep(random.uniform(1.0, 2.0))
         except Exception:
             pass
@@ -345,7 +352,8 @@ async def _download_via_fetch_browser(context, estado: str) -> Optional[bytes]:
                         headers: {{'Accept': 'text/csv,*/*', 'Referer': 'https://venda-imoveis.caixa.gov.br/'}}
                     }});
                     const buf = await r.arrayBuffer();
-                    return {{ok: true, bytes: Array.from(new Uint8Array(buf)), status: r.status}};
+                    const arr = new Uint8Array(buf);
+                    return {{ok: true, bytes: Array.from(arr), status: r.status, size: arr.length}};
                 }} catch(e) {{
                     return {{ok: false, err: e.toString()}};
                 }}
@@ -356,6 +364,8 @@ async def _download_via_fetch_browser(context, estado: str) -> Optional[bytes]:
             if _is_csv_valido(data):
                 csv_bytes = data
                 logger.info(f"etapa1: {estado} OK via fetch-browser ({len(data)} bytes)")
+            else:
+                _log_conteudo_invalido(data, estado, "fetch-browser")
     except Exception as e:
         logger.debug(f"etapa1: fetch-browser {estado}: {e}")
     finally:
@@ -380,28 +390,53 @@ async def _executar() -> dict:
     restantes = [e for e in ESTADOS if e not in ESTADOS_PRIORIDADE]
     ordenados = ESTADOS_PRIORIDADE + restantes
 
-    # Fase 0: httpx HTTP/2
+    # Fase 0: httpx HTTP/2 com sessao compartilhada
     logger.info("etapa1: Fase 0 - httpx HTTP/2...")
-    for estado in ordenados:
-        try:
-            data = await _download_via_httpx(estado)
-            if data:
-                imoveis = _parse_csv(data, estado)
-                if imoveis:
-                    todos_imoveis.extend(imoveis)
-                    estados_ok.append(estado)
-                    continue
-        except Exception as e:
-            logger.debug(f"etapa1: httpx {estado}: {e}")
+    proxies = PROXY_URL if PROXY_URL else None
+    async with httpx.AsyncClient(
+        http2=True,
+        follow_redirects=True,
+        timeout=30.0,
+        verify=True,
+        proxies=proxies,
+    ) as session:
+        for estado in ordenados:
+            try:
+                data = await _download_via_httpx(estado, session)
+                if data:
+                    imoveis = _parse_csv(data, estado)
+                    if imoveis:
+                        todos_imoveis.extend(imoveis)
+                        estados_ok.append(estado)
+                        continue
+            except Exception as e:
+                logger.debug(f"etapa1: httpx {estado}: {e}")
+            await asyncio.sleep(0.5)
 
     pendentes = [e for e in ordenados if e not in estados_ok]
     logger.info(f"etapa1: httpx ok={len(estados_ok)}, pendentes={len(pendentes)}")
 
     if pendentes:
-        # Fase 3: curl
-        logger.info("etapa1: Fase 3 - curl subprocess...")
+        # Fase 3: curl (apenas 1 estado de teste para economizar tempo)
+        logger.info("etapa1: Fase 3 - curl subprocess (amostra SP)...")
         ainda_pendentes = []
+        # Testar com SP primeiro para ver o conteudo
+        teste_estados = [e for e in ["SP", "MG"] if e in pendentes]
+        for estado in teste_estados:
+            try:
+                data = await _download_via_curl(estado)
+                if data:
+                    imoveis = _parse_csv(data, estado)
+                    if imoveis:
+                        todos_imoveis.extend(imoveis)
+                        estados_ok.append(estado)
+                        continue
+            except Exception as e:
+                logger.debug(f"etapa1: curl {estado}: {e}")
+        # Restantes via curl
         for estado in pendentes:
+            if estado in estados_ok:
+                continue
             try:
                 data = await _download_via_curl(estado)
                 if data:
