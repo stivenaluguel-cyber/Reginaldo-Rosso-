@@ -66,21 +66,32 @@ CSV_HEADERS = {
 
 
 def _is_csv_valido(conteudo: bytes) -> bool:
+    """Verifica se conteudo e um CSV real da Caixa.
+    IMPORTANTE: O CSV da Caixa tem linha 1 com titulo "Lista de Imoveis da Caixa;;..."
+    e linha 2 com cabecalho "N do imovel;UF;Cidade;...". Verificar primeiras 5 linhas.
+    """
     if not conteudo or len(conteudo) < 50:
         return False
     try:
-        texto = conteudo[:500].decode("latin-1", errors="replace")
+        texto = conteudo[:1000].decode("latin-1", errors="replace")
     except Exception:
         return False
     stripped = texto.strip()
+    # Rejeitar HTML
     if stripped.startswith("<") or "<!DOCTYPE" in texto or "<html" in texto.lower():
         return False
     if "captcha" in texto.lower() or "recaptcha" in texto.lower():
         return False
-    primeira_linha = texto.split("\n")[0].lower()
-    keywords = ["numero", "imovel", "rua", "cidade", "preco", "valor", "uf", "estado",
-                "modalidade", "bairro", "descricao", "avalia", "endereco", "logradouro"]
-    return any(kw in primeira_linha for kw in keywords)
+    # Verificar se tem separador de CSV (ponto e virgula - padrao Caixa)
+    if ";" not in texto[:500]:
+        return False
+    # Verificar keywords nas primeiras 5 linhas (nao apenas na primeira)
+    linhas = texto.split("\n")[:5]
+    texto_cabecalho = " ".join(linhas).lower()
+    keywords = ["imovel", "imóvel", "cidade", "preco", "preço", "valor", "uf",
+                "modalidade", "bairro", "descricao", "avalia", "endereco", "endereço",
+                "logradouro", "lista de im", "caixa", "financiam"]
+    return any(kw in texto_cabecalho for kw in keywords)
 
 
 def _log_conteudo_invalido(conteudo: bytes, estado: str, estrategia: str):
@@ -100,19 +111,31 @@ def _parse_csv(conteudo: bytes, estado: str) -> list:
     try:
         df = None
         for enc in ("latin-1", "utf-8", "cp1252"):
-            try:
-                df = pd.read_csv(
-                    io.BytesIO(conteudo),
-                    encoding=enc,
-                    sep=";",
-                    dtype=str,
-                    on_bad_lines="skip",
-                    skip_blank_lines=True,
-                )
-                if len(df.columns) > 1:
-                    break
-            except Exception:
-                df = None
+            for skiprows in (0, 1):
+                try:
+                    df = pd.read_csv(
+                        io.BytesIO(conteudo),
+                        encoding=enc,
+                        sep=";",
+                        dtype=str,
+                        on_bad_lines="skip",
+                        skip_blank_lines=True,
+                        skiprows=skiprows,
+                    )
+                    # CSV valido tem colunas reais (nao so indices numericos)
+                    cols = [str(c).lower() for c in df.columns]
+                    has_real_cols = any(
+                        any(kw in c for kw in ["imovel", "imóvel", "cidade", "uf", "preco", "preço",
+                                               "numero", "número", "bairro", "modal", "avali"])
+                        for c in cols
+                    )
+                    if len(df.columns) > 1 and has_real_cols:
+                        break
+                    df = None
+                except Exception:
+                    df = None
+            if df is not None:
+                break
         if df is None or df.empty:
             return []
 
