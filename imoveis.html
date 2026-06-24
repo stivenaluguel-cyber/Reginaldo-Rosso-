@@ -307,7 +307,7 @@ window.__AMOSTRA_META__={
   const WHATS = { RS:"5551991104976", SC:"5548991642332" };
   // Mostrar foto da Caixa (hotlink). Se aparecer muita foto quebrada, deixe false.
   const USAR_FOTOS = true;
-  const fotoURL = id => `https://venda-imoveis.caixa.gov.br/fotos/F${id}21.jpg`;
+  const fotoURL = id => `https://venda-imoveis.caixa.gov.br/fotos/F${String(id).padStart(13,'0')}21.jpg`;
 </script>
 <script>
   const BRL = v => v==null ? "—" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
