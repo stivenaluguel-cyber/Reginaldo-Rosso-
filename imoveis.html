@@ -128,6 +128,7 @@ window.__AMOSTRA_META__={
   .card .fav:hover{background:rgba(23,38,56,.95);transform:scale(1.08)}
   .card .fav.on{background:#fff}
   .card .fav.on svg{fill:#e0566a;stroke:#e0566a}
+.card .fin-badge{background:#1f9d57;color:#fff;border-radius:7px;padding:4px 9px;font-size:.74rem;font-weight:800;letter-spacing:.02em}
   .chip-fav[aria-pressed="true"]{background:#e0566a;border-color:#e0566a;color:#fff}
   .chip-send{background:#25D366;border-color:#25D366;color:#fff;font-weight:700}
   .chip-send:hover{background:#1ebe5a}
@@ -393,6 +394,18 @@ window.__AMOSTRA_META__={
         ALL=[...rs.lista,...sc.lista];
         quando=rs.mod||sc.mod;
         geracao=rs.geracao||sc.geracao;
+        // Patcha financiamento com dados do scraper JSON (mais preciso que CSV da Caixa)
+        try{
+          const [jrs,jsc]=await Promise.all([carregarJSON("imoveis-rs.json"),carregarJSON("imoveis-sc.json")]);
+          const jmap={};
+          [...jrs,...jsc].forEach(j=>{if(j&&j.id)jmap[j.id]=j;});
+          ALL.forEach(item=>{
+            const jd=jmap[item.id];
+            if(!jd) return;
+            if(jd.financiamento===false) item.financiamento=false;
+            if(jd.financiamento===true) item.financiamento=true;
+          });
+        }catch(_){}
       }catch(_){ ALL=[]; }
       // 2) RESERVA: JSON (se algum dia houver coleta completa)
       if(!ALL.length){
@@ -509,6 +522,7 @@ function aplicar(){
         <div class="badges">
           <span class="uf">${i.uf}</span>
           ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
+          ${i.financiamento===true?'<span class="fin-badge">🏦 Financia</span>':""}
         </div>
         <button class="fav${isFav(i.id)?' on':''}" aria-label="Favoritar" title="Favoritar">
           <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.4 8.6 1.7 5 5 5c2 0 3.2 1.2 4 2.3C9.8 6.2 11 5 13 5c3.3 0 4.6 3.6 3 6.8C18.5 16.4 12 21 12 21z"/></svg>
