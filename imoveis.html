@@ -652,3 +652,25 @@ window.__AMOSTRA_META__={
     document.querySelectorAll("#mobile a").forEach(function(a){a.addEventListener("click",function(){document.getElementById("mobile").classList.remove("open");});});}
   carregar();
 </script>
+
+<script>
+/* Atualiza o rotulo "Lista da Caixa gerada em ..." a partir do meta.json (sempre atual). */
+(function(){
+  function fmtBR(iso){
+    try{ var d=new Date(iso); if(isNaN(d)) return null;
+      return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
+    }catch(e){ return null; }
+  }
+  fetch("meta.json?t="+Date.now(),{cache:"no-store"})
+    .then(function(r){ return r.json(); })
+    .then(function(m){
+      if(!m) return;
+      var el=document.getElementById("updatedTxt");
+      if(!el) return;
+      var data=fmtBR(m.atualizado)||"";
+      var total=(m.total!=null)?m.total:"";
+      el.textContent="Lista da Caixa gerada em "+data+" \u00b7 "+total+" im\u00f3veis";
+    })
+    .catch(function(){});
+})();
+</script>
