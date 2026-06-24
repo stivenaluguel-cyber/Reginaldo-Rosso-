@@ -1,14 +1,16 @@
 """
-Etapa 2 - Enriquecimento com Playwright
-=========================================
-Acessa cada imovel novo individualmente via Playwright + stealth.
-Extrai campos detalhados, baixa a matricula (PDF) e envia ao S3/B2.
-
-Reescrito para ler a estrutura real da pagina detalhe-imovel.aspx da Caixa:
-- extrai area total / area util(privativa), debitos, FGTS, financiamento, etc.
-- captura o PDF da matricula interceptando respostas application/pdf e
-  tambem seguindo links/onclick de documentos.
-- loga diagnostico (texto e links) para facilitar ajustes.
+Etapa 2 - Enriquecimento
+=========================
+Estrategia dupla:
+  1. URL DETERMINISTICA: matric/edital/laudo em /editais/{kind}/{UF}/{id}.pdf
+     - Tenta baixar via httpx (rapido, sem Playwright).
+     - Se retornar 200 + content-type=pdf, faz upload p/ B2 e salva URL.
+  2. PLAYWRIGHT (detalhe-imovel.asp): aguarda 6s para AJAX carregar,
+     extrai texto via CSS selector 'body *', parseia areas, debitos, FGTS,
+     financiamento, descricao, modalidade.
+Campos gravados: area_total, area_privativa, debito_tributos,
+debito_condominio, aceita_fgts, aceita_financiamento,
+matricula_s3_url, scraped_at.
 """
 import asyncio
 import logging
@@ -16,11 +18,12 @@ import re
 import unicodedata
 from datetime import datetime, timezone
 
+import httpx
 from playwright.async_api import async_playwright, TimeoutError as PWTimeout
 
 try:
     from playwright_stealth import stealth_async
-except Exception:  # pragma: no cover
+except Exception:
     async def stealth_async(page):
         return None
 
@@ -30,32 +33,33 @@ from config import (
 )
 from captcha import solve_captcha, inject_captcha_token
 from s3_uploader import upload_bytes
-from db import upsert_imovel  # noqa: F401  (mantido por compatibilidade)
+from db import upsert_imovel  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
+# URL base dos PDFs determinísticos da Caixa
+_PDF_EDITAIS = "https://venda-imoveis.caixa.gov.br/editais"
 
-# -- Utilitarios de texto ------------------------------------------------------
-def _strip_accents(texto):
-    if not texto:
+# ---------------------------------------------------------------------------
+# Utilitarios de texto
+# ---------------------------------------------------------------------------
+def _strip_accents(t):
+    if not t:
         return ""
-    nfkd = unicodedata.normalize("NFKD", texto)
-    return "".join(c for c in nfkd if not unicodedata.combining(c))
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", t)
+        if not unicodedata.combining(c)
+    )
 
-
-def _norm(texto):
-    """minusculo, sem acento, espacos colapsados."""
-    return re.sub(r"\s+", " ", _strip_accents(texto or "").lower()).strip()
-
+def _norm(t):
+    return re.sub(r"\s+", " ", _strip_accents(t or "").lower()).strip()
 
 def _parse_money(value):
     if value is None:
         return None
-    s = str(value)
-    s = re.sub(r"[^0-9.,]", "", s)
+    s = re.sub(r"[^0-9.,]", "", str(value))
     if not s:
         return None
-    # formato brasileiro: 1.234,56
     if "," in s:
         s = s.replace(".", "").replace(",", ".")
     try:
@@ -63,44 +67,27 @@ def _parse_money(value):
     except Exception:
         return None
 
-
 def _find_value(full_text, *labels):
-    """Procura 'Label: valor' (ou 'Label = valor') no texto completo.
-    Retorna o trecho ate a quebra de linha. Tolerante a acento/caixa."""
+    """Busca 'Label: valor' no texto, tolerante a acentos/caixa."""
     nt = _norm(full_text)
     for label in labels:
         nl = _norm(label)
         idx = nt.find(nl)
         if idx == -1:
             continue
-        # localizar a mesma posicao no texto original (aproximada via offset)
-        # como _norm pode encurtar, usamos regex no texto original
-        pat = re.compile(
-            re.escape(label).replace(r"\ ", r"\s+"),
-            re.IGNORECASE,
-        )
-        m = pat.search(_strip_accents(full_text))
-        if not m:
-            # fallback: usa texto normalizado
-            after = nt[idx + len(nl):]
-        else:
-            after = _strip_accents(full_text)[m.end():]
-        after = after.lstrip(" :=\t")
-        # pega ate a proxima quebra de linha ou rotulo conhecido
+        after = nt[idx + len(nl):].lstrip(" :=\t")
         valor = re.split(r"[\n\r]| {2,}", after, maxsplit=1)[0].strip()
         valor = valor.strip(" .;,-")
         if valor:
             return valor
     return ""
 
-
 def _parse_area(full_text, *labels):
     raw = _find_value(full_text, *labels)
     if not raw:
         return None
-    m = re.search(r"([\d.]+,\d+|\d+[.,]?\d*)", raw)
+    m = re.search(r"([\d.]+,[\d]+|\d+[.,]?\d*)", raw)
     return _parse_money(m.group(1)) if m else None
-
 
 def _parse_debito_tributos(texto):
     t = _norm(texto)
@@ -110,7 +97,6 @@ def _parse_debito_tributos(texto):
         return "Caixa Paga"
     return "Arrematante Paga" if t else None
 
-
 def _parse_debito_condominio(texto):
     t = _norm(texto)
     if "caixa paga" in t or "paga integralmente" in t:
@@ -119,8 +105,46 @@ def _parse_debito_condominio(texto):
         return "Arrematante paga ate 10% da avaliacao"
     return "Arrematante Paga" if t else None
 
+# ---------------------------------------------------------------------------
+# 1. URL DETERMINISTICA - baixa PDF direto sem Playwright
+# ---------------------------------------------------------------------------
+def _baixar_pdf_determinisitco(numero_imovel, uf):
+    """Tenta baixar matricula via URL deterministica /editais/matricula/UF/ID.pdf.
+    Retorna bytes do PDF ou None."""
+    if not uf:
+        return None
+    uf_upper = uf.strip().upper()
+    url = f"{_PDF_EDITAIS}/matricula/{uf_upper}/{numero_imovel}.pdf"
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Referer": "https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp",
+        "Accept": "application/pdf,*/*",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+    }
+    try:
+        with httpx.Client(timeout=30, follow_redirects=True) as cli:
+            r = cli.get(url, headers=headers)
+            ctype = r.headers.get("content-type", "")
+            logger.info(
+                f"[det-pdf {numero_imovel}] UF={uf_upper} "
+                f"status={r.status_code} ctype={ctype[:40]}"
+            )
+            if r.status_code == 200 and "pdf" in ctype.lower():
+                return r.content
+            # Fallback: tenta edital se matricula nao existe
+            url2 = f"{_PDF_EDITAIS}/edital/{uf_upper}/{numero_imovel}.pdf"
+            r2 = cli.get(url2, headers=headers)
+            ctype2 = r2.headers.get("content-type", "")
+            if r2.status_code == 200 and "pdf" in ctype2.lower():
+                logger.info(f"[det-pdf {numero_imovel}] edital OK como fallback")
+                return r2.content
+    except Exception as e:
+        logger.warning(f"[det-pdf {numero_imovel}] erro httpx: {e}")
+    return None
 
-# -- CAPTCHA -------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# 2. CAPTCHA
+# ---------------------------------------------------------------------------
 async def _handle_captcha(page):
     try:
         site_key_el = await page.query_selector("[data-sitekey]")
@@ -134,83 +158,191 @@ async def _handle_captcha(page):
         await page.wait_for_timeout(2000)
         return True
     except Exception as e:
-        logger.warning(f"Falha ao tratar CAPTCHA: {e}")
+        logger.warning(f"CAPTCHA falhou: {e}")
         return False
 
+# ---------------------------------------------------------------------------
+# 3. Captura de PDF via Playwright (interceptacao de rede)
+# ---------------------------------------------------------------------------
+async def _capturar_pdf_playwright(page, numero_imovel):
+    """Intercepta PDFs carregados durante a navegacao da pagina de detalhe."""
+    pdf_bytes_list = []
 
-# -- Captura de PDF da matricula ----------------------------------------------
-async def _capturar_matricula_pdf(page, pdf_bytes):
-    """Tenta acionar o download da matricula. pdf_bytes e preenchido pelo
-    interceptor de rede (route). Retorna True se algo foi clicado."""
-    seletores = [
-        "a:has-text('Matricula')",
+    async def capture_pdf(route):
+        try:
+            resp = await route.fetch()
+            ctype = resp.headers.get("content-type", "")
+            if "application/pdf" in ctype.lower():
+                body = await resp.body()
+                if body:
+                    pdf_bytes_list.append(body)
+            await route.fulfill(response=resp)
+        except Exception:
+            try:
+                await route.continue_()
+            except Exception:
+                pass
+
+    await page.route("**/*.pdf**", capture_pdf)
+    await page.route("**/*atricula*", capture_pdf)
+    await page.route("**/*edital*", capture_pdf)
+
+    # Tenta clicar em links de matricula/edital/documentos
+    seletores_docs = [
         "a:has-text('Matrícula')",
-        "button:has-text('Matricula')",
-        "button:has-text('Matrícula')",
+        "a:has-text('Matricula')",
+        "a:has-text('matrícula')",
         "a[href*='matricula']",
         "a[href*='Matricula']",
+        "a[href$='.pdf']",
         "a[onclick*='atricula']",
         "input[value*='atricula']",
     ]
-    clicou = False
-    for sel in seletores:
+    for sel in seletores_docs:
         try:
             loc = page.locator(sel)
             n = await loc.count()
-            for i in range(min(n, 3)):
-                el = loc.nth(i)
+            for i in range(min(n, 2)):
                 try:
+                    el = loc.nth(i)
                     if await el.is_visible(timeout=1500):
-                        async with page.context.expect_page() as popinfo:
-                            await el.click(timeout=3000)
                         try:
+                            async with page.context.expect_page() as popinfo:
+                                await el.click(timeout=3000)
                             pop = await popinfo.value
-                            await pop.wait_for_load_state("networkidle", timeout=15000)
+                            await pop.wait_for_load_state("networkidle", timeout=10000)
                             await pop.close()
                         except Exception:
-                            pass
-                        clicou = True
-                        await page.wait_for_timeout(2500)
+                            await el.click(timeout=3000)
+                        await page.wait_for_timeout(2000)
+                        if pdf_bytes_list:
+                            return pdf_bytes_list[-1]
                 except Exception:
-                    # clique simples sem popup
-                    try:
-                        await el.click(timeout=3000)
-                        clicou = True
-                        await page.wait_for_timeout(2500)
-                    except Exception:
-                        pass
-                if pdf_bytes:
-                    return True
+                    pass
         except Exception:
             continue
 
-    # Tentar baixar diretamente os hrefs de PDF/matricula encontrados
+    # Extrai hrefs de PDF dos links da pagina
     try:
         hrefs = await page.eval_on_selector_all(
             "a",
-            "els => els.map(a => a.href).filter(h => h && (/matricula/i.test(h) || /\\.pdf/i.test(h)))",
+            "els => els.map(a=>a.href).filter(h=>h&&(/matricula/i.test(h)||/\\.pdf/i.test(h)))",
         )
+        for href in (hrefs or [])[:5]:
+            try:
+                resp = await page.request.get(href, timeout=20000)
+                ctype = (resp.headers or {}).get("content-type", "")
+                if "pdf" in ctype.lower():
+                    body = await resp.body()
+                    if body:
+                        return body
+            except Exception:
+                continue
     except Exception:
-        hrefs = []
-    for href in (hrefs or [])[:5]:
+        pass
+
+    return pdf_bytes_list[-1] if pdf_bytes_list else None
+
+# ---------------------------------------------------------------------------
+# 4. Extrai dados textuais da pagina de detalhe via Playwright
+# ---------------------------------------------------------------------------
+async def _extrair_dados_playwright(page, numero_imovel):
+    """Aguarda AJAX carregar e extrai campos da pagina de detalhe da Caixa."""
+    dados = {}
+    try:
+        # Aguarda o conteudo AJAX carregar (ate 20s)
+        # A pagina da Caixa carrega os dados do imovel via JS apos DOMContentLoaded
+        await page.wait_for_timeout(6000)  # Aguarda AJAX
+        # Tenta esperar por seletores com dados reais
+        for sel in ["#lblTitulo", ".titulo", "h1", "#pnlDetalhe", "#pnlImovel",
+                    "table", "#divDetalhe", ".detalhe", "#divPrincipal"]:
+            try:
+                await page.wait_for_selector(sel, timeout=5000)
+                break
+            except Exception:
+                continue
+
+        # Extrai texto completo da pagina
+        full_text = ""
         try:
-            resp = await page.request.get(href, timeout=20000)
-            ctype = (resp.headers or {}).get("content-type", "")
-            if "pdf" in ctype.lower():
-                body = await resp.body()
-                if body:
-                    pdf_bytes.append(body)
-                    return True
+            # Pega texto de todos os elementos relevantes
+            full_text = await page.inner_text("body")
         except Exception:
-            continue
-    return clicou
+            try:
+                full_text = await page.content()
+            except Exception:
+                pass
 
+        logger.info(
+            f"[diag {numero_imovel}] texto={len(full_text)} chars | "
+            f"trecho={repr(_strip_accents(full_text)[:300].replace(chr(10), ' '))}"
+        )
 
-# -- Scraper principal ---------------------------------------------------------
-async def scrape_imovel(numero_imovel, browser=None):
-    """Raspa um imovel pelo numero. Retorna dict com os dados ou None."""
-    url = URL_BASE_DETALHE + str(numero_imovel)
+        if len(full_text) < 500:
+            logger.warning(f"[diag {numero_imovel}] pagina muito curta, AJAX nao carregou")
+            return dados
+
+        # Extrai campos
+        dados["area_total"] = _parse_area(
+            full_text, "Area total", "Area do terreno", "Área total", "Área do terreno"
+        )
+        dados["area_privativa"] = _parse_area(
+            full_text, "Area privativa", "Área privativa",
+            "Area util", "Área útil", "Area construida", "Área construída"
+        )
+
+        deb_t = _find_value(full_text, "Tributos", "IPTU") or ""
+        dados["debito_tributos"] = _parse_debito_tributos(deb_t)
+
+        deb_c = _find_value(full_text, "Condominio", "Condomínio") or ""
+        dados["debito_condominio"] = _parse_debito_condominio(deb_c)
+
+        nt = _norm(full_text)
+        dados["aceita_fgts"] = (
+            "aceita fgts" in nt or (
+                "fgts" in nt
+                and "nao aceita fgts" not in nt
+                and "nao utiliza fgts" not in nt
+            )
+        )
+        dados["aceita_financiamento"] = (
+            "aceita financiamento" in nt or (
+                "financiamento" in nt
+                and "nao aceita financiamento" not in nt
+                and "nao permite financiamento" not in nt
+            )
+        )
+
+        desc = _find_value(full_text, "Descricao", "Descrição")
+        if desc:
+            dados["descricao"] = desc[:1000]
+
+    except Exception as e:
+        logger.warning(f"[diag {numero_imovel}] erro extração playwright: {e}")
+
+    return dados
+
+# ---------------------------------------------------------------------------
+# 5. Funcao principal
+# ---------------------------------------------------------------------------
+async def scrape_imovel(numero_imovel, uf=None, browser=None):
+    """Raspa um imovel. Retorna dict com dados enriquecidos ou None."""
     dados = {"numero_imovel": str(numero_imovel), "status": "Disponivel"}
+
+    # --- Etapa 2a: baixar matricula via URL deterministica (sem Playwright) ---
+    pdf_content = _baixar_pdf_determinisitco(numero_imovel, uf)
+    if pdf_content:
+        try:
+            s3_url = upload_bytes(pdf_content, str(numero_imovel))
+            dados["matricula_s3_url"] = s3_url
+            logger.info(f"[det {numero_imovel}] matricula via URL deterministica: {s3_url}")
+        except Exception as e:
+            logger.warning(f"[det {numero_imovel}] upload B2 falhou: {e}")
+    else:
+        logger.info(f"[det {numero_imovel}] PDF nao encontrado na URL deterministica")
+
+    # --- Etapa 2b: dados textuais via Playwright ---
+    url = URL_BASE_DETALHE + str(numero_imovel)
 
     for attempt in range(MAX_RETRIES):
         context = None
@@ -221,7 +353,8 @@ async def scrape_imovel(numero_imovel, browser=None):
                 pw_instance = await async_playwright().start()
                 browser = await pw_instance.chromium.launch(
                     headless=HEADLESS,
-                    args=["--no-sandbox", "--disable-setuid-sandbox"],
+                    args=["--no-sandbox", "--disable-setuid-sandbox",
+                          "--disable-blink-features=AutomationControlled"],
                 )
                 should_close = True
 
@@ -235,31 +368,7 @@ async def scrape_imovel(numero_imovel, browser=None):
             page = await context.new_page()
             await stealth_async(page)
 
-            pdf_bytes = []
-
-            async def capture_pdf(route):
-                try:
-                    resp = await route.fetch()
-                    ctype = resp.headers.get("content-type", "")
-                    if "application/pdf" in ctype.lower():
-                        body = await resp.body()
-                        if body:
-                            pdf_bytes.append(body)
-                    await route.fulfill(response=resp)
-                except Exception:
-                    try:
-                        await route.continue_()
-                    except Exception:
-                        pass
-
-            await page.route("**/*.pdf**", capture_pdf)
-            await page.route("**/*atricula*", capture_pdf)
-
             await page.goto(url, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
-            try:
-                await page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:
-                pass
 
             if await _handle_captcha(page):
                 try:
@@ -267,82 +376,20 @@ async def scrape_imovel(numero_imovel, browser=None):
                 except Exception:
                     pass
 
-            # Texto visivel da pagina (mais robusto que regex no HTML cru)
-            try:
-                full_text = await page.inner_text("body")
-            except Exception:
-                full_text = await page.content()
+            # Extrai dados textuais
+            dados_pw = await _extrair_dados_playwright(page, numero_imovel)
+            dados.update({k: v for k, v in dados_pw.items() if v is not None})
 
-            # -- Diagnostico (apenas nos primeiros imoveis) -----------------
-            if attempt == 0:
-                logger.info(
-                    f"[diag {numero_imovel}] texto={len(full_text)} chars; "
-                    f"trecho=%r" % (_strip_accents(full_text)[:300].replace("\n", " "))
-                )
-
-            # -- Extracao de campos -----------------------------------------
-            dados["uf"] = (_find_value(full_text, "UF") or "")[:2].upper() or None
-            dados["cidade"] = _find_value(full_text, "Cidade") or None
-            dados["bairro"] = _find_value(full_text, "Bairro") or None
-            dados["endereco"] = _find_value(full_text, "Endereco", "Endereço") or None
-            dados["modalidade"] = _find_value(
-                full_text, "Modalidade de venda", "Modalidade"
-            ) or None
-
-            dados["preco_avaliacao"] = _parse_money(
-                _find_value(full_text, "Valor de avaliacao", "Valor de avaliação",
-                            "Valor de Avaliacao")
-            )
-            dados["preco_minimo"] = _parse_money(
-                _find_value(full_text, "Valor minimo de venda", "Valor mínimo de venda",
-                            "Lance minimo", "Valor minimo")
-            )
-
-            dados["area_total"] = _parse_area(
-                full_text, "Area total", "Área total", "Area do terreno"
-            )
-            dados["area_privativa"] = _parse_area(
-                full_text, "Area privativa", "Área privativa",
-                "Area util", "Área útil", "Area construida"
-            )
-
-            deb_t = _find_value(full_text, "Tributos", "IPTU") or ""
-            dados["debito_tributos"] = _parse_debito_tributos(deb_t)
-            deb_c = _find_value(full_text, "Condominio", "Condomínio") or ""
-            dados["debito_condominio"] = _parse_debito_condominio(deb_c)
-
-            nt = _norm(full_text)
-            dados["aceita_fgts"] = ("aceita fgts" in nt) or (
-                "fgts" in nt and "nao aceita fgts" not in nt
-                and "nao utiliza fgts" not in nt
-            )
-            dados["aceita_financiamento"] = (
-                "aceita financiamento" in nt
-            ) or (
-                "financiamento" in nt and "nao aceita financiamento" not in nt
-                and "nao permite financiamento" not in nt
-            )
-
-            # descricao: bloco "Descricao:" se existir
-            desc = _find_value(full_text, "Descricao", "Descrição")
-            if desc:
-                dados["descricao"] = desc[:1000]
-
-            # -- Matricula PDF ----------------------------------------------
-            try:
-                await _capturar_matricula_pdf(page, pdf_bytes)
-            except Exception as e:
-                logger.warning(f"Erro ao capturar matricula {numero_imovel}: {e}")
-
-            if pdf_bytes:
-                try:
-                    s3_url = upload_bytes(pdf_bytes[-1], str(numero_imovel))
-                    dados["matricula_s3_url"] = s3_url
-                    logger.info(f"Matricula enviada {numero_imovel}: {s3_url}")
-                except Exception as e:
-                    logger.warning(f"Falha upload matricula {numero_imovel}: {e}")
-            else:
-                logger.info(f"[diag {numero_imovel}] nenhum PDF de matricula capturado")
+            # Tenta capturar PDF via Playwright se nao teve pela URL deterministica
+            if not dados.get("matricula_s3_url"):
+                pdf_pw = await _capturar_pdf_playwright(page, numero_imovel)
+                if pdf_pw:
+                    try:
+                        s3_url = upload_bytes(pdf_pw, str(numero_imovel))
+                        dados["matricula_s3_url"] = s3_url
+                        logger.info(f"[det {numero_imovel}] matricula via Playwright: {s3_url}")
+                    except Exception as e:
+                        logger.warning(f"[det {numero_imovel}] upload B2 (pw) falhou: {e}")
 
             dados["scraped_at"] = datetime.now(timezone.utc)
 
@@ -361,12 +408,12 @@ async def scrape_imovel(numero_imovel, browser=None):
 
         except PWTimeout:
             logger.warning(
-                f"Timeout no imovel {numero_imovel} "
+                f"Timeout imovel {numero_imovel} "
                 f"(tentativa {attempt + 1}/{MAX_RETRIES})"
             )
         except Exception as e:
             logger.error(
-                f"Erro no imovel {numero_imovel} (tentativa {attempt + 1}): {e}"
+                f"Erro imovel {numero_imovel} (tentativa {attempt + 1}): {e}"
             )
         finally:
             try:
@@ -380,11 +427,19 @@ async def scrape_imovel(numero_imovel, browser=None):
                     await pw_instance.stop()
                 except Exception:
                     pass
-                browser = None
+            browser = None
 
         await asyncio.sleep(5 * (attempt + 1))
 
+    # Se Playwright falhou mas ja temos PDF, retorna dados parciais
+    if dados.get("matricula_s3_url"):
+        dados["scraped_at"] = datetime.now(timezone.utc)
+        logger.info(
+            f"[det {numero_imovel}] Playwright falhou mas matricula ja capturada"
+        )
+        return dados
+
     logger.error(
-        f"Falha definitiva no imovel {numero_imovel} apos {MAX_RETRIES} tentativas"
+        f"Falha definitiva imovel {numero_imovel} apos {MAX_RETRIES} tentativas"
     )
     return None
