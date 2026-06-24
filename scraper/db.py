@@ -78,6 +78,26 @@ def get_all_ids() -> set:
             cur.execute("SELECT numero_imovel FROM imoveis_caixa WHERE status = 'Disponivel'")
             return {row[0] for row in cur.fetchall()}
 
+def get_pendentes_enriquecimento(ufs, limit=1000) -> list:
+    """Retorna numero_imovel ativos que ainda NAO foram enriquecidos
+    (sem area_total ou sem matricula), para reprocessar a Etapa 2.
+    Filtra pelos estados informados (ex.: RS/SC). Prioriza os nunca raspados."""
+    if not ufs:
+        return []
+    ufs = [u.upper() for u in ufs]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel FROM imoveis_caixa "
+                "WHERE status = 'Disponivel' AND uf = ANY(%s) "
+                "AND (scraped_at IS NULL OR area_total IS NULL OR matricula_s3_url IS NULL) "
+                "ORDER BY (scraped_at IS NOT NULL), updated_at "
+                "LIMIT %s",
+                (ufs, limit),
+            )
+            return [row[0] for row in cur.fetchall()]
+
+
 def mark_unavailable(ids: list):
     """Marca IDs que sairam do CSV como Indisponivel."""
     if not ids:
