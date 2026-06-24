@@ -257,9 +257,14 @@ window.__AMOSTRA_META__={
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
-        <option value="desc">Maior desconto</option>
-        <option value="precoasc">Menor preço</option>
-        <option value="precodesc">Maior preço</option>
+        <option value="precoasc">Preço: menor → maior</option>
+        <option value="precodesc">Preço: maior → menor</option>
+        <option value="descasc">Desconto: menor → maior</option>
+        <option value="desc" selected>Desconto: maior → menor</option>
+        <option value="idasc">Inclusão: mais antigo</option>
+        <option value="iddesc">Inclusão: mais recente</option>
+        <option value="fimasc">Finaliza: primeiro</option>
+        <option value="fimdesc">Finaliza: último</option>
       </select></div>
       <button class="clearbtn" id="clear">Limpar</button>
     </div>
@@ -439,7 +444,8 @@ window.__AMOSTRA_META__={
   }
   function flashShare(msg){const b=document.getElementById("mshare");if(b){const o=b.innerHTML;b.innerHTML="✓ "+msg;setTimeout(()=>{b.innerHTML=o;},2200);}}
 
-  function aplicar(){
+  const _idNum=id=>{const n=parseInt(id||"0");return isNaN(n)?0:n>1e12?Math.round(n/1e6):n;};
+function aplicar(){
     view=ALL.filter(i=>{
       if(state.uf && i.uf!==state.uf) return false;
       if(state.cidade && i.cidade!==state.cidade) return false;
@@ -458,8 +464,13 @@ window.__AMOSTRA_META__={
       return true;
     });
     view.sort((a,b)=>{
-      if(state.ordem==="precoasc") return (a.preco??1e15)-(b.preco??1e15);
+      if(state.ordem==="precoasc")  return (a.preco??1e15)-(b.preco??1e15);
       if(state.ordem==="precodesc") return (b.preco??-1)-(a.preco??-1);
+      if(state.ordem==="descasc")   return (a.desconto??1e15)-(b.desconto??1e15);
+      if(state.ordem==="idasc")     return _idNum(a.id)-_idNum(b.id);
+      if(state.ordem==="iddesc")    return _idNum(b.id)-_idNum(a.id);
+      if(state.ordem==="fimasc")    return _idNum(a.id)-_idNum(b.id);
+      if(state.ordem==="fimdesc")   return _idNum(b.id)-_idNum(a.id);
       return (b.desconto??-1)-(a.desconto??-1);
     });
     shown=0; grid.innerHTML=""; loadingEl.style.display="none";
