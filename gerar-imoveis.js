@@ -144,8 +144,8 @@ function pagina(i){
 
   // ---- documentos ----
   const docs = [];
-  if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" target="_blank" rel="noopener">&#128196; Matricula (PDF)</a>']);
-  docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; Ficha / Edital na Caixa</a>']);
+  if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" download target="_blank" rel="noopener">&#128196; Baixar Matricula (PDF)</a>']);
+  else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; Ficha / Edital na Caixa</a>']);
   const docsHTML = '<div class="docs"><h2>Documentos</h2><div class="docs-row">'+docs.join("")+'</div></div>';
 
   const temDetalhe = (fgts!=null||fin!=null||tributos||condominio||matriculaUrl||areaPriv);
