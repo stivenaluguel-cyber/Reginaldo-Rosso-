@@ -145,17 +145,27 @@ def _parse_csv(conteudo, estado):
         # Mapeamento direto baseado no formato real da Caixa
         # "N do imovel" ou "Numero do imovel" -> numero_imovel
         id_col = None
+        # O ID do imovel da Caixa e um codigo numerico longo (6 a 14 digitos).
+        # Escolhemos a coluna cujos valores melhor se parecem com esse padrao,
+        # com forte prioridade para o cabecalho que contenha "imovel".
+        import re as _re_id
+        best_score = -1
         for col in df.columns:
-            cl = col.lower()
-            if any(k in cl for k in ["n", "num", "cod", "imovel", "imov"]):
-                # verificar se tem dados numericos nessa coluna
-                sample = df[col].dropna().astype(str).head(5).tolist()
-                if any(any(c.isdigit() for c in s) for s in sample):
-                    id_col = col
-                    break
+            cl = str(col).lower()
+            sample = df[col].dropna().astype(str).head(30).tolist()
+            digits_only = [_re_id.sub(r"\D", "", s) for s in sample]
+            longcodes = [d for d in digits_only if 6 <= len(d) <= 14]
+            score = len(longcodes)
+            if any(k in cl for k in ["imovel", "imov", "n do imovel", "n imovel"]):
+                score += 1000
+            if any(k in cl for k in ["preco", "valor", "avalia", "desconto", "lance", "financ"]):
+                score -= 500
+            if score > best_score:
+                best_score = score
+                id_col = col
 
         if id_col is None and len(df.columns) > 0:
-            # Tentar a primeira coluna
+            # Fallback: primeira coluna (sempre "N do imovel" nos CSVs da Caixa)
             id_col = df.columns[0]
 
         if id_col is None:
