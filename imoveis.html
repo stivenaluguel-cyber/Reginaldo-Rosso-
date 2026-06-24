@@ -1,10 +1,5 @@
 <!--
-  ========
-// Parseia débitos da descrição para itens sem dados do JSON
-ALL.forEach(item=>{
-  if(!item.debito_tributos) item.debito_tributos=_parseTrib(item.descricao);
-  if(!item.debito_condominio) item.debito_condominio=_parseCond(item.descricao);
-});====================================================
+  ============================================================
   PORTAL DE IMÓVEIS CAIXA — RS & SC · Reginaldo Rosso
   ------------------------------------------------------------
   Lê os arquivos imoveis-rs.json e imoveis-sc.json (gerados
@@ -392,9 +387,9 @@ window.__AMOSTRA_META__={
   }
   async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
 
-  
-function _parseTrib(d){if(!d)return null;const s=d.toLowerCase();const i=s.indexOf('tributo');if(i<0)return null;const sec=s.substring(i,Math.min(s.length,i+500));if((sec.includes('inferior a 10')||sec.includes('quando o debito for inferior'))&&(sec.includes('superior a 10')||sec.includes('caixa paga integralmente quando')))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
-function _parseCond(d){if(!d)return null;const s=d.toLowerCase();const i=s.indexOf('condomin');if(i<0)return null;const sec=s.substring(i,Math.min(s.length,i+500));if(sec.includes('ate o limite de 10%')||sec.includes('valor que exceder')||sec.includes('10% em relacao'))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
+  function _parseTrib(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('tributo');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if((sec.includes('inferior a 10')||sec.includes('quando o debito for inferior'))&&(sec.includes('superior a 10')||sec.includes('caixa paga integralmente quando')))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
+function _parseCond(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('condomin');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if(sec.includes('ate o limite de 10%')||sec.includes('valor que exceder')||sec.includes('10% em relacao'))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
+
 async function carregar(){
     try{
       let dataTxt="", quando=null, geracao=null;
@@ -417,6 +412,7 @@ async function carregar(){
             if(jd.debito_tributos) item.debito_tributos=jd.debito_tributos;
             if(jd.debito_condominio) item.debito_condominio=jd.debito_condominio;
           });
+ALL.forEach(item=>{if(!item.debito_tributos)item.debito_tributos=_parseTrib(item.descricao);if(!item.debito_condominio)item.debito_condominio=_parseCond(item.descricao);});
         }catch(_){}
       }catch(_){ ALL=[]; }
       // 2) RESERVA: JSON (se algum dia houver coleta completa)
