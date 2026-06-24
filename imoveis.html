@@ -1,16 +1,16 @@
 <!--
   ============================================================
-  PORTAL DE IMÓVEIS CAIXA — RS & SC · Reginaldo Rosso
+  PORTAL DE IMÃVEIS CAIXA â RS & SC Â· Reginaldo Rosso
   ------------------------------------------------------------
-  Lê os arquivos imoveis-rs.json e imoveis-sc.json (gerados
-  diariamente pelo robô atualizar-imoveis.js) e mostra tudo
+  LÃª os arquivos imoveis-rs.json e imoveis-sc.json (gerados
+  diariamente pelo robÃ´ atualizar-imoveis.js) e mostra tudo
   aqui dentro do site. Nenhum redirecionamento para a Caixa.
   Edite WHATS no <script id="amostra">
 // Dados de exemplo embutidos: usados so quando os arquivos JSON ainda nao
 // estao disponiveis (ex.: abrir o arquivo localmente com 2 cliques).
 // Quando o robo publicar os JSON no seu site, eles tem prioridade.
-window.__AMOSTRA_RS__=[{"id":"1444400000","uf":"RS","cidade":"Lajeado","bairro":"Centro","tipo":"Apartamento","endereco":"Rua das Acácias, 1250, Apt 304","preco":182000,"avaliacao":260000,"desconto":30,"descricao":"Apartamento, 48,30m² de área privativa, 1 vaga de garagem","modalidade":"Venda Online","link":""},{"id":"1444400001","uf":"RS","cidade":"Porto Alegre","bairro":"Cidade Baixa","tipo":"Apartamento","endereco":"Rua João Alfredo, 410, Apt 502","preco":149900,"avaliacao":221000,"desconto":32.1,"descricao":"Apartamento, 52m², 2 dormitórios","modalidade":"Venda Online","link":""},{"id":"1444400002","uf":"RS","cidade":"Caxias do Sul","bairro":"São Pelegrino","tipo":"Casa","endereco":"Av. Júlio de Castilhos, 900","preco":235000,"avaliacao":318000,"desconto":26.1,"descricao":"Casa, 120m² construídos, 3 dormitórios","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"1444400003","uf":"RS","cidade":"Canoas","bairro":"Marechal Rondon","tipo":"Apartamento","endereco":"Rua Tiradentes, 77, Apt 201","preco":98000,"avaliacao":142000,"desconto":30.9,"descricao":"Apartamento, 44m², 1 dormitório","modalidade":"Venda Online","link":""},{"id":"1444400004","uf":"RS","cidade":"Pelotas","bairro":"Centro","tipo":"Sala comercial","endereco":"Rua General Osório, 555, Sala 12","preco":72000,"avaliacao":96000,"desconto":25,"descricao":"Sala comercial, 33m²","modalidade":"Compra Direta","link":""},{"id":"1444400005","uf":"RS","cidade":"Santa Maria","bairro":"Camobi","tipo":"Casa","endereco":"Rua das Palmeiras, 88","preco":168000,"avaliacao":205000,"desconto":18,"descricao":"Casa, 98m², 2 dormitórios, pátio","modalidade":"Venda Online","link":""},{"id":"1444400006","uf":"RS","cidade":"Novo Hamburgo","bairro":"Rio Branco","tipo":"Apartamento","endereco":"Rua Bento Gonçalves, 1200, Apt 33","preco":119000,"avaliacao":176000,"desconto":32.4,"descricao":"Apartamento, 49m², 2 dormitórios","modalidade":"Licitação Aberta","link":""},{"id":"1444400007","uf":"RS","cidade":"Gravataí","bairro":"Bom Sucesso","tipo":"Terreno","endereco":"Estrada das Três Meninas, s/n","preco":54000,"avaliacao":80000,"desconto":32.5,"descricao":"Terreno, 360m²","modalidade":"Venda Online","link":""},{"id":"1444400008","uf":"RS","cidade":"Passo Fundo","bairro":"Boqueirão","tipo":"Casa","endereco":"Rua Uruguai, 432","preco":142000,"avaliacao":189000,"desconto":24.9,"descricao":"Casa, 110m², 3 dormitórios","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"1444400009","uf":"RS","cidade":"Bento Gonçalves","bairro":"Cidade Alta","tipo":"Apartamento","endereco":"Rua Marechal Deodoro, 250, Apt 404","preco":205000,"avaliacao":268000,"desconto":23.5,"descricao":"Apartamento, 67m², 2 dormitórios, 1 vaga","modalidade":"Venda Online","link":""}];
-window.__AMOSTRA_SC__=[{"id":"4855500000","uf":"SC","cidade":"Florianópolis","bairro":"Trindade","tipo":"Apartamento","endereco":"Rua Lauro Linhares, 1010, Apt 706","preco":298000,"avaliacao":395000,"desconto":24.5,"descricao":"Apartamento, 58m², 2 dormitórios, 1 vaga","modalidade":"Venda Online","link":""},{"id":"4855500001","uf":"SC","cidade":"Blumenau","bairro":"Velha","tipo":"Casa","endereco":"Rua Amazonas, 322","preco":265000,"avaliacao":340000,"desconto":22,"descricao":"Casa, 130m², 3 dormitórios","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"4855500002","uf":"SC","cidade":"Joinville","bairro":"Glória","tipo":"Apartamento","endereco":"Rua Blumenau, 1450, Apt 102","preco":159000,"avaliacao":231000,"desconto":31.2,"descricao":"Apartamento, 50m², 2 dormitórios","modalidade":"Venda Online","link":""},{"id":"4855500003","uf":"SC","cidade":"Itajaí","bairro":"Fazenda","tipo":"Apartamento","endereco":"Av. Ministro Victor Konder, 80, Apt 901","preco":340000,"avaliacao":430000,"desconto":20.9,"descricao":"Apartamento, 72m², vista mar, 1 vaga","modalidade":"Compra Direta","link":""},{"id":"4855500004","uf":"SC","cidade":"Chapecó","bairro":"Centro","tipo":"Sala comercial","endereco":"Av. Getúlio Vargas, 600, Sala 5","preco":88000,"avaliacao":118000,"desconto":25.4,"descricao":"Sala comercial, 40m²","modalidade":"Venda Online","link":""},{"id":"4855500005","uf":"SC","cidade":"Criciúma","bairro":"Próspera","tipo":"Casa","endereco":"Rua Santos Dumont, 145","preco":178000,"avaliacao":224000,"desconto":20.5,"descricao":"Casa, 105m², 2 dormitórios, garagem","modalidade":"Licitação Aberta","link":""},{"id":"4855500006","uf":"SC","cidade":"Balneário Camboriú","bairro":"Centro","tipo":"Apartamento","endereco":"Rua 1500, 250, Apt 1203","preco":520000,"avaliacao":640000,"desconto":18.7,"descricao":"Apartamento, 80m², 2 suítes, vista mar","modalidade":"2º Leilão SFI - Edital Único","link":""},{"id":"4855500007","uf":"SC","cidade":"Lages","bairro":"Coral","tipo":"Terreno","endereco":"Rua João Costa, s/n","preco":61000,"avaliacao":92000,"desconto":33.6,"descricao":"Terreno, 420m²","modalidade":"Venda Online","link":""}];
+window.__AMOSTRA_RS__=[{"id":"1444400000","uf":"RS","cidade":"Lajeado","bairro":"Centro","tipo":"Apartamento","endereco":"Rua das AcÃ¡cias, 1250, Apt 304","preco":182000,"avaliacao":260000,"desconto":30,"descricao":"Apartamento, 48,30mÂ² de Ã¡rea privativa, 1 vaga de garagem","modalidade":"Venda Online","link":""},{"id":"1444400001","uf":"RS","cidade":"Porto Alegre","bairro":"Cidade Baixa","tipo":"Apartamento","endereco":"Rua JoÃ£o Alfredo, 410, Apt 502","preco":149900,"avaliacao":221000,"desconto":32.1,"descricao":"Apartamento, 52mÂ², 2 dormitÃ³rios","modalidade":"Venda Online","link":""},{"id":"1444400002","uf":"RS","cidade":"Caxias do Sul","bairro":"SÃ£o Pelegrino","tipo":"Casa","endereco":"Av. JÃºlio de Castilhos, 900","preco":235000,"avaliacao":318000,"desconto":26.1,"descricao":"Casa, 120mÂ² construÃ­dos, 3 dormitÃ³rios","modalidade":"2Âº LeilÃ£o SFI - Edital Ãnico","link":""},{"id":"1444400003","uf":"RS","cidade":"Canoas","bairro":"Marechal Rondon","tipo":"Apartamento","endereco":"Rua Tiradentes, 77, Apt 201","preco":98000,"avaliacao":142000,"desconto":30.9,"descricao":"Apartamento, 44mÂ², 1 dormitÃ³rio","modalidade":"Venda Online","link":""},{"id":"1444400004","uf":"RS","cidade":"Pelotas","bairro":"Centro","tipo":"Sala comercial","endereco":"Rua General OsÃ³rio, 555, Sala 12","preco":72000,"avaliacao":96000,"desconto":25,"descricao":"Sala comercial, 33mÂ²","modalidade":"Compra Direta","link":""},{"id":"1444400005","uf":"RS","cidade":"Santa Maria","bairro":"Camobi","tipo":"Casa","endereco":"Rua das Palmeiras, 88","preco":168000,"avaliacao":205000,"desconto":18,"descricao":"Casa, 98mÂ², 2 dormitÃ³rios, pÃ¡tio","modalidade":"Venda Online","link":""},{"id":"1444400006","uf":"RS","cidade":"Novo Hamburgo","bairro":"Rio Branco","tipo":"Apartamento","endereco":"Rua Bento GonÃ§alves, 1200, Apt 33","preco":119000,"avaliacao":176000,"desconto":32.4,"descricao":"Apartamento, 49mÂ², 2 dormitÃ³rios","modalidade":"LicitaÃ§Ã£o Aberta","link":""},{"id":"1444400007","uf":"RS","cidade":"GravataÃ­","bairro":"Bom Sucesso","tipo":"Terreno","endereco":"Estrada das TrÃªs Meninas, s/n","preco":54000,"avaliacao":80000,"desconto":32.5,"descricao":"Terreno, 360mÂ²","modalidade":"Venda Online","link":""},{"id":"1444400008","uf":"RS","cidade":"Passo Fundo","bairro":"BoqueirÃ£o","tipo":"Casa","endereco":"Rua Uruguai, 432","preco":142000,"avaliacao":189000,"desconto":24.9,"descricao":"Casa, 110mÂ², 3 dormitÃ³rios","modalidade":"2Âº LeilÃ£o SFI - Edital Ãnico","link":""},{"id":"1444400009","uf":"RS","cidade":"Bento GonÃ§alves","bairro":"Cidade Alta","tipo":"Apartamento","endereco":"Rua Marechal Deodoro, 250, Apt 404","preco":205000,"avaliacao":268000,"desconto":23.5,"descricao":"Apartamento, 67mÂ², 2 dormitÃ³rios, 1 vaga","modalidade":"Venda Online","link":""}];
+window.__AMOSTRA_SC__=[{"id":"4855500000","uf":"SC","cidade":"FlorianÃ³polis","bairro":"Trindade","tipo":"Apartamento","endereco":"Rua Lauro Linhares, 1010, Apt 706","preco":298000,"avaliacao":395000,"desconto":24.5,"descricao":"Apartamento, 58mÂ², 2 dormitÃ³rios, 1 vaga","modalidade":"Venda Online","link":""},{"id":"4855500001","uf":"SC","cidade":"Blumenau","bairro":"Velha","tipo":"Casa","endereco":"Rua Amazonas, 322","preco":265000,"avaliacao":340000,"desconto":22,"descricao":"Casa, 130mÂ², 3 dormitÃ³rios","modalidade":"2Âº LeilÃ£o SFI - Edital Ãnico","link":""},{"id":"4855500002","uf":"SC","cidade":"Joinville","bairro":"GlÃ³ria","tipo":"Apartamento","endereco":"Rua Blumenau, 1450, Apt 102","preco":159000,"avaliacao":231000,"desconto":31.2,"descricao":"Apartamento, 50mÂ², 2 dormitÃ³rios","modalidade":"Venda Online","link":""},{"id":"4855500003","uf":"SC","cidade":"ItajaÃ­","bairro":"Fazenda","tipo":"Apartamento","endereco":"Av. Ministro Victor Konder, 80, Apt 901","preco":340000,"avaliacao":430000,"desconto":20.9,"descricao":"Apartamento, 72mÂ², vista mar, 1 vaga","modalidade":"Compra Direta","link":""},{"id":"4855500004","uf":"SC","cidade":"ChapecÃ³","bairro":"Centro","tipo":"Sala comercial","endereco":"Av. GetÃºlio Vargas, 600, Sala 5","preco":88000,"avaliacao":118000,"desconto":25.4,"descricao":"Sala comercial, 40mÂ²","modalidade":"Venda Online","link":""},{"id":"4855500005","uf":"SC","cidade":"CriciÃºma","bairro":"PrÃ³spera","tipo":"Casa","endereco":"Rua Santos Dumont, 145","preco":178000,"avaliacao":224000,"desconto":20.5,"descricao":"Casa, 105mÂ², 2 dormitÃ³rios, garagem","modalidade":"LicitaÃ§Ã£o Aberta","link":""},{"id":"4855500006","uf":"SC","cidade":"BalneÃ¡rio CamboriÃº","bairro":"Centro","tipo":"Apartamento","endereco":"Rua 1500, 250, Apt 1203","preco":520000,"avaliacao":640000,"desconto":18.7,"descricao":"Apartamento, 80mÂ², 2 suÃ­tes, vista mar","modalidade":"2Âº LeilÃ£o SFI - Edital Ãnico","link":""},{"id":"4855500007","uf":"SC","cidade":"Lages","bairro":"Coral","tipo":"Terreno","endereco":"Rua JoÃ£o Costa, s/n","preco":61000,"avaliacao":92000,"desconto":33.6,"descricao":"Terreno, 420mÂ²","modalidade":"Venda Online","link":""}];
 window.__AMOSTRA_META__={
   "atualizado": "2026-06-19T12:14:10.915Z",
   "total": 18,
@@ -21,7 +21,7 @@ window.__AMOSTRA_META__={
   "exemplo": true
 };
 </script>
-<script id="config"> se mudar de número.
+<script id="config"> se mudar de nÃºmero.
   ============================================================
 -->
 <meta charset="UTF-8" />
@@ -40,21 +40,21 @@ window.__AMOSTRA_META__={
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<title>Imóveis Caixa à venda no RS e SC — Reginaldo Rosso</title>
-<meta name="description" content="Portal de imóveis da Caixa à venda no Rio Grande do Sul e Santa Catarina, atualizado diariamente. Filtre por cidade, modalidade, preço e desconto e fale direto comigo." />
+<title>ImÃ³veis Caixa Ã  venda no RS e SC â Reginaldo Rosso</title>
+<meta name="description" content="Portal de imÃ³veis da Caixa Ã  venda no Rio Grande do Sul e Santa Catarina, atualizado diariamente. Filtre por cidade, modalidade, preÃ§o e desconto e fale direto comigo." />
 <link rel="canonical" href="https://reginaldorosso.com.br/imoveis.html">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
-<meta property="og:site_name" content="Reginaldo Rosso — Imóveis Caixa">
-<meta property="og:title" content="Imóveis da Caixa à venda no RS e SC — Reginaldo Rosso">
-<meta property="og:description" content="Centenas de imóveis de leilão e venda direta da Caixa no RS e SC. Filtre por cidade, tipo, preço e desconto.">
+<meta property="og:site_name" content="Reginaldo Rosso â ImÃ³veis Caixa">
+<meta property="og:title" content="ImÃ³veis da Caixa Ã  venda no RS e SC â Reginaldo Rosso">
+<meta property="og:description" content="Centenas de imÃ³veis de leilÃ£o e venda direta da Caixa no RS e SC. Filtre por cidade, tipo, preÃ§o e desconto.">
 <meta property="og:url" content="https://reginaldorosso.com.br/imoveis.html">
 <meta property="og:image" content="https://reginaldorosso.com.br/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Imóveis da Caixa à venda no RS e SC — Reginaldo Rosso">
-<meta name="twitter:description" content="Centenas de imóveis de leilão e venda direta da Caixa no RS e SC. Filtre por cidade, tipo, preço e desconto.">
+<meta name="twitter:title" content="ImÃ³veis da Caixa Ã  venda no RS e SC â Reginaldo Rosso">
+<meta name="twitter:description" content="Centenas de imÃ³veis de leilÃ£o e venda direta da Caixa no RS e SC. Filtre por cidade, tipo, preÃ§o e desconto.">
 <meta name="twitter:image" content="https://reginaldorosso.com.br/og-image.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,6 +97,9 @@ window.__AMOSTRA_META__={
   .hero p{color:var(--muted);margin:0;font-size:.98rem}
   .updated{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.8rem;color:var(--ink2);font-weight:600}
   .updated .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .btn-refresh{background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 10px;font-size:.76rem;font-weight:700;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-left:8px;transition:.2s;font-family:inherit}
+  .btn-refresh:hover{border-color:var(--gold);color:var(--ink)}
+  .btn-refresh.spin svg{animation:spin .9s linear infinite}
 
   .filters{position:sticky;top:69px;z-index:30;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
   .fbar{display:grid;grid-template-columns:1.3fr repeat(5,1fr) auto;gap:10px}
@@ -194,69 +197,69 @@ window.__AMOSTRA_META__={
 
 <header>
   <div class="topbar">
-    <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 23h5v5" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="42" width="4" height="8" fill="#c6a052"/><rect x="26" y="38" width="4" height="12" fill="#c6a052"/><rect x="34" y="40" width="4" height="10" fill="#c6a052"/></svg><span class="bt"><b>Reginaldo Rosso</b><small>Imóveis Caixa · RS &amp; SC</small></span></a>
+    <a class="brand" href="index.html"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 23h5v5" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="42" width="4" height="8" fill="#c6a052"/><rect x="26" y="38" width="4" height="12" fill="#c6a052"/><rect x="34" y="40" width="4" height="10" fill="#c6a052"/></svg><span class="bt"><b>Reginaldo Rosso</b><small>ImÃ³veis Caixa Â· RS &amp; SC</small></span></a>
     <nav class="menu">
-      <a href="index.html">Início</a>
-      <a href="imoveis.html" class="on">Imóveis Caixa</a>
+      <a href="index.html">InÃ­cio</a>
+      <a href="imoveis.html" class="on">ImÃ³veis Caixa</a>
       <a href="mapa.html">Mapa</a>
       <a href="como-funciona.html">Como funciona</a>
-    <a href="gestao.html">Gestão</a>
+    <a href="gestao.html">GestÃ£o</a>
       <a href="calculadora.html">Calculadora ROI</a>
       <a href="index.html#contato">Contato</a>
     </nav>
     <div class="fones">
       <div class="fone-drop">
-        <button class="fone-btn">Allan ▾</button>
+        <button class="fone-btn">Allan â¾</button>
         <div class="fone-menu">
-          <a href="tel:5551991104976"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 99110-4976 · RS</a>
-          <a href="tel:5548991642332"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99164-2332 · SC</a>
+          <a href="tel:5551991104976"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 99110-4976 Â· RS</a>
+          <a href="tel:5548991642332"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99164-2332 Â· SC</a>
         </div>
       </div>
       <div class="fone-drop">
-        <button class="fone-btn">Reginaldo ▾</button>
+        <button class="fone-btn">Reginaldo â¾</button>
         <div class="fone-menu">
-          <a href="tel:5551982017867"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 98201-7867 · RS</a>
-          <a href="tel:5548999359022"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99935-9022 · SC</a>
+          <a href="tel:5551982017867"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 98201-7867 Â· RS</a>
+          <a href="tel:5548999359022"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99935-9022 Â· SC</a>
         </div>
       </div>
     </div>
 <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile" id="mobile">
-    <a href="index.html">Início</a>
-    <a href="imoveis.html">Imóveis Caixa</a>
+    <a href="index.html">InÃ­cio</a>
+    <a href="imoveis.html">ImÃ³veis Caixa</a>
     <a href="mapa.html">Mapa</a>
     <a href="como-funciona.html">Como funciona</a>
-    <a href="index.html#relatorio">Relatório</a>
+    <a href="index.html#relatorio">RelatÃ³rio</a>
     <a href="index.html#contato">Contato</a>
-    <a class="mf" href="tel:5551991104976">📞 Allan (51) 99110-4976 · RS</a>
-    <a class="mf" href="tel:5548991642332">📞 Allan (48) 99164-2332 · SC</a>
-    <a class="mf" href="tel:5551982017867">📞 Reginaldo (51) 98201-7867 · RS</a>
-    <a class="mf" href="tel:5548999359022">📞 Reginaldo (48) 99935-9022 · SC</a>
+    <a class="mf" href="tel:5551991104976">ð Allan (51) 99110-4976 Â· RS</a>
+    <a class="mf" href="tel:5548991642332">ð Allan (48) 99164-2332 Â· SC</a>
+    <a class="mf" href="tel:5551982017867">ð Reginaldo (51) 98201-7867 Â· RS</a>
+    <a class="mf" href="tel:5548999359022">ð Reginaldo (48) 99935-9022 Â· SC</a>
   </div>
 </header>
 
 <section class="hero">
   <div class="wrap">
-    <span class="eyebrow">Portal de imóveis</span>
-    <h1>Imóveis da Caixa à venda no RS e SC</h1>
-    <p>Encontre o seu imóvel, fale comigo e receba o Relatório Confidencial sem custo. Tudo aqui no site.</p>
-    <div class="updated"><span class="dot"></span><span id="updatedTxt">Carregando lista atualizada…</span></div>
+    <span class="eyebrow">Portal de imÃ³veis</span>
+    <h1>ImÃ³veis da Caixa Ã  venda no RS e SC</h1>
+    <p>Encontre o seu imÃ³vel, fale comigo e receba o RelatÃ³rio Confidencial sem custo. Tudo aqui no site.</p>
+    <div class="updated"><span class="dot"></span><span id="updatedTxt">Carregando lista atualizada…</span><button class="btn-refresh" id="btnAtualizar" title="Recarregar lista"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar</button></div>
   </div>
 </section>
 
 <section class="filters">
   <div class="wrap">
     <div class="fbar">
-      <div class="field"><label for="q">Buscar (cidade, bairro, descrição)</label><input id="q" type="search" placeholder="Ex.: apartamento Lajeado, casa Blumenau…" autocomplete="off"></div>
+      <div class="field"><label for="q">Buscar (cidade, bairro, descriÃ§Ã£o)</label><input id="q" type="search" placeholder="Ex.: apartamento Lajeado, casa Blumenauâ¦" autocomplete="off"></div>
       <div class="field"><label for="cidade">Cidade</label><select id="cidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
-      <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option></select></div>
+      <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">NÃ£o aceita</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
         <option value="desc">Maior desconto</option>
-        <option value="precoasc">Menor preço</option>
-        <option value="precodesc">Maior preço</option>
+        <option value="precoasc">Menor preÃ§o</option>
+        <option value="precodesc">Maior preÃ§o</option>
       </select></div>
       <button class="clearbtn" id="clear">Limpar</button>
     </div>
@@ -264,11 +267,11 @@ window.__AMOSTRA_META__={
       <button class="chip" data-uf="" aria-pressed="true">Todos os estados</button>
       <button class="chip" data-uf="RS" aria-pressed="false">Rio Grande do Sul</button>
       <button class="chip" data-uf="SC" aria-pressed="false">Santa Catarina</button>
-      <button class="chip" data-min="0" data-max="100000" aria-pressed="false">Até R$ 100 mil</button>
-      <button class="chip" data-min="100000" data-max="200000" aria-pressed="false">R$ 100–200 mil</button>
-      <button class="chip" data-min="200000" data-max="400000" aria-pressed="false">R$ 200–400 mil</button>
+      <button class="chip" data-min="0" data-max="100000" aria-pressed="false">AtÃ© R$ 100 mil</button>
+      <button class="chip" data-min="100000" data-max="200000" aria-pressed="false">R$ 100â200 mil</button>
+      <button class="chip" data-min="200000" data-max="400000" aria-pressed="false">R$ 200â400 mil</button>
       <button class="chip" data-mindesc="30" aria-pressed="false">Desconto 30%+</button>
-      <button class="chip chip-fav" id="chipFav" aria-pressed="false">♥ Favoritos (<span id="favN">0</span>)</button>
+      <button class="chip chip-fav" id="chipFav" aria-pressed="false">â¥ Favoritos (<span id="favN">0</span>)</button>
       <button class="chip chip-send" id="sendFav" style="display:none">Enviar favoritos no WhatsApp</button>
       <span class="count" id="count"></span>
     </div>
@@ -277,14 +280,14 @@ window.__AMOSTRA_META__={
 
 <div class="wrap">
   <div id="grid" class="grid"></div>
-  <div id="loading" class="loading"><div class="spinner"></div>Buscando imóveis…</div>
-  <button id="loadmore" class="loadmore" style="display:none">Ver mais imóveis</button>
+  <div id="loading" class="loading"><div class="spinner"></div>Buscando imÃ³veisâ¦</div>
+  <button id="loadmore" class="loadmore" style="display:none">Ver mais imÃ³veis</button>
 </div>
 
 <footer>
   <div class="wrap">
-    Dados obtidos da base pública da CAIXA Econômica Federal, atualizados diariamente. Valores e situação podem mudar — confirme sempre no edital oficial.<br>
-    © 2026 — Reginaldo Rosso · Corretor de Imóveis · CRECI RS 28565J · CRECI SC 8152J.
+    Dados obtidos da base pÃºblica da CAIXA EconÃ´mica Federal, atualizados diariamente. Valores e situaÃ§Ã£o podem mudar â confirme sempre no edital oficial.<br>
+    Â© 2026 â Reginaldo Rosso Â· Corretor de ImÃ³veis Â· CRECI RS 28565J Â· CRECI SC 8152J.
   </div>
 </footer>
 
@@ -301,7 +304,7 @@ window.__AMOSTRA_META__={
   const fotoURL = id => `https://venda-imoveis.caixa.gov.br/fotos/F${id}21.jpg`;
 </script>
 <script>
-  const BRL = v => v==null ? "—" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+  const BRL = v => v==null ? "â" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
   const norm = s => (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   const PER_PAGE = 24;
 
@@ -326,8 +329,8 @@ window.__AMOSTRA_META__={
     const L=favList(); if(!L.length) return;
     const ufc={RS:0,SC:0}; L.forEach(i=>{if(ufc[i.uf]!=null)ufc[i.uf]++;});
     const uf=ufc.SC>ufc.RS?"SC":"RS";
-    let msg="Olá Reginaldo! Tenho interesse nestes imóveis que favoritei no site:\n\n";
-    L.forEach((i,n)=>{msg+=(n+1)+") "+(i.tipo||"Imóvel")+" · "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf+" — "+BRL(i.preco)+" (cód. "+i.id+")\n";});
+    let msg="OlÃ¡ Reginaldo! Tenho interesse nestes imÃ³veis que favoritei no site:\n\n";
+    L.forEach((i,n)=>{msg+=(n+1)+") "+(i.tipo||"ImÃ³vel")+" Â· "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf+" â "+BRL(i.preco)+" (cÃ³d. "+i.id+")\n";});
     msg+="\nPode me passar mais detalhes sobre eles?";
     if(window.gtag) gtag("event","generate_lead",{method:"favoritos",value:L.length});
     window.open("https://wa.me/"+(WHATS[uf]||WHATS.RS)+"?text="+encodeURIComponent(msg),"_blank");
@@ -337,15 +340,15 @@ window.__AMOSTRA_META__={
         loadmore=document.getElementById("loadmore"), countEl=document.getElementById("count");
 
   // ---- carregar JSON (mesmo site, sem CORS) ----
-  // --- conversor de CSV da Caixa (mesmo formato do robô), feito no navegador ---
+  // --- conversor de CSV da Caixa (mesmo formato do robÃ´), feito no navegador ---
   const _k=s=>(s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
-  function _num(v){ // o ÚLTIMO separador (. ou ,) é o decimal — funciona p/ "37.585,97" e "66.45"
+  function _num(v){ // o ÃLTIMO separador (. ou ,) Ã© o decimal â funciona p/ "37.585,97" e "66.45"
     if(v==null)return null; let s=v.toString().trim().replace(/[^0-9.,]/g,""); if(!s)return null;
     const d=Math.max(s.lastIndexOf("."),s.lastIndexOf(",")); if(d<0){const n=parseFloat(s);return isNaN(n)?null:n;}
     const n=parseFloat(s.slice(0,d).replace(/[.,]/g,"")+"."+s.slice(d+1).replace(/[.,]/g,"")); return isNaN(n)?null:n;
   }
   const _simNao=v=>{if(v==null)return null;const k=_k(v);if(k.startsWith("sim"))return true;if(k.startsWith("nao"))return false;return null;};
-  function _tipo(d){d=_k(d);const m=[["apartamento","Apartamento"],["casa","Casa"],["terreno","Terreno"],["loja","Loja"],["sala","Sala comercial"],["galpao","Galpão"],["sobrado","Sobrado"],["gleba","Gleba"],["predio","Prédio"],["chacara","Chácara"],["fazenda","Fazenda"],["kitnet","Kitnet"],["lote","Lote"],["imovel","Imóvel"]];for(const[a,b]of m)if(d.includes(a))return b;return "Imóvel";}
+  function _tipo(d){d=_k(d);const m=[["apartamento","Apartamento"],["casa","Casa"],["terreno","Terreno"],["loja","Loja"],["sala","Sala comercial"],["galpao","GalpÃ£o"],["sobrado","Sobrado"],["gleba","Gleba"],["predio","PrÃ©dio"],["chacara","ChÃ¡cara"],["fazenda","Fazenda"],["kitnet","Kitnet"],["lote","Lote"],["imovel","ImÃ³vel"]];for(const[a,b]of m)if(d.includes(a))return b;return "ImÃ³vel";}
   function parseCaixaCSV(txt){
     const L=txt.split(/\r?\n/);
     let hi=L.findIndex(l=>{const k=_k(l);return k.includes("cidade")&&k.includes("preco");});
@@ -365,9 +368,9 @@ window.__AMOSTRA_META__={
         const res=await fetch(nome+"?t="+Date.now(),{cache:"no-store"});
         if(!res.ok) continue;
         const buf=await res.arrayBuffer();
-        const txt=new TextDecoder("iso-8859-1").decode(buf); // listas da Caixa são latin1
+        const txt=new TextDecoder("iso-8859-1").decode(buf); // listas da Caixa sÃ£o latin1
         if(/cidade/i.test(txt)&&txt.length>200){
-          const mg=txt.match(/gera[çc][aã]o[^0-9]*(\d{2}\/\d{2}\/\d{4})/i);
+          const mg=txt.match(/gera[Ã§c][aÃ£]o[^0-9]*(\d{2}\/\d{2}\/\d{4})/i);
           return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified"),geracao:mg?mg[1]:null};
         }
       }catch(_){}
@@ -392,19 +395,19 @@ window.__AMOSTRA_META__={
         ALL=[...rs,...sc];
         if(meta&&meta.atualizado) quando=meta.atualizado;
       }
-      // 3) ÚLTIMO RECURSO: amostra embutida (abrindo o arquivo localmente)
+      // 3) ÃLTIMO RECURSO: amostra embutida (abrindo o arquivo localmente)
       if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; quando=(window.__AMOSTRA_META__||{}).atualizado; }
 
       const elU=document.getElementById("updatedTxt");
-      if(geracao){ elU.textContent="Lista da Caixa gerada em "+geracao+" · "+ALL.length+" imóveis"; }
-      else if(quando){ const d=new Date(quando); elU.textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" · "+ALL.length+" imóveis"; }
-      else{ elU.textContent=ALL.length+" imóveis disponíveis"; }
+      if(geracao){ elU.textContent="Lista da Caixa gerada em "+geracao+" Â· "+ALL.length+" imÃ³veis"; }
+      else if(quando){ const d=new Date(quando); elU.textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" Â· "+ALL.length+" imÃ³veis"; }
+      else{ elU.textContent=ALL.length+" imÃ³veis disponÃ­veis"; }
       preencherFiltros();
       aplicarHash();
       aplicar();
       updateFavUI();
     }catch(e){
-      loadingEl.innerHTML="<h2>Não consegui carregar a lista agora.</h2><p>Atualize a página em instantes.</p>";
+      loadingEl.innerHTML="<h2>NÃ£o consegui carregar a lista agora.</h2><p>Atualize a pÃ¡gina em instantes.</p>";
     }
   }
 
@@ -425,16 +428,16 @@ window.__AMOSTRA_META__={
   }
   async function shareImovel(i){
     const url=location.origin+"/imovel/"+i.id+".html";
-    const titulo=(i.tipo||"Imóvel")+" em "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf;
-    const txt=titulo+" — "+BRL(i.preco)+(i.desconto?" ("+Math.round(i.desconto)+"% OFF)":"")+"\nImóvel da Caixa com o corretor Reginaldo Rosso:\n"+url;
+    const titulo=(i.tipo||"ImÃ³vel")+" em "+(i.cidade||"")+(i.bairro?" - "+i.bairro:"")+"/"+i.uf;
+    const txt=titulo+" â "+BRL(i.preco)+(i.desconto?" ("+Math.round(i.desconto)+"% OFF)":"")+"\nImÃ³vel da Caixa com o corretor Reginaldo Rosso:\n"+url;
     try{
       if(window.gtag) gtag("event","share",{item_id:i.id});
       if(navigator.share){ await navigator.share({title:titulo,text:txt,url:url}); return; }
-    }catch(e){ return; } // usuário cancelou o compartilhamento
+    }catch(e){ return; } // usuÃ¡rio cancelou o compartilhamento
     try{ await navigator.clipboard.writeText(txt); flashShare("Link copiado!"); }
-    catch(e){ window.prompt("Copie o link deste imóvel:", url); }
+    catch(e){ window.prompt("Copie o link deste imÃ³vel:", url); }
   }
-  function flashShare(msg){const b=document.getElementById("mshare");if(b){const o=b.innerHTML;b.innerHTML="✓ "+msg;setTimeout(()=>{b.innerHTML=o;},2200);}}
+  function flashShare(msg){const b=document.getElementById("mshare");if(b){const o=b.innerHTML;b.innerHTML="â "+msg;setTimeout(()=>{b.innerHTML=o;},2200);}}
 
   function aplicar(){
     view=ALL.filter(i=>{
@@ -460,9 +463,9 @@ window.__AMOSTRA_META__={
       return (b.desconto??-1)-(a.desconto??-1);
     });
     shown=0; grid.innerHTML=""; loadingEl.style.display="none";
-    countEl.innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> "+(view.length===1?"imóvel":"imóveis");
+    countEl.innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> "+(view.length===1?"imÃ³vel":"imÃ³veis");
     if(!view.length){
-      grid.innerHTML="<div class='empty' style='grid-column:1/-1'><h2>Nenhum imóvel com esses filtros.</h2><p>Tente ampliar a busca ou limpar os filtros.</p></div>";
+      grid.innerHTML="<div class='empty' style='grid-column:1/-1'><h2>Nenhum imÃ³vel com esses filtros.</h2><p>Tente ampliar a busca ou limpar os filtros.</p></div>";
       loadmore.style.display="none"; return;
     }
     render();
@@ -489,7 +492,7 @@ window.__AMOSTRA_META__={
       const foto=fotoDe(i);
       const img = foto ? `<img src="${foto}" loading="lazy" referrerpolicy="no-referrer" alt="" onerror="this.style.display='none'">` : "";
       el.innerHTML=`
-        <div class="pholder">${i.tipo||'Imóvel'}</div>
+        <div class="pholder">${i.tipo||'ImÃ³vel'}</div>
         ${img}
         <div class="grad"></div>
         <div class="badges">
@@ -504,7 +507,7 @@ window.__AMOSTRA_META__={
           ${i.bairro?`<div class="cbairro">${i.bairro}</div>`:""}
         </div>
         <div class="cbot">
-          <div class="ctype">${i.tipo||"Imóvel"}</div>
+          <div class="ctype">${i.tipo||"ImÃ³vel"}</div>
           <div class="specs">${specsHTML(i)}</div>
           <div class="price">${BRL(i.preco)}${i.avaliacao&&i.avaliacao>i.preco?`<span class="old">${BRL(i.avaliacao)}</span>`:""}</div>
         </div>`;
@@ -527,74 +530,74 @@ window.__AMOSTRA_META__={
 
   // ---- modal detalhe ----
   const modal=document.getElementById("modal"), sheet=document.getElementById("sheet");
-  // rótulos amigáveis e extração de dados da descrição
+  // rÃ³tulos amigÃ¡veis e extraÃ§Ã£o de dados da descriÃ§Ã£o
   const CRECI={RS:"CRECI/RS 28565J",SC:"CRECI/SC 8152J"};
   const BASE_CAIXA="https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel=";
   function modalidadeLabel(m){
-    if(!m) return "—"; const k=_k(m);
+    if(!m) return "â"; const k=_k(m);
     if(k.includes("direta")) return "Venda Direta Online";
-    if(k.includes("licitacao")) return "Licitação Aberta";
-    if(k.includes("2")&&(k.includes("praca")||k.includes("leilao"))) return "2ª Praça (Leilão)";
-    if(k.includes("1")&&(k.includes("praca")||k.includes("leilao"))) return "1ª Praça (Leilão)";
+    if(k.includes("licitacao")) return "LicitaÃ§Ã£o Aberta";
+    if(k.includes("2")&&(k.includes("praca")||k.includes("leilao"))) return "2Âª PraÃ§a (LeilÃ£o)";
+    if(k.includes("1")&&(k.includes("praca")||k.includes("leilao"))) return "1Âª PraÃ§a (LeilÃ£o)";
     if(k.includes("online")) return "Venda Online";
-    if(k.includes("leilao")) return "Leilão (SFI)";
+    if(k.includes("leilao")) return "LeilÃ£o (SFI)";
     return m;
   }
   function aposRotulo(desc,rotulo,fins){
     if(!desc) return ""; const i=desc.search(new RegExp(rotulo+"\\s*:","i")); if(i<0) return "";
     let rest=desc.slice(i); rest=rest.slice(rest.indexOf(":")+1);
     let cut=rest.length; (fins||[]).forEach(f=>{const j=rest.search(new RegExp(f,"i")); if(j>=0&&j<cut)cut=j;});
-    return rest.slice(0,cut).trim().replace(/\s+/g," ").replace(/[-–]\s*$/,"").trim();
+    return rest.slice(0,cut).trim().replace(/\s+/g," ").replace(/[-â]\s*$/,"").trim();
   }
   function nomeCondominio(desc){
-    if(!desc) return ""; const first=desc.split(/\s[-–]\s/)[0].trim();
+    if(!desc) return ""; const first=desc.split(/\s[-â]\s/)[0].trim();
     return (/cond|resid|edif|villa|village|loteamento|parque/i.test(first)&&first.length<90)?first:"";
   }
-  const simNao=v=>v===true?"Sim":v===false?"Não":null;
+  const simNao=v=>v===true?"Sim":v===false?"NÃ£o":null;
 
   function abrir(i){
     const foto=fotoDe(i);
-    const waMsg=`Olá Reginaldo! Tenho interesse no imóvel ${i.id} — ${i.tipo||"imóvel"} em ${i.cidade}/${i.uf} (${BRL(i.preco)}). Vi no seu site. Pode me ajudar a arrematar?`;
+    const waMsg=`OlÃ¡ Reginaldo! Tenho interesse no imÃ³vel ${i.id} â ${i.tipo||"imÃ³vel"} em ${i.cidade}/${i.uf} (${BRL(i.preco)}). Vi no seu site. Pode me ajudar a arrematar?`;
     const wa="https://wa.me/"+(WHATS[i.uf]||WHATS.RS)+"?text="+encodeURIComponent(waMsg);
 
     const kv=[
-      `<div>Preço de venda<b>${BRL(i.preco)}</b></div>`,
-      `<div>Avaliação Caixa<b>${BRL(i.avaliacao)}</b></div>`,
-      `<div>Desconto<b>${i.desconto?Math.round(i.desconto)+"%":"—"}</b></div>`,
+      `<div>PreÃ§o de venda<b>${BRL(i.preco)}</b></div>`,
+      `<div>AvaliaÃ§Ã£o Caixa<b>${BRL(i.avaliacao)}</b></div>`,
+      `<div>Desconto<b>${i.desconto?Math.round(i.desconto)+"%":"â"}</b></div>`,
       `<div>Modalidade<b style="font-size:.9rem">${modalidadeLabel(i.modalidade)}</b></div>`,
     ];
-    if(i.matricula) kv.push(`<div>Matrícula<b>${i.matricula}</b></div>`);
+    if(i.matricula) kv.push(`<div>MatrÃ­cula<b>${i.matricula}</b></div>`);
     if(i.comarca) kv.push(`<div>Comarca<b style="font-size:.9rem">${i.comarca}</b></div>`);
-    if(i.leilao1) kv.push(`<div>1ª Praça<b style="font-size:.95rem">${BRL(i.leilao1)}</b></div>`);
-    if(i.leilao2) kv.push(`<div>2ª Praça<b style="font-size:.95rem">${BRL(i.leilao2)}</b></div>`);
+    if(i.leilao1) kv.push(`<div>1Âª PraÃ§a<b style="font-size:.95rem">${BRL(i.leilao1)}</b></div>`);
+    if(i.leilao2) kv.push(`<div>2Âª PraÃ§a<b style="font-size:.95rem">${BRL(i.leilao2)}</b></div>`);
     [["Financiamento",i.financiamento],["Usa FGTS",i.fgts],["Parcelamento",i.parcelamento]].forEach(([rot,val])=>{const s=simNao(val);if(s)kv.push(`<div>${rot}<b>${s}</b></div>`);});
 
     const nomeC=nomeCondominio(i.descricao);
-    const cond=aposRotulo(i.descricao,"Condom[íi]nio",["Tributos","Despesas","Situa","Coment","Inscri"]);
+    const cond=aposRotulo(i.descricao,"Condom[Ã­i]nio",["Tributos","Despesas","Situa","Coment","Inscri"]);
     const trib=aposRotulo(i.descricao,"Tributos",["Condom","Despesas","Situa","Coment","Inscri"]);
 
     sheet.innerHTML=`
       <div class="sheet__img">
         ${foto?`<img src="${foto}" referrerpolicy="no-referrer" alt="" onerror="this.style.display='none'">`:""}
-        <button class="sheet__x" id="mx" aria-label="Fechar">×</button>
+        <button class="sheet__x" id="mx" aria-label="Fechar">Ã</button>
       </div>
       <div class="sheet__body">
-        <span class="ctype" style="color:var(--accent);font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase">${i.tipo||"Imóvel"} · ${i.uf}</span>
-        <h2>${i.cidade}${i.bairro?" · "+i.bairro:""}</h2>
+        <span class="ctype" style="color:var(--accent);font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase">${i.tipo||"ImÃ³vel"} Â· ${i.uf}</span>
+        <h2>${i.cidade}${i.bairro?" Â· "+i.bairro:""}</h2>
         <div class="sheet__addr">${i.endereco||""}</div>
         <div class="kv">${kv.join("")}</div>
-        ${nomeC?`<div class="binfo"><b>Condomínio:</b> ${nomeC}</div>`:""}
-        ${cond?`<div class="binfo"><b>Despesas de condomínio:</b> ${cond}</div>`:""}
+        ${nomeC?`<div class="binfo"><b>CondomÃ­nio:</b> ${nomeC}</div>`:""}
+        ${cond?`<div class="binfo"><b>Despesas de condomÃ­nio:</b> ${cond}</div>`:""}
         ${trib?`<div class="binfo"><b>Tributos (IPTU):</b> ${trib}</div>`:""}
-        ${i.descricao?`<div class="sheet__desc"><b style="color:var(--ink)">Descrição:</b> ${i.descricao}</div>`:""}
+        ${i.descricao?`<div class="sheet__desc"><b style="color:var(--ink)">DescriÃ§Ã£o:</b> ${i.descricao}</div>`:""}
         <div class="sheet__cta">
-          <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">📲 Tenho interesse — falar no WhatsApp</a>
-          <a class="btn btn--ghost" href="${i.link||(BASE_CAIXA+i.id)}" target="_blank" rel="noopener">📄 Ver ficha oficial na Caixa</a>
-          <a class="btn btn--ghost" href="/imovel/${i.id}.html">🔎 Ver página completa</a>
-          <button class="btn btn--share" id="mshare">🔗 Compartilhar</button>
+          <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">ð² Tenho interesse â falar no WhatsApp</a>
+          <a class="btn btn--ghost" href="${i.link||(BASE_CAIXA+i.id)}" target="_blank" rel="noopener">ð Ver ficha oficial na Caixa</a>
+          <a class="btn btn--ghost" href="/imovel/${i.id}.html">ð Ver pÃ¡gina completa</a>
+          <button class="btn btn--share" id="mshare">ð Compartilhar</button>
         </div>
-        <div class="binfo" style="border-left-color:var(--gold);margin-top:12px"><b>Na ficha oficial da Caixa você confere:</b> matrícula, FGTS, parcelamento, tributos/condomínio (quem paga) e valores de 1ª e 2ª praça.</div>
-        <div class="relat">★ Arrematando comigo, o Relatório Confidencial deste imóvel é gratuito.<br>Código Caixa: ${i.id} · Corretagem: <b style="color:var(--green)">${CRECI[i.uf]||"Reginaldo Rosso"}</b> (indique na proposta)</div>
+        <div class="binfo" style="border-left-color:var(--gold);margin-top:12px"><b>Na ficha oficial da Caixa vocÃª confere:</b> matrÃ­cula, FGTS, parcelamento, tributos/condomÃ­nio (quem paga) e valores de 1Âª e 2Âª praÃ§a.</div>
+        <div class="relat">â Arrematando comigo, o RelatÃ³rio Confidencial deste imÃ³vel Ã© gratuito.<br>CÃ³digo Caixa: ${i.id} Â· Corretagem: <b style="color:var(--green)">${CRECI[i.uf]||"Reginaldo Rosso"}</b> (indique na proposta)</div>
       </div>`;
     modal.classList.add("open"); document.body.style.overflow="hidden";
     document.getElementById("mx").addEventListener("click",fechar);
@@ -703,5 +706,45 @@ window.__AMOSTRA_META__={
       }catch(e){}
     })
     .catch(function(){});
+})();
+</script>
+
+<script>
+/* Botão de atualização manual da lista */
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('btnAtualizar');
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.classList.add('spin');
+      btn.innerHTML = btn.innerHTML.replace(/Atualizar.*$/, 'Atualizando…');
+      // Limpa os dados e recarrega
+      if (typeof ALL !== 'undefined') {
+        ALL = [];
+        if (typeof view !== 'undefined') view = [];
+        var grid = document.getElementById('grid');
+        if (grid) grid.innerHTML = '';
+        var loading = document.getElementById('loading');
+        if (loading) loading.style.display = 'block';
+        var loadmore = document.getElementById('loadmore');
+        if (loadmore) loadmore.style.display = 'none';
+      }
+      if (typeof carregar === 'function') {
+        carregar().then(function(){
+          btn.disabled = false;
+          btn.classList.remove('spin');
+          btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar';
+        }).catch(function(){
+          btn.disabled = false;
+          btn.classList.remove('spin');
+          btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Atualizar';
+        });
+      } else {
+        location.reload();
+      }
+    });
+  });
 })();
 </script>
