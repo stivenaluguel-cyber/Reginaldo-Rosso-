@@ -106,80 +106,96 @@ def _log_conteudo_invalido(conteudo: bytes, estado: str, estrategia: str):
         logger.info(f"etapa1: {estrategia} {estado}: {len(conteudo)} bytes (nao decodificavel)")
 
 
-def _parse_csv(conteudo: bytes, estado: str) -> list:
+def _parse_csv(conteudo, estado):
+    """Parse do CSV da Caixa.
+    O CSV tem linha 0 de titulo (Lista de Imoveis da Caixa...) e linha 1 com cabecalhos.
+    Usa skiprows=1 para pular o titulo e header=0 para usar a linha 1 como cabecalho.
+    """
     imoveis = []
     try:
         df = None
+        # O CSV da Caixa usa separador ; e encoding latin-1
+        # Linha 0 = titulo, Linha 1 = cabecalho, Linhas 2+ = dados
         for enc in ("latin-1", "utf-8", "cp1252"):
-            for skiprows in (0, 1):
+            for sr in (1, 0):
                 try:
-                    df = pd.read_csv(
+                    df_test = pd.read_csv(
                         io.BytesIO(conteudo),
                         encoding=enc,
                         sep=";",
                         dtype=str,
                         on_bad_lines="skip",
                         skip_blank_lines=True,
-                        skiprows=skiprows,
+                        skiprows=sr,
                     )
-                    # CSV valido tem colunas reais (nao so indices numericos)
-                    cols = [str(c).lower() for c in df.columns]
-                    has_real_cols = any(
-                        any(kw in c for kw in ["imovel", "imóvel", "cidade", "uf", "preco", "preço",
-                                               "numero", "número", "bairro", "modal", "avali"])
-                        for c in cols
-                    )
-                    if len(df.columns) > 1 and has_real_cols:
+                    if len(df_test.columns) >= 3:
+                        df = df_test
                         break
-                    df = None
                 except Exception:
-                    df = None
+                    pass
             if df is not None:
                 break
+
         if df is None or df.empty:
+            logger.warning(f"etapa1: parse {estado}: nao foi possivel criar DataFrame")
             return []
 
-        df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+        # Normalizar nomes de colunas
+        df.columns = [str(c).strip() for c in df.columns]
+        logger.info(f"etapa1: parse {estado}: colunas brutas={list(df.columns)[:5]}")
 
-        COL_ALIASES = {
-            "numero_imovel":   ["numero_do_imovel", "cod_imovel", "codigo", "numero_imovel", "num_imovel", "imovel"],
-            "uf":              ["uf", "estado", "sg_uf"],
-            "cidade":          ["cidade", "municipio", "nm_cidade", "nm_municipio"],
-            "bairro":          ["bairro", "nm_bairro"],
-            "endereco":        ["endereco", "logradouro", "rua", "nm_logradouro", "ds_endereco"],
-            "preco_avaliacao": ["valor_de_avaliacao", "avaliacao", "vl_avaliacao", "preco_avaliacao"],
-            "preco_minimo":    ["valor_minimo_de_venda", "preco_minimo", "lance_minimo", "vl_minimo", "valor_minimo"],
-            "modalidade":      ["modalidade_de_venda", "modalidade", "tp_modalidade"],
-            "descricao":       ["descricao_do_imovel", "descricao", "tipo_imovel", "tipo", "ds_imovel"],
-            "numero_matricula":["numero_da_matricula", "matricula", "nr_matricula"],
-            "link_detalhe":    ["link_de_acesso", "link", "url", "ds_link"],
-        }
-
-        def find_col(aliases):
-            for a in aliases:
-                if a in df.columns:
-                    return a
-            return None
-
-        col_map = {c: find_col(als) for c, als in COL_ALIASES.items()}
-        id_col = col_map.get("numero_imovel")
-        if id_col is None:
-            for col in df.columns:
-                sample = df[col].dropna().astype(str)
-                if sample.str.match(r"^\d+").any():
+        # Mapeamento direto baseado no formato real da Caixa
+        # "N do imovel" ou "Numero do imovel" -> numero_imovel
+        id_col = None
+        for col in df.columns:
+            cl = col.lower()
+            if any(k in cl for k in ["n", "num", "cod", "imovel", "imov"]):
+                # verificar se tem dados numericos nessa coluna
+                sample = df[col].dropna().astype(str).head(5).tolist()
+                if any(any(c.isdigit() for c in s) for s in sample):
                     id_col = col
                     break
+
+        if id_col is None and len(df.columns) > 0:
+            # Tentar a primeira coluna
+            id_col = df.columns[0]
+
         if id_col is None:
+            logger.warning(f"etapa1: parse {estado}: sem coluna ID")
             return []
 
+        # Mapear outras colunas por palavras-chave
+        def find_col_by_kws(kws):
+            for col in df.columns:
+                cl = col.lower()
+                if any(k in cl for k in kws):
+                    return col
+            return None
+
+        col_map = {
+            "numero_imovel": id_col,
+            "uf":             find_col_by_kws(["uf", "estado", "sg_uf"]),
+            "cidade":         find_col_by_kws(["cidade", "munic"]),
+            "bairro":         find_col_by_kws(["bairro"]),
+            "endereco":       find_col_by_kws(["endereco", "logradouro", "rua", "end"]),
+            "preco_minimo":   find_col_by_kws(["preco", "pre", "lance", "minimo", "venda"]),
+            "preco_avaliacao":find_col_by_kws(["avalia", "valor_avalia", "valor de avalia"]),
+            "modalidade":     find_col_by_kws(["modalidade", "modal"]),
+            "descricao":      find_col_by_kws(["descricao", "descri", "tipo"]),
+            "link_detalhe":   find_col_by_kws(["link", "url", "acesso"]),
+        }
+
         CAMPOS_FLOAT = {"preco_avaliacao", "preco_minimo"}
+        contador = 0
+
         for _, row in df.iterrows():
             id_val = str(row.get(id_col, "")).strip()
+            # Ignorar linhas sem ID numerico
             if not id_val or id_val.lower() in ("nan", "none", "") or not any(c.isdigit() for c in id_val):
                 continue
             imovel = {"numero_imovel": id_val, "uf": estado, "status": "Disponivel"}
             for campo, col in col_map.items():
-                if col is None:
+                if col is None or campo == "numero_imovel":
                     continue
                 val = str(row.get(col, "")).strip()
                 if not val or val.lower() in ("nan", "none", ""):
@@ -193,12 +209,12 @@ def _parse_csv(conteudo: bytes, estado: str) -> list:
                 else:
                     imovel[campo] = val
             imoveis.append(imovel)
+            contador += 1
 
-        logger.info(f"etapa1: CSV {estado}: {len(imoveis)} imoveis ({len(df)} linhas bruto)")
+        logger.info(f"etapa1: CSV {estado}: {contador} imoveis parseados de {len(df)} linhas")
     except Exception as e:
         logger.warning(f"etapa1: parse {estado}: {e}", exc_info=True)
     return imoveis
-
 
 async def _download_via_httpx(estado: str, session: httpx.AsyncClient) -> Optional[bytes]:
     """Estrategia 0: httpx com HTTP/2, reutilizando sessao para cookies."""
