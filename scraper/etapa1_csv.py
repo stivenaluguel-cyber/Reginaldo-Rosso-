@@ -527,11 +527,17 @@ async def _executar() -> dict:
         db.mark_unavailable(list(ids_removidos))
 
     novos = [im for im in todos_imoveis if im["numero_imovel"] in ids_novos]
-    for im in novos:
+    # Upsert em lote (MUITO mais rapido que um-por-um com Neon remoto)
+    if novos:
         try:
-            db.upsert_imovel(im)
+            db.upsert_imoveis_bulk(novos)
         except Exception as e:
-            logger.warning(f"etapa1: upsert {im.get('numero_imovel')}: {e}")
+            logger.error(f"etapa1: upsert_bulk falhou: {e}; tentando um-por-um...")
+            for im in novos:
+                try:
+                    db.upsert_imovel(im)
+                except Exception as e2:
+                    logger.warning(f"etapa1: upsert {im.get('numero_imovel')}: {e2}")
 
     logger.info(
         f"etapa1: FINAL total_csv={len(ids_csv)} | banco={len(ids_banco)} | "
