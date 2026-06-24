@@ -328,6 +328,8 @@ async def _extrair_dados_playwright(page, numero_imovel):
 async def scrape_imovel(numero_imovel, uf=None, browser=None):
     """Raspa um imovel. Retorna dict com dados enriquecidos ou None."""
     dados = {"numero_imovel": str(numero_imovel), "status": "Disponivel"}
+    if uf:
+        dados["uf"] = uf.strip().upper()
 
     # --- Etapa 2a: baixar matricula via URL deterministica (sem Playwright) ---
     pdf_content = _baixar_pdf_determinisitco(numero_imovel, uf)
