@@ -28,12 +28,10 @@ from config import USER_AGENT, LOCALE, TIMEZONE
 
 logger = logging.getLogger(__name__)
 
-ESTADOS = [
-    "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO",
-    "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR",
-    "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
-]
-ESTADOS_PRIORIDADE = ["SP", "MG", "RJ", "RS", "PR"]
+# Foco configuravel por env var FOCO_ESTADOS (padrao: RS,SC).
+# Apenas estes estados serao baixados, crosscheckados e enriquecidos.
+ESTADOS = [e.strip().upper() for e in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if e.strip()]
+ESTADOS_PRIORIDADE = list(ESTADOS)
 
 CAIXA_CSV_URL = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{estado}.csv"
 CAIXA_HOME_URL = "https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.aspx?sltTipoBusca=imoveis"
@@ -519,7 +517,7 @@ async def _executar() -> dict:
 
     # Crosscheck banco
     ids_csv = {im["numero_imovel"] for im in todos_imoveis}
-    ids_banco = db.get_all_ids()
+    ids_banco = db.get_ids_by_uf(ESTADOS)
     ids_removidos = ids_banco - ids_csv
     ids_novos = ids_csv - ids_banco
 
