@@ -411,6 +411,7 @@ async function carregar(){
             if(jd.financiamento===true) item.financiamento=true;
             if(jd.debito_tributos) item.debito_tributos=jd.debito_tributos;
             if(jd.debito_condominio) item.debito_condominio=jd.debito_condominio;
+            if(jd.descricao && jd.descricao.length > (item.descricao||'').length) item.descricao=jd.descricao;
           });
 ALL.forEach(item=>{if(!item.debito_tributos)item.debito_tributos=_parseTrib(item.descricao);if(!item.debito_condominio)item.debito_condominio=_parseCond(item.descricao);});
         }catch(_){}
