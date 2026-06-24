@@ -681,58 +681,8 @@ function aplicar(){
   carregar();
 </script>
 
-<script>
-/* Mantem o rotulo "Lista da Caixa gerada em ..." sincronizado com meta.json (sempre atual).
-   Usa MutationObserver para resistir a sobrescritas de outros scripts da pagina. */
-(function(){
-  function fmtBR(iso){
-    try{ var d=new Date(iso); if(isNaN(d)) return null;
-      return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"});
-    }catch(e){ return null; }
-  }
-  var alvo = null;
-  function aplicar(){
-    if(!alvo) return;
-    if(alvo.textContent !== alvo.__desejado){
-      alvo.textContent = alvo.__desejado;
-    }
-  }
-  fetch("meta.json?t="+Date.now(),{cache:"no-store"})
-    .then(function(r){ return r.json(); })
-    .then(function(m){
-      if(!m) return;
-      alvo = document.getElementById("updatedTxt");
-      if(!alvo) return;
-      var data = fmtBR(m.atualizado) || "";
-      var total = (m.total!=null) ? m.total : "";
-      alvo.__desejado = "Lista da Caixa gerada em " + data + " \u00b7 " + total + " im\u00f3veis";
-      aplicar();
-      // Corrige o contador inicial "#count" (sem filtro ativo) com o total real.
-      try{
-        function ajustarCount(){
-          var c=document.getElementById("count");
-          if(!c) return;
-          var t=(m.total!=null)?m.total:null;
-          if(t==null) return;
-          // So ajusta se nenhum filtro/busca estiver ativo (evita quebrar a contagem filtrada)
-          var busca=document.querySelector('input[type="search"], #q, .search input');
-          var temBusca = busca && busca.value && busca.value.trim().length>0;
-          if(!temBusca){ c.textContent = t + " im\u00f3veis"; }
-        }
-        window.addEventListener("load", function(){ setTimeout(ajustarCount, 400); setTimeout(ajustarCount, 1400); });
-        setTimeout(ajustarCount, 600);
-      }catch(e){}
-      // Observa mudancas no texto e reaplica se algo sobrescrever
-      try{
-        var obs = new MutationObserver(function(){ aplicar(); });
-        obs.observe(alvo, { childList:true, characterData:true, subtree:true });
-        // garante uma reaplicacao apos o load completo
-        window.addEventListener("load", function(){ setTimeout(aplicar, 300); setTimeout(aplicar, 1200); });
-      }catch(e){}
-    })
-    .catch(function(){});
-})();
-</script>
+
+
 <script>
 /* Botão de atualização manual da lista */
 (function(){
