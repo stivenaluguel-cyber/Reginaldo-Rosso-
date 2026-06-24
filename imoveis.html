@@ -191,7 +191,14 @@ window.__AMOSTRA_META__={
 .fone-menu a:hover{background:rgba(198,160,82,.12);color:#fff}
 .fone-menu svg{width:13px;height:13px;fill:var(--gold);flex:0 0 13px}
 @media(max-width:1080px){nav.menu,.fones{display:none}.burger{display:flex;margin-left:auto}}
-  @media(max-width:880px){.fbar{grid-template-columns:1fr 1fr}.filters{position:static}}
+  @media(max-width:880px){
+  .filters{position:static}
+  .fbar{grid-template-columns:1fr 1fr;gap:8px}
+  .fbar .field:first-child{grid-column:1/-1}
+  .fbar .field:nth-child(8){grid-column:1/-1}
+  .fbar .clearbtn{grid-column:1/-1;width:100%}
+  .field label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+}
   @media(max-width:560px){.kv{grid-template-columns:1fr}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
