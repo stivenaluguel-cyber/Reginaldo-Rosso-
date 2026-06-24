@@ -96,9 +96,15 @@ async def run_pipeline():
             f"estados ok={len(estados_ok)} | falha={len(estados_falha)}"
         )
 
-        # Etapa 2: Enriquecer imoveis novos
-        logger.info(f"--- Etapa 2: Enriquecendo {len(ids_novos)} imoveis novos ---")
-        await run_etapa2(ids_novos)
+        # Etapa 2: Enriquecer imoveis novos (limitado por lote para nao estourar timeout)
+        import os
+        batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "300"))
+        ids_lote = ids_novos[:batch_limit] if batch_limit > 0 else ids_novos
+        logger.info(
+            f"--- Etapa 2: Enriquecendo {len(ids_lote)} de {len(ids_novos)} imoveis novos "
+            f"(limite/run={batch_limit}; restante sera processado nas proximas execucoes) ---"
+        )
+        await run_etapa2(ids_lote)
 
     except Exception as e:
         logger.exception(f"Erro fatal no pipeline: {e}")
