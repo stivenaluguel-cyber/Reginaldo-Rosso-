@@ -30,16 +30,24 @@ function specs(desc){ const d=desc||""; const out=[];
   m=d.match(/(\d+)\s*(?:qto|quarto|dorm)/i); if(m)out.push(m[1]+(m[1]=="1"?" dormitorio":" dormitorios"));
   m=d.match(/(\d+)\s*vaga/i); if(m)out.push(m[1]+(m[1]=="1"?" vaga":" vagas")); return out; }
 
+function key(s){ return String(s==null?"":s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(); }
 function parse(file, uf){
   if(!fs.existsSync(file)) return [];
   const txt = fs.readFileSync(file, "latin1");
   const linhas = txt.split(/\r?\n/);
-  let hi = linhas.findIndex(l=>/idade/i.test(l) && /(pre[c]o)/i.test(l)); if(hi<0) return [];
-  const hdr = linhas[hi].split(";").map(h=>h.trim().toLowerCase());
+  // detecta a linha de cabecalho de forma tolerante a acentos
+  let hi = linhas.findIndex(l=>{ const k=key(l); return k.includes("cidade") && k.includes("preco"); });
+  if(hi<0) hi = linhas.findIndex(l=>{ const k=key(l); return k.includes("uf") && k.includes("cidade"); });
+  if(hi<0) return [];
+  const hdr = linhas[hi].split(";").map(h=>key(h));
   const col = (k)=>hdr.findIndex(h=>h.indexOf(k)>=0);
-  const M = { id:col("imovel")>=0?col("imovel"):col("imovel"), uf:col("uf"), cidade:col("idade"), bairro:col("bairro"),
-    end:col("endereco")>=0?col("endereco"):col("endereco"), preco:col("preco")>=0?col("preco"):col("preco"),
-    aval:col("avalia"), desc:col("desconto"), fin:col("financ"), descricao:col("descri"), mod:col("modalidade"), link:col("link") };
+  const M = {
+    id: (col("imovel")>=0?col("imovel"):0),
+    uf: col("uf"), cidade: col("cidade"), bairro: col("bairro"),
+    end: col("endereco"), preco: col("preco"), aval: col("avalia"),
+    desc: col("desconto"), fin: col("financ"), descricao: col("descri"),
+    mod: col("modalidade"), link: col("link")
+  };
   const out=[];
   for(let i=hi+1;i<linhas.length;i++){
     const ln=linhas[i]; if(!ln||ln.indexOf(";")<0) continue;
