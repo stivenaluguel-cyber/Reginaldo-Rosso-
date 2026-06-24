@@ -59,3 +59,24 @@ footer b{color:#fff}
 
 @media(max-width:820px){.det{grid-template-columns:1fr;gap:18px}.fones{display:none}.body h1{font-size:1.4rem}.price{font-size:1.7rem}}
 @media(max-width:480px){.kv{grid-template-columns:1fr}}
+
+
+/* ===== Seções detalhadas (dados do banco / Etapa 2) ===== */
+.body h2{font-size:1.02rem;color:var(--ink);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.cond{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 16px}
+.chip{display:inline-flex;align-items:center;font-size:.82rem;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line)}
+.chip-ok{background:#e8f6ee;color:#176b3d;border-color:#bfe6cf}
+.chip-no{background:#fdecec;color:#9e2b25;border-color:#f3c9c6}
+.regras{margin-bottom:8px}
+.regra{font-size:.9rem;color:var(--ink2);background:#fff;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:11px 13px;margin-bottom:8px}
+.regra b{color:var(--ink)}
+.mais{margin-bottom:8px}
+.mais-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mais-grid div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.mais-grid span{display:block;font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.mais-grid b{display:block;color:var(--ink);font-size:.95rem;margin-top:3px}
+.docs{margin-bottom:8px}
+.docs-row{display:flex;flex-wrap:wrap;gap:10px}
+.doc{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;font-weight:700;color:var(--navy);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:11px 16px;transition:border-color .15s}
+.doc:hover{border-color:var(--gold)}
+@media(max-width:480px){.mais-grid{grid-template-columns:1fr}}
