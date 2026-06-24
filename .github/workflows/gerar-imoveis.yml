@@ -8,7 +8,7 @@ on:
       - 'imoveis-sc.json'
       - 'gerar-imoveis.js'
   workflow_run:
-    workflows: ["Atualizar imóveis Caixa"]
+    workflows: ["Atualizar imóveis Caixa", "Scraper Caixa Economica Federal"]
     types: [completed]
   workflow_dispatch:
 
@@ -27,7 +27,12 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Instalar dependencia pg (cliente Postgres)
+        run: npm install pg --no-save
+
       - name: Gerar páginas HTML e sitemap
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node gerar-imoveis.js
 
       - name: Publicar páginas geradas
