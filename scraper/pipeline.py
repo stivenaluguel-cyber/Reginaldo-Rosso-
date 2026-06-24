@@ -17,8 +17,8 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 from config import MAX_WORKERS
 from etapa1_csv import _executar as etapa1_executar
-from etapa2_scraper import scrape_imovel
-from db import upsert_imovel, get_pendentes_com_uf, get_uf_por_ids
+from etapa2_scraper import scrape_imovel, baixar_matriculas_em_massa
+from db import upsert_imovel, get_pendentes_com_uf, get_uf_por_ids, get_pendentes_matricula_com_uf
 
 # -- Logging -------------------------------------------------------
 LOG_DIR = Path(__file__).parent / "logs"
@@ -106,8 +106,21 @@ async def run_pipeline():
             f"estados ok={len(estados_ok)} | falha={len(estados_falha)}"
         )
 
-        # Busca UF dos ids_novos no banco para passar ao scraper
+        # === FASE RAPIDA: baixar TODAS as matriculas pendentes (httpx, sem Playwright) ===
+        # Esta fase resolve o gargalo: baixa matriculas de milhares de imoveis
+        # em paralelo via URL deterministica, sem CAPTCHA nem navegador.
         import os
+        focos_mat = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
+        mat_limit = int(os.getenv("MATRICULA_BATCH_LIMIT", "20000"))
+        mat_conc = int(os.getenv("MATRICULA_CONCURRENCY", "16"))
+        try:
+            pend_mat = get_pendentes_matricula_com_uf(focos_mat, limit=mat_limit)
+            logger.info(f"--- Fase matriculas: {len(pend_mat)} imoveis SEM matricula em {focos_mat} ---")
+            await baixar_matriculas_em_massa(pend_mat, concurrency=mat_conc)
+        except Exception as e:
+            logger.exception(f"Falha na fase rapida de matriculas: {e}")
+
+        # Busca UF dos ids_novos no banco para passar ao scraper
         batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "1000"))
         ids_lote = ids_novos[:batch_limit] if batch_limit > 0 else ids_novos
 
