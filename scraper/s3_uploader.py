@@ -54,7 +54,7 @@ def upload_pdf(local_path: str, numero_imovel: str) -> str:
         else:
             raise
 
-    url = f"https://{S3_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{s3_key}"
+    url = f"{S3_ENDPOINT_URL.rstrip(chr(47))}/{S3_BUCKET_NAME}/{s3_key}"
     return url
 
 def upload_bytes(data: bytes, numero_imovel: str, filename: str = "matricula.pdf") -> str:
@@ -84,5 +84,5 @@ def upload_bytes(data: bytes, numero_imovel: str, filename: str = "matricula.pdf
         else:
             raise
 
-    url = f"https://{S3_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{s3_key}"
+    url = f"{S3_ENDPOINT_URL.rstrip(chr(47))}/{S3_BUCKET_NAME}/{s3_key}"
     return url
