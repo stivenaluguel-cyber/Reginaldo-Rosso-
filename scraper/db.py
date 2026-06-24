@@ -105,3 +105,35 @@ def upsert_imovel(data: dict):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, values)
+
+
+def upsert_imoveis_bulk(lista, batch_size=500):
+    """Insere ou atualiza varios imoveis em lote (MUITO mais rapido que um-por-um).
+    Usa execute_values numa unica conexao com batches.
+    """
+    if not lista:
+        return 0
+    cols = [
+        'numero_imovel','status','uf','cidade','bairro','endereco',
+        'preco_avaliacao','preco_minimo','modalidade','descricao',
+        'area_total','area_privativa','debito_tributos','debito_condominio',
+        'aceita_fgts','aceita_financiamento','matricula_s3_url','scraped_at'
+    ]
+    update_set = ', '.join([f"{c}=EXCLUDED.{c}" for c in cols if c != 'numero_imovel'])
+    sql = f"""
+        INSERT INTO imoveis_caixa ({', '.join(cols)})
+        VALUES %s
+        ON CONFLICT (numero_imovel) DO UPDATE SET
+            {update_set},
+            updated_at = NOW()
+    """
+    total = 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            for i in range(0, len(lista), batch_size):
+                batch = lista[i:i + batch_size]
+                valores = [tuple(d.get(c) for c in cols) for d in batch]
+                psycopg2.extras.execute_values(cur, sql, valores, page_size=batch_size)
+                total += len(batch)
+    logger.info(f"upsert_imoveis_bulk: {total} imoveis processados em lote")
+    return total
