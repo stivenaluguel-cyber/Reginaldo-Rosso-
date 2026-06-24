@@ -559,6 +559,15 @@ async def _executar() -> dict:
     ids_csv = {im["numero_imovel"] for im in todos_imoveis}
     ids_banco = db.get_ids_by_uf(ESTADOS)
     ids_removidos = ids_banco - ids_csv
+    # SALVAGUARDA: se o CSV veio vazio/minusculo (ex.: HTTP 403 ao baixar),
+    # NAO marcar tudo como indisponivel. Aborta a remocao para nao apagar o site.
+    if len(ids_csv) < max(10, len(ids_banco) // 5):
+        logger.warning(
+            "etapa1: CSV suspeito (total_csv=%d, banco=%d). "
+            "Pulando mark_unavailable para evitar apagar o estoque.",
+            len(ids_csv), len(ids_banco),
+        )
+        ids_removidos = set()
     ids_novos = ids_csv - ids_banco
 
     if ids_removidos:
