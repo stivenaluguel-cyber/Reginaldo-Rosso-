@@ -18,7 +18,7 @@ from playwright.async_api import async_playwright
 from config import MAX_WORKERS
 from etapa1_csv import _executar as etapa1_executar
 from etapa2_scraper import scrape_imovel
-from db import upsert_imovel
+from db import upsert_imovel, get_pendentes_enriquecimento
 
 # -- Logging -------------------------------------------------------
 LOG_DIR = Path(__file__).parent / "logs"
@@ -100,6 +100,24 @@ async def run_pipeline():
         import os
         batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "1000"))
         ids_lote = ids_novos[:batch_limit] if batch_limit > 0 else ids_novos
+        # Tambem reprocessa imoveis ja existentes que ficaram sem
+        # area/matricula (ex.: enriquecimento anterior falhou). Foco RS/SC.
+        focos = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
+        vagas = batch_limit - len(ids_lote) if batch_limit > 0 else 100000
+        if vagas > 0 and focos:
+            try:
+                pendentes = get_pendentes_enriquecimento(focos, limit=vagas)
+            except Exception as _e:
+                logger.warning(f"Falha ao buscar pendentes de enriquecimento: {_e}")
+                pendentes = []
+            ja = set(ids_lote)
+            extras = [p for p in pendentes if p not in ja]
+            if extras:
+                logger.info(
+                    f"Etapa 2: +{len(extras)} imoveis pendentes de enriquecimento "
+                    f"(sem area/matricula) em {focos} serao reprocessados"
+                )
+                ids_lote = ids_lote + extras
         logger.info(
             f"--- Etapa 2: Enriquecendo {len(ids_lote)} de {len(ids_novos)} imoveis novos "
             f"(limite/run={batch_limit}; restante sera processado nas proximas execucoes) ---"
