@@ -1,19 +1,25 @@
 """
-etapa1_csv.py - Download robusto dos CSVs de imoveis da Caixa via Playwright stealth
-Estrategia multi-camada:
-  1. Playwright stealth (navegador headless com anti-bot bypass)
-  2. Interceptacao de download direto via network request
-  3. Fetch dentro do browser com cookies da sessao autenticada
-  4. Validacao rigorosa de CSV real vs HTML/bloqueio
-  5. Todos os 27 estados do Brasil
-  6. Crosscheck com banco de dados
+etapa1_csv.py - Download ultra-robusto dos CSVs de imoveis da Caixa Economica Federal
+Estrategia multi-camada com 4 abordagens:
+  0. httpx HTTP/2 com headers completos (mais rapido, fingerprint diferente de Playwright)
+  1. Playwright stealth - interceptacao de response/download
+  2. Fetch JS dentro do browser com cookies da sessao
+  3. curl subprocess (TLS fingerprint nativo do OS)
+  + Suporte a proxy opcional (PROXY_URL env var)
+  + Validacao rigorosa: rejeita HTML/bloqueio, aceita apenas CSV real
+  + Parse completo: todos os campos do CSV da Caixa mapeados para o banco
+  + Crosscheck: marca indisponivel, faz upsert de novos imoveis
 """
 import asyncio
 import io
 import logging
+import os
 import random
+import subprocess
+import tempfile
 from typing import Optional
 
+import httpx
 import pandas as pd
 from playwright.async_api import async_playwright, BrowserContext
 
@@ -22,131 +28,226 @@ from config import USER_AGENT, LOCALE, TIMEZONE
 
 logger = logging.getLogger(__name__)
 
-# ── Constantes ────────────────────────────────────────────────────
 ESTADOS = [
     "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO",
     "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR",
     "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
 ]
+ESTADOS_PRIORIDADE = ["SP", "MG", "RJ", "RS", "PR"]
 
 CAIXA_CSV_URL = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{estado}.csv"
 CAIXA_HOME_URL = "https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.aspx?sltTipoBusca=imoveis"
+PROXY_URL = os.getenv("PROXY_URL", "")
 
+CHROME_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "sec-ch-ua": '"Google Chrome";v="124", "Not-A.Brand";v="8", "Chromium";v="124"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Cache-Control": "max-age=0",
+}
 
-# ── Helpers ───────────────────────────────────────────────────────
 
 def _is_csv_valido(conteudo: bytes) -> bool:
-    """Verifica se o conteudo e um CSV real da Caixa (nao HTML/bloqueio)."""
-    if not conteudo or len(conteudo) < 100:
+    if not conteudo or len(conteudo) < 50:
         return False
     try:
-        texto = conteudo.decode("latin-1", errors="replace")
+        texto = conteudo[:500].decode("latin-1", errors="replace")
     except Exception:
         return False
-    if texto.strip().startswith("<"):
-        return False
-    if "<!DOCTYPE" in texto[:200] or "<html" in texto[:200].lower():
+    stripped = texto.strip()
+    if stripped.startswith("<") or "<!DOCTYPE" in texto or "<html" in texto.lower():
         return False
     primeira_linha = texto.split("\n")[0].lower()
-    for col in ["numero", "imovel", "rua", "cidade", "preco", "valor"]:
-        if col in primeira_linha:
-            return True
-    return False
+    keywords = ["numero", "imovel", "rua", "cidade", "preco", "valor", "uf", "estado",
+                "modalidade", "bairro", "descricao", "avalia"]
+    return any(kw in primeira_linha for kw in keywords)
 
 
 def _parse_csv(conteudo: bytes, estado: str) -> list:
-    """Parse do CSV da Caixa retorna lista de dicts com campo 'id' e dados basicos."""
     imoveis = []
     try:
-        df = pd.read_csv(
-            io.BytesIO(conteudo),
-            encoding="latin-1",
-            sep=";",
-            dtype=str,
-            on_bad_lines="skip",
-        )
-        df.columns = [c.strip() for c in df.columns]
+        df = None
+        for enc in ("latin-1", "utf-8", "cp1252"):
+            try:
+                df = pd.read_csv(
+                    io.BytesIO(conteudo),
+                    encoding=enc,
+                    sep=";",
+                    dtype=str,
+                    on_bad_lines="skip",
+                    skip_blank_lines=True,
+                )
+                if len(df.columns) > 1:
+                    break
+            except Exception:
+                df = None
+        if df is None or df.empty:
+            return []
 
-        # Detectar coluna de ID
-        id_col = None
-        for col in df.columns:
-            col_l = col.lower()
-            if "numero" in col_l and "imovel" in col_l:
-                id_col = col
-                break
+        df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+
+        COL_ALIASES = {
+            "numero_imovel":   ["numero_do_imovel", "cod_imovel", "codigo", "numero_imovel", "num_imovel", "imovel"],
+            "uf":              ["uf", "estado", "sg_uf"],
+            "cidade":          ["cidade", "municipio", "nm_cidade", "nm_municipio"],
+            "bairro":          ["bairro", "nm_bairro"],
+            "endereco":        ["endereco", "logradouro", "rua", "nm_logradouro", "ds_endereco"],
+            "preco_avaliacao": ["valor_de_avaliacao", "avaliacao", "vl_avaliacao", "preco_avaliacao"],
+            "preco_minimo":    ["valor_minimo_de_venda", "preco_minimo", "lance_minimo", "vl_minimo", "valor_minimo"],
+            "modalidade":      ["modalidade_de_venda", "modalidade", "tp_modalidade"],
+            "descricao":       ["descricao_do_imovel", "descricao", "tipo_imovel", "tipo", "ds_imovel"],
+            "numero_matricula":["numero_da_matricula", "matricula", "nr_matricula"],
+            "link_detalhe":    ["link_de_acesso", "link", "url", "ds_link"],
+        }
+
+        def find_col(aliases):
+            for a in aliases:
+                if a in df.columns:
+                    return a
+            return None
+
+        col_map = {c: find_col(als) for c, als in COL_ALIASES.items()}
+        id_col = col_map.get("numero_imovel")
         if id_col is None:
             for col in df.columns:
-                if col.lower() in ("cod_imovel", "codigo", "id", "numero do imovel"):
+                sample = df[col].dropna().astype(str)
+                if sample.str.match(r"^\d+").any():
                     id_col = col
                     break
-        if id_col is None and len(df.columns) > 0:
-            id_col = df.columns[0]
+        if id_col is None:
+            return []
 
-        # Mapear colunas para os campos do banco
-        col_map = {}
-        for col in df.columns:
-            cl = col.lower()
-            if "uf" in cl or cl == "estado":
-                col_map["uf"] = col
-            elif "cidade" in cl or "municipio" in cl:
-                col_map["cidade"] = col
-            elif "bairro" in cl:
-                col_map["bairro"] = col
-            elif "rua" in cl or "endereco" in cl or "logradouro" in cl:
-                col_map["endereco"] = col
-            elif "avaliacao" in cl:
-                col_map["preco_avaliacao"] = col
-            elif "minimo" in cl or "lance" in cl:
-                col_map["preco_minimo"] = col
-            elif "modalidade" in cl or "venda" in cl:
-                col_map["modalidade"] = col
-            elif "descricao" in cl or "tipo" in cl:
-                col_map["descricao"] = col
+        CAMPOS_FLOAT = {"preco_avaliacao", "preco_minimo"}
 
         for _, row in df.iterrows():
             id_val = str(row.get(id_col, "")).strip()
-            if not id_val or id_val.lower() in ("nan", "none", ""):
+            if not id_val or id_val.lower() in ("nan", "none", "") or not any(c.isdigit() for c in id_val):
                 continue
-            if not any(c.isdigit() for c in id_val):
-                continue
-
             imovel = {"numero_imovel": id_val, "uf": estado, "status": "Disponivel"}
             for campo, col in col_map.items():
+                if col is None:
+                    continue
                 val = str(row.get(col, "")).strip()
-                if val and val.lower() not in ("nan", "none"):
-                    if campo in ("preco_avaliacao", "preco_minimo"):
-                        val = val.replace("R$", "").replace(".", "").replace(",", ".").strip()
-                        try:
-                            imovel[campo] = float(val)
-                        except ValueError:
-                            pass
-                    else:
-                        imovel[campo] = val
+                if not val or val.lower() in ("nan", "none", ""):
+                    continue
+                if campo in CAMPOS_FLOAT:
+                    val_clean = val.replace("R$", "").replace(".", "").replace(",", ".").strip()
+                    try:
+                        imovel[campo] = float(val_clean)
+                    except ValueError:
+                        pass
+                else:
+                    imovel[campo] = val
             imoveis.append(imovel)
 
-        logger.info(f"etapa1_csv: CSV {estado}: {len(imoveis)} imoveis parseados")
+        logger.info(f"etapa1: CSV {estado}: {len(imoveis)} imoveis ({len(df)} linhas bruto)")
     except Exception as e:
-        logger.warning(f"etapa1_csv: Erro ao parsear CSV {estado}: {e}")
+        logger.warning(f"etapa1: parse {estado}: {e}", exc_info=True)
     return imoveis
 
 
-# ── Playwright stealth ─────────────────────────────────────────────
+async def _download_via_httpx(estado: str) -> Optional[bytes]:
+    url = CAIXA_CSV_URL.format(estado=estado)
+    proxies = PROXY_URL if PROXY_URL else None
+    try:
+        async with httpx.AsyncClient(
+            http2=True,
+            follow_redirects=True,
+            timeout=30.0,
+            verify=True,
+            proxies=proxies,
+        ) as client:
+            try:
+                home = await client.get(CAIXA_HOME_URL, headers={**CHROME_HEADERS})
+                cookies = dict(home.cookies)
+                await asyncio.sleep(random.uniform(0.8, 2.0))
+            except Exception:
+                cookies = {}
+            resp = await client.get(
+                url,
+                headers={**CHROME_HEADERS,
+                         "Referer": CAIXA_HOME_URL,
+                         "Sec-Fetch-Site": "same-origin"},
+                cookies=cookies,
+            )
+            if resp.status_code == 200:
+                data = resp.content
+                if _is_csv_valido(data):
+                    logger.info(f"etapa1: {estado} OK via httpx ({len(data)} bytes, {resp.http_version})")
+                    return data
+                else:
+                    logger.debug(f"etapa1: httpx {estado} HTTP 200 mas nao CSV")
+            else:
+                logger.debug(f"etapa1: httpx {estado} status={resp.status_code}")
+    except Exception as e:
+        logger.debug(f"etapa1: httpx {estado}: {e}")
+    return None
+
+
+async def _download_via_curl(estado: str) -> Optional[bytes]:
+    url = CAIXA_CSV_URL.format(estado=estado)
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tf:
+        tmp_path = tf.name
+    cmd = [
+        "curl", "-sL", "--max-time", "30", "--compressed",
+        "-o", tmp_path, "-w", "%{http_code}",
+        "-H", f"User-Agent: {USER_AGENT}",
+        "-H", "Accept: text/csv,text/plain,*/*",
+        "-H", "Accept-Language: pt-BR,pt;q=0.9",
+        "-H", f"Referer: {CAIXA_HOME_URL}",
+        "--cookie-jar", "/tmp/caixa_cookies.txt",
+        "--cookie", "/tmp/caixa_cookies.txt",
+    ]
+    if PROXY_URL:
+        cmd += ["--proxy", PROXY_URL]
+    cmd.append(url)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, lambda: subprocess.run(cmd, capture_output=True, timeout=40)
+        )
+        code = result.stdout.decode().strip()
+        if code == "200" and os.path.exists(tmp_path):
+            with open(tmp_path, "rb") as f:
+                data = f.read()
+            if _is_csv_valido(data):
+                logger.info(f"etapa1: {estado} OK via curl ({len(data)} bytes)")
+                return data
+            else:
+                logger.debug(f"etapa1: curl {estado} HTTP 200 mas nao CSV")
+        else:
+            logger.debug(f"etapa1: curl {estado} status={code}")
+    except Exception as e:
+        logger.debug(f"etapa1: curl {estado}: {e}")
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
+    return None
+
 
 async def _criar_contexto_stealth(playwright):
-    """Cria browser e contexto Playwright com maximo stealth anti-bot."""
+    proxy_config = {"server": PROXY_URL} if PROXY_URL else None
     browser = await playwright.chromium.launch(
         headless=True,
         args=[
-            "--no-sandbox",
-            "--disable-blink-features=AutomationControlled",
-            "--disable-web-security",
-            "--disable-features=IsolateOrigins,site-per-process",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--no-first-run",
-            "--no-default-browser-check",
-            "--window-size=1366,768",
+            "--no-sandbox", "--disable-blink-features=AutomationControlled",
+            "--disable-web-security", "--disable-features=IsolateOrigins,site-per-process",
+            "--disable-setuid-sandbox", "--disable-dev-shm-usage",
+            "--no-first-run", "--no-default-browser-check", "--window-size=1366,768",
         ],
+        proxy=proxy_config,
     )
     context = await browser.new_context(
         user_agent=USER_AGENT,
@@ -157,7 +258,6 @@ async def _criar_contexto_stealth(playwright):
         accept_downloads=True,
         extra_http_headers={
             "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "sec-ch-ua": '"Google Chrome";v="124", "Not-A.Brand";v="8"',
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"macOS"',
@@ -178,12 +278,10 @@ async def _criar_contexto_stealth(playwright):
     return browser, context
 
 
-async def _download_via_interceptacao(context: BrowserContext, estado: str) -> Optional[bytes]:
-    """Estrategia 1: Interceptar response do CSV apos visitar home."""
+async def _download_via_interceptacao(context, estado: str) -> Optional[bytes]:
     url = CAIXA_CSV_URL.format(estado=estado)
     page = await context.new_page()
     csv_bytes = None
-
     try:
         async def on_response(response):
             nonlocal csv_bytes
@@ -196,19 +294,17 @@ async def _download_via_interceptacao(context: BrowserContext, estado: str) -> O
                             csv_bytes = body
                     except Exception:
                         pass
-
         page.on("response", on_response)
-
-        # Visitar home para cookies
-        await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=30000)
-        await asyncio.sleep(random.uniform(1.5, 3.0))
-
-        # Tentar download direto
+        try:
+            await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(random.uniform(1.5, 3.0))
+        except Exception:
+            pass
         try:
             async with page.expect_download(timeout=15000) as dl_info:
                 await page.goto(url, wait_until="commit", timeout=15000)
-            download = await dl_info.value
-            path = await download.path()
+            dl = await dl_info.value
+            path = await dl.path()
             if path:
                 with open(path, "rb") as f:
                     data = f.read()
@@ -224,111 +320,130 @@ async def _download_via_interceptacao(context: BrowserContext, estado: str) -> O
                             csv_bytes = body
                 except Exception:
                     pass
-
     except Exception as e:
-        logger.debug(f"etapa1_csv: Interceptacao {estado} falhou: {e}")
+        logger.debug(f"etapa1: interceptacao {estado}: {e}")
     finally:
         await page.close()
-
     return csv_bytes
 
 
-async def _download_via_fetch_browser(context: BrowserContext, estado: str) -> Optional[bytes]:
-    """Estrategia 2: Usar fetch() JS dentro do browser com cookies da sessao."""
+async def _download_via_fetch_browser(context, estado: str) -> Optional[bytes]:
     url = CAIXA_CSV_URL.format(estado=estado)
     page = await context.new_page()
     csv_bytes = None
-
     try:
-        await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=30000)
-        await asyncio.sleep(random.uniform(1.0, 2.0))
-
+        try:
+            await page.goto(CAIXA_HOME_URL, wait_until="domcontentloaded", timeout=30000)
+            await asyncio.sleep(random.uniform(1.0, 2.0))
+        except Exception:
+            pass
         result = await page.evaluate(f"""
             async () => {{
                 try {{
                     const r = await fetch('{url}', {{
                         credentials: 'include',
-                        headers: {{
-                            'Accept': 'text/csv,*/*',
-                            'Referer': 'https://venda-imoveis.caixa.gov.br/'
-                        }}
+                        headers: {{'Accept': 'text/csv,*/*', 'Referer': 'https://venda-imoveis.caixa.gov.br/'}}
                     }});
                     const buf = await r.arrayBuffer();
-                    return {{ok: true, bytes: Array.from(new Uint8Array(buf))}};
+                    return {{ok: true, bytes: Array.from(new Uint8Array(buf)), status: r.status}};
                 }} catch(e) {{
                     return {{ok: false, err: e.toString()}};
                 }}
             }}
         """)
-
         if result and result.get("ok") and result.get("bytes"):
             data = bytes(result["bytes"])
             if _is_csv_valido(data):
                 csv_bytes = data
-                logger.info(f"etapa1_csv: CSV {estado} via fetch-browser ({len(data)} bytes)")
-
+                logger.info(f"etapa1: {estado} OK via fetch-browser ({len(data)} bytes)")
     except Exception as e:
-        logger.debug(f"etapa1_csv: Fetch-browser {estado} falhou: {e}")
+        logger.debug(f"etapa1: fetch-browser {estado}: {e}")
     finally:
         await page.close()
-
     return csv_bytes
 
 
-async def _baixar_csv_estado(context: BrowserContext, estado: str) -> Optional[bytes]:
-    """Tenta baixar CSV de um estado com multiplas estrategias."""
+async def _baixar_csv_estado(context, estado: str) -> Optional[bytes]:
     data = await _download_via_interceptacao(context, estado)
     if data:
-        logger.info(f"etapa1_csv: CSV {estado} obtido via interceptacao ({len(data)} bytes)")
         return data
-    await asyncio.sleep(random.uniform(0.5, 1.5))
-    data = await _download_via_fetch_browser(context, estado)
-    if data:
-        return data
-    logger.warning(f"etapa1_csv: CSV {estado} - todas as estrategias falharam")
-    return None
+    await asyncio.sleep(random.uniform(0.3, 0.8))
+    return await _download_via_fetch_browser(context, estado)
 
-
-# ── Entry point ────────────────────────────────────────────────────
 
 async def _executar() -> dict:
-    """Baixa todos os CSVs e faz crosscheck com o banco."""
     db.init_db()
     todos_imoveis = []
     estados_ok = []
     estados_falha = []
 
-    async with async_playwright() as pw:
-        browser, context = await _criar_contexto_stealth(pw)
+    restantes = [e for e in ESTADOS if e not in ESTADOS_PRIORIDADE]
+    ordenados = ESTADOS_PRIORIDADE + restantes
+
+    # Fase 0: httpx HTTP/2
+    logger.info("etapa1: Fase 0 - httpx HTTP/2...")
+    for estado in ordenados:
         try:
-            # SP/MG/RJ/RS/PR primeiro (maior estoque)
-            prioridade = ["SP", "MG", "RJ", "RS", "PR"]
-            restantes = [e for e in ESTADOS if e not in prioridade]
-            ordenados = prioridade + restantes
+            data = await _download_via_httpx(estado)
+            if data:
+                imoveis = _parse_csv(data, estado)
+                if imoveis:
+                    todos_imoveis.extend(imoveis)
+                    estados_ok.append(estado)
+                    continue
+        except Exception as e:
+            logger.debug(f"etapa1: httpx {estado}: {e}")
 
-            for estado in ordenados:
-                logger.info(f"etapa1_csv: Processando {estado}...")
+    pendentes = [e for e in ordenados if e not in estados_ok]
+    logger.info(f"etapa1: httpx ok={len(estados_ok)}, pendentes={len(pendentes)}")
+
+    if pendentes:
+        # Fase 3: curl
+        logger.info("etapa1: Fase 3 - curl subprocess...")
+        ainda_pendentes = []
+        for estado in pendentes:
+            try:
+                data = await _download_via_curl(estado)
+                if data:
+                    imoveis = _parse_csv(data, estado)
+                    if imoveis:
+                        todos_imoveis.extend(imoveis)
+                        estados_ok.append(estado)
+                        continue
+            except Exception as e:
+                logger.debug(f"etapa1: curl {estado}: {e}")
+            ainda_pendentes.append(estado)
+
+        logger.info(f"etapa1: curl ok={len(estados_ok)}, pendentes={len(ainda_pendentes)}")
+
+        if ainda_pendentes:
+            # Fase 1+2: Playwright stealth
+            logger.info(f"etapa1: Fase 1+2 - Playwright stealth para {len(ainda_pendentes)} estados...")
+            async with async_playwright() as pw:
+                browser, context = await _criar_contexto_stealth(pw)
                 try:
-                    csv_bytes = await _baixar_csv_estado(context, estado)
-                    if csv_bytes:
-                        imoveis = _parse_csv(csv_bytes, estado)
-                        if imoveis:
-                            todos_imoveis.extend(imoveis)
-                            estados_ok.append(estado)
-                        else:
-                            estados_falha.append(estado)
-                    else:
+                    for estado in ainda_pendentes:
+                        try:
+                            csv_bytes = await _baixar_csv_estado(context, estado)
+                            if csv_bytes:
+                                imoveis = _parse_csv(csv_bytes, estado)
+                                if imoveis:
+                                    todos_imoveis.extend(imoveis)
+                                    estados_ok.append(estado)
+                                    continue
+                        except Exception as e:
+                            logger.error(f"etapa1: Playwright {estado}: {e}")
                         estados_falha.append(estado)
-                except Exception as e:
-                    logger.error(f"etapa1_csv: Erro {estado}: {e}")
-                    estados_falha.append(estado)
+                        await asyncio.sleep(random.uniform(0.3, 1.0))
+                finally:
+                    await context.close()
+                    await browser.close()
 
-                await asyncio.sleep(random.uniform(0.3, 1.0))
-        finally:
-            await context.close()
-            await browser.close()
+    for e in ordenados:
+        if e not in estados_ok and e not in estados_falha:
+            estados_falha.append(e)
 
-    # Crosscheck
+    # Crosscheck banco
     ids_csv = {im["numero_imovel"] for im in todos_imoveis}
     ids_banco = db.get_all_ids()
     ids_removidos = ids_banco - ids_csv
@@ -337,18 +452,17 @@ async def _executar() -> dict:
     if ids_removidos:
         db.mark_unavailable(list(ids_removidos))
 
-    # Upsert novos com dados do CSV
     novos = [im for im in todos_imoveis if im["numero_imovel"] in ids_novos]
     for im in novos:
         try:
             db.upsert_imovel(im)
         except Exception as e:
-            logger.warning(f"etapa1_csv: upsert falhou para {im.get('numero_imovel')}: {e}")
+            logger.warning(f"etapa1: upsert {im.get('numero_imovel')}: {e}")
 
     logger.info(
-        f"etapa1_csv: Resumo: {len(ids_csv)} no CSV | {len(ids_banco)} no banco | "
-        f"{len(ids_removidos)} removidos | {len(ids_novos)} novos | "
-        f"ok={estados_ok} | falha={estados_falha}"
+        f"etapa1: FINAL total_csv={len(ids_csv)} | banco={len(ids_banco)} | "
+        f"removidos={len(ids_removidos)} | novos={len(ids_novos)} | "
+        f"ok={len(estados_ok)} | falha={len(estados_falha)}"
     )
 
     return {
