@@ -18,39 +18,35 @@ def _get_client():
 
 def upload_pdf(local_path: str, numero_imovel: str) -> str:
     """
-    Faz upload de um PDF local para o S3.
-    Retorna a URL pública do arquivo.
-
+    Faz upload de um PDF local para o S3/B2.
+    Retorna a URL publica do arquivo.
     Caminho no S3: matriculas/{numero_imovel}/{hash_md5}.pdf
+    NOTA: Backblaze B2 nao suporta ACL por objeto - permissoes sao do bucket.
     """
     path = Path(local_path)
     if not path.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {local_path}")
+        raise FileNotFoundError(f"Arquivo nao encontrado: {local_path}")
 
-    # Calcular hash para evitar duplicatas
     md5 = hashlib.md5(path.read_bytes()).hexdigest()
     s3_key = f"matriculas/{numero_imovel}/{md5}.pdf"
 
     client = _get_client()
 
-    # Verificar se já existe
     try:
         client.head_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
-        logger.info(f"PDF já existe no S3: {s3_key}")
+        logger.info(f"PDF ja existe no S3: {s3_key}")
     except ClientError as e:
         if e.response['Error']['Code'] == '404':
-            # Fazer upload
             client.upload_file(
                 str(path),
                 S3_BUCKET_NAME,
                 s3_key,
                 ExtraArgs={
                     "ContentType": "application/pdf",
-                    "ACL": "public-read",
                     "CacheControl": "max-age=31536000",
                 }
             )
-            logger.info(f"Upload concluído: s3://{S3_BUCKET_NAME}/{s3_key}")
+            logger.info(f"Upload concluido: s3://{S3_BUCKET_NAME}/{s3_key}")
         else:
             raise
 
@@ -59,8 +55,8 @@ def upload_pdf(local_path: str, numero_imovel: str) -> str:
 
 def upload_bytes(data: bytes, numero_imovel: str, filename: str = "matricula.pdf") -> str:
     """
-    Faz upload de bytes diretamente (sem arquivo temporário).
-    Útil quando o PDF é interceptado via rede como bytes.
+    Faz upload de bytes diretamente para o S3/B2.
+    NOTA: Backblaze B2 nao suporta ACL por objeto - permissoes sao do bucket.
     """
     md5 = hashlib.md5(data).hexdigest()
     s3_key = f"matriculas/{numero_imovel}/{md5}.pdf"
@@ -69,7 +65,7 @@ def upload_bytes(data: bytes, numero_imovel: str, filename: str = "matricula.pdf
 
     try:
         client.head_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
-        logger.info(f"PDF já existe no S3: {s3_key}")
+        logger.info(f"PDF ja existe no S3: {s3_key}")
     except ClientError as e:
         if e.response['Error']['Code'] == '404':
             client.put_object(
@@ -77,10 +73,9 @@ def upload_bytes(data: bytes, numero_imovel: str, filename: str = "matricula.pdf
                 Key=s3_key,
                 Body=data,
                 ContentType="application/pdf",
-                ACL="public-read",
                 CacheControl="max-age=31536000",
             )
-            logger.info(f"Upload (bytes) concluído: s3://{S3_BUCKET_NAME}/{s3_key}")
+            logger.info(f"Upload (bytes) concluido: s3://{S3_BUCKET_NAME}/{s3_key}")
         else:
             raise
 
