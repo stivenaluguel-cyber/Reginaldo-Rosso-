@@ -113,6 +113,12 @@ def upsert_imoveis_bulk(lista, batch_size=500):
     """
     if not lista:
         return 0
+    # Deduplicar por numero_imovel (PostgreSQL ON CONFLICT nao aceita
+    # a mesma chave duas vezes no mesmo comando). Mantem a ultima ocorrencia.
+    vistos = {}
+    for item in lista:
+        vistos[item.get("numero_imovel")] = item
+    lista = list(vistos.values())
     cols = [
         'numero_imovel','status','uf','cidade','bairro','endereco',
         'preco_avaliacao','preco_minimo','modalidade','descricao',
