@@ -98,7 +98,7 @@ async def run_pipeline():
 
         # Etapa 2: Enriquecer imoveis novos (limitado por lote para nao estourar timeout)
         import os
-        batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "300"))
+        batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "1000"))
         ids_lote = ids_novos[:batch_limit] if batch_limit > 0 else ids_novos
         logger.info(
             f"--- Etapa 2: Enriquecendo {len(ids_lote)} de {len(ids_novos)} imoveis novos "
