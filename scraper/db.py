@@ -55,6 +55,22 @@ def init_db():
             cur.execute(CREATE_TABLE_SQL)
     logger.info("Banco de dados inicializado.")
 
+def get_ids_by_uf(ufs) -> set:
+    """Retorna numero_imovel ativos (Disponivel) apenas dos estados informados.
+    Usado para crosscheck filtrado por UF (ex.: focar somente RS/SC).
+    """
+    if not ufs:
+        return set()
+    ufs = [u.upper() for u in ufs]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel FROM imoveis_caixa "
+                "WHERE status = 'Disponivel' AND uf = ANY(%s)",
+                (ufs,)
+            )
+            return {row[0] for row in cur.fetchall()}
+
 def get_all_ids() -> set:
     """Retorna todos os numero_imovel ativos no banco."""
     with get_connection() as conn:
