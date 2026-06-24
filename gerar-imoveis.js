@@ -358,7 +358,7 @@ async function carregarImoveisDoBanco(){
       id: im.id, uf: im.uf, cidade: im.cidade, bairro: im.bairro,
       endereco: im.endereco, preco: im.preco, avaliacao: im.avaliacao,
       desconto: im.desconto, descricao: im.descricao,
-      modalidade: im.modalidade, tipo: im.tipo, link: im.link
+      modalidade: im.modalidade, tipo: im.tipo, link: im.link, financiamento: im.financiamento
     };
   }
   const imoveisRS = imoveis.filter(im=>im.uf==="RS").map(imovelParaJson);
