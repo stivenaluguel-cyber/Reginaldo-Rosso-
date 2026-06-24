@@ -81,6 +81,7 @@ async function carregarDetalhesDoBanco(){
     );
     for(const row of r.rows){ mapa[String(row.numero_imovel).replace(/\D/g,"")] = row; }
     console.log("Banco: "+r.rows.length+" registros detalhados carregados.");
+    console.log("DEBUG IDs banco (amostra): "+Object.keys(mapa).slice(0,8).join(", "));
   } catch(e){
     console.log("Falha ao consultar o banco ("+e.message+") - gerando apenas com CSV.");
   } finally {
@@ -284,6 +285,7 @@ if(window.gtag)gtag('event','view_item',{item_id:'${i.id}',item_name:${JSON.stri
     if(d){ im._det = d; comDetalhe++; }
   }
   console.log("Imoveis: "+imoveis.length+" | com ficha detalhada do banco: "+comDetalhe);
+  console.log("DEBUG IDs CSV (amostra): "+imoveis.slice(0,8).map(x=>x.id).join(", "));
 
   if(!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR,{recursive:true});
   for(const f of fs.readdirSync(OUT_DIR)) if(f.endsWith(".html")) fs.unlinkSync(path.join(OUT_DIR,f));
