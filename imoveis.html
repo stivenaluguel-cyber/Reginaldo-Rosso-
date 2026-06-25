@@ -296,6 +296,7 @@ window.__AMOSTRA_META__={
       <button class="chip chip-fav" id="chipFav" aria-pressed="false">♥ Favoritos (<span id="favN">0</span>)</button>
       <button class="chip chip-send" id="sendFav" style="display:none">Enviar favoritos no WhatsApp</button>
       <span class="count" id="count"></span>
+    <a id="mapaLink" href="mapa.html" style="display:none;font-size:.75rem;color:var(--gold);text-decoration:none;margin-left:10px">🗺️ Ver no mapa</a>
     </div>
   </div>
 </section>
@@ -470,6 +471,7 @@ ALL.forEach(item=>{if(!item.debito_tributos)item.debito_tributos=_parseTrib(item
     const uf=p.get("uf"); if(uf){state.uf=uf;document.querySelectorAll(".chip[data-uf]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.uf===uf?"true":"false"));}
     const tp=p.get("tipo"); if(tp){state.tipo=tp;const sel=document.getElementById("tipo");if(sel&&[...sel.options].some(o=>o.value===tp))sel.value=tp;}
     const q=p.get("q"); if(q){state.q=q;const qi=document.getElementById("q");if(qi)qi.value=q;}
+    const cidade=p.get("cidade"); if(cidade){state.cidade=cidade;const ci=document.getElementById("cidade");if(ci)ci.value=cidade;}
     const id=p.get("id"); if(id){const im=ALL.find(x=>x.id===id); if(im) setTimeout(()=>abrir(im),80);}
   }
   async function shareImovel(i){
@@ -523,6 +525,7 @@ function aplicar(){
     });
     shown=0; grid.innerHTML=""; loadingEl.style.display="none";
     countEl.innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> "+(view.length===1?"imóvel":"imóveis");
+    const ml=document.getElementById("mapaLink");if(ml)ml.style.display=state.cidade?"inline":"none";
     if(!view.length){
       grid.innerHTML="<div class='empty' style='grid-column:1/-1'><h2>Nenhum imóvel com esses filtros.</h2><p>Tente ampliar a busca ou limpar os filtros.</p></div>";
       loadmore.style.display="none"; return;
