@@ -664,16 +664,30 @@ var taxaSA = (typeof saAtivo !== 'undefined' && saAtivo)
 : 0;
 var despVenda = corrVenda + ir + outras + taxaSA;
 
-var custoMensal = condMensal + (iptuAnual / 12) + prestacaoMensal;
+var custoMensal = condMensal + (iptuAnual / 12);
 
 function res(meses){
 var manutencao = custoMensal * meses;
-var totalCusto = custosFixos + manutencao + despVenda;
-var resultado = recVenda - totalCusto;
-var roi = totalCusto > 0 ? (resultado / totalCusto) * 100 : 0;
-var taxaMensal = custosFixos > 0 && meses > 0
-? (Math.pow(1 + roi/100, 1/meses) - 1) * 100 : 0;
-return { meses: meses, totalCusto: totalCusto, resultado: resultado, roi: roi, taxaMensal: taxaMensal };
+var parcelasPagas = prestacaoMensal * meses;
+if(isFinanc){
+var fator = cetMes > 0 ? Math.pow(1 + cetMes, meses) : 1;
+var saldoDevedor = cetMes > 0 ? lanceFin * fator - prestacaoMensal * (fator - 1) / cetMes : Math.max(0, lanceFin - prestacaoMensal * meses);
+if(saldoDevedor < 0) saldoDevedor = 0;
+var custosIniciais = itbi + reg + escritura + comLeil + debitos + condAtras + reforma + desocupacao;
+var capitalInvestido = entrada + custosIniciais + parcelasPagas + manutencao;
+var receitaLiquida = recVenda - despVenda - saldoDevedor;
+var lucro = receitaLiquida - capitalInvestido;
+var roi = capitalInvestido > 0 ? (lucro / capitalInvestido) * 100 : 0;
+var taxaMensal = capitalInvestido > 0 && meses > 0 && roi > -100 ? (Math.pow(1 + roi/100, 1/meses) - 1) * 100 : 0;
+return { meses:meses, totalCusto:capitalInvestido, resultado:lucro, roi:roi, taxaMensal:taxaMensal, saldoDevedor:saldoDevedor, capitalInvestido:capitalInvestido };
+} else {
+var capitalInvestido = custosFixos + manutencao;
+var receitaLiquida = recVenda - despVenda;
+var lucro = receitaLiquida - capitalInvestido;
+var roi = capitalInvestido > 0 ? (lucro / capitalInvestido) * 100 : 0;
+var taxaMensal = capitalInvestido > 0 && meses > 0 && roi > -100 ? (Math.pow(1 + roi/100, 1/meses) - 1) * 100 : 0;
+return { meses:meses, totalCusto:capitalInvestido, resultado:lucro, roi:roi, taxaMensal:taxaMensal, saldoDevedor:0, capitalInvestido:capitalInvestido };
+}
 }
 
 return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, escritura: escritura, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, irModo: irModo, outras: outras, taxaSA: taxaSA, isFinanc: isFinanc, entrada: entrada, lanceFin: lanceFin, prestacaoMensal: prestacaoMensal, res: res };
@@ -733,21 +747,22 @@ var linhas = [
 c.isFinanc ? ['Entrada (valor pago)', fBRL(c.entrada), true] : ['Lance (valor pago)', fBRL(lance), true],
 ['ITBI', fBRL(c.itbi), false],
 ['Escritura', fBRL(c.escritura), false],
-['Registro em cartório', fBRL(c.reg), false],
-['Comissão leiloeiro', fBRL(c.comLeil), false],
-c.isFinanc ? null : ['Débitos assumidos', fBRL(c.debitos), false],
-c.isFinanc ? null : ['Condomínio em atraso', fBRL(c.condAtras), false],
-['Reforma / adequação', fBRL(c.reforma), false],
-['Custo desocupação', fBRL(c.desocupacao), false],
-c.isFinanc ? ['Prestação financiamento (mensal)', fBRL(c.prestacaoMensal), false] : null,
-['Manutenção mensal (12 m)', fBRL(c.custoMensal * 12), false],
-['<strong>Total investido (12 m)</strong>', '<strong>'+fBRL(c.custosFixos + c.custoMensal*12)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
+['Registro em cart\u00f3rio', fBRL(c.reg), false],
+['Comiss\u00e3o leiloeiro', fBRL(c.comLeil), false],
+['D\u00e9bitos assumidos', fBRL(c.debitos), false],
+['Condom\u00ednio em atraso', fBRL(c.condAtras), false],
+['Reforma / adequa\u00e7\u00e3o', fBRL(c.reforma), false],
+['Custo desocupa\u00e7\u00e3o', fBRL(c.desocupacao), false],
+c.isFinanc ? ['Parcelas pagas (12 m)', fBRL(c.prestacaoMensal * 12), false] : null,
+['Manuten\u00e7\u00e3o mensal (12 m)', fBRL(c.custoMensal * 12), false],
+['<strong>Capital investido (12 m)</strong>', '<strong>'+fBRL(r12.capitalInvestido)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
 ['Receita de venda', fBRL(c.recVenda), false],
 ['(-) Corretagem venda', fBRL(c.corrVenda), false],
 ['(-) IR ganho de capital (' + c.irModo + ')', fBRL(c.ir), false],
 ['(-) Outras despesas', fBRL(c.outras), false],
-['(-) Administração SA Gestão', c.taxaSA > 0 ? fBRL(c.taxaSA) : 'R$ 0,00', false],
-['<strong>Resultado líquido (12 m)</strong>', '<strong style="color:'+(r12.resultado>=0?'var(--green)':'var(--red)')+'">'+fBRL(r12.resultado)+'</strong>', true, 'border-top:2px solid var(--line)'],
+['(-) Administra\u00e7\u00e3o SA Gest\u00e3o', c.taxaSA > 0 ? fBRL(c.taxaSA) : 'R$ 0,00', false],
+c.isFinanc ? ['(-) Saldo devedor ao banco', fBRL(r12.saldoDevedor), false] : null,
+['<strong>Resultado l\u00edquido (12 m)</strong>', '<strong style="color:'+(r12.resultado>=0?'var(--green)':'var(--red)')+'">'+ fBRL(r12.resultado)+'</strong>', true, 'border-top:2px solid var(--line)'],
 ];
 el('detalheBody').innerHTML = linhas.filter(Boolean).map(function(l){
 var style = l[3] ? ' style="'+l[3]+'"' : '';
