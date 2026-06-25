@@ -205,6 +205,17 @@ window.__AMOSTRA_META__={
 }
   @media(max-width:560px){.kv{grid-template-columns:1fr}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* ===== PRICE RANGE SLIDER ===== */
+  .pslider{min-width:0;display:flex;flex-direction:column;gap:4px}
+  .pslider-vals{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pslider-track{position:relative;height:18px;display:flex;align-items:center}
+  .pslider-rail{position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px}
+  .pslider-fill{position:absolute;height:4px;background:var(--gold);border-radius:2px;pointer-events:none}
+  .pslider input[type=range]{position:absolute;width:100%;margin:0;height:4px;background:transparent;-webkit-appearance:none;pointer-events:none;border:none;outline:none}
+  .pslider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);cursor:pointer;pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .pslider input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);cursor:pointer;pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  @media(max-width:880px){.pslider{grid-column:1/-1;min-width:0;max-width:100%}}
 </style>
 
 <header>
@@ -289,9 +300,15 @@ window.__AMOSTRA_META__={
       <button class="chip" data-uf="" aria-pressed="true">Todos os estados</button>
       <button class="chip" data-uf="RS" aria-pressed="false">Rio Grande do Sul</button>
       <button class="chip" data-uf="SC" aria-pressed="false">Santa Catarina</button>
-      <button class="chip" data-min="0" data-max="100000" aria-pressed="false">Até R$ 100 mil</button>
-      <button class="chip" data-min="100000" data-max="200000" aria-pressed="false">R$ 100–200 mil</button>
-      <button class="chip" data-min="200000" data-max="400000" aria-pressed="false">R$ 200–400 mil</button>
+      <div class="field pslider" id="pslider">
+      <div class="pslider-vals"><label>Preço</label><span id="pMinLbl" style="font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px">Qualquer</span></div>
+      <div class="pslider-track">
+        <div class="pslider-rail"></div>
+        <div class="pslider-fill" id="pFill"></div>
+        <input type="range" id="pRangeMin" min="0" max="1000000" step="5000" value="0">
+        <input type="range" id="pRangeMax" min="0" max="1000000" step="5000" value="1000000">
+      </div>
+    </div>
       <button class="chip" data-mindesc="30" aria-pressed="false">Desconto 30%+</button>
       <button class="chip chip-fav" id="chipFav" aria-pressed="false">♥ Favoritos (<span id="favN">0</span>)</button>
       <button class="chip chip-send" id="sendFav" style="display:none">Enviar favoritos no WhatsApp</button>
@@ -686,16 +703,35 @@ document.getElementById("dcond").addEventListener("change",e=>{state.dcond=e.tar
     if(c.dataset.uf!==undefined){
       document.querySelectorAll(".chip[data-uf]").forEach(x=>x.setAttribute("aria-pressed","false"));
       c.setAttribute("aria-pressed","true"); state.uf=c.dataset.uf;
-    }else if(c.dataset.min!==undefined){
-      const on=c.getAttribute("aria-pressed")==="true";
-      document.querySelectorAll(".chip[data-min]").forEach(x=>x.setAttribute("aria-pressed","false"));
-      if(on){state.min=null;state.max=null;}
-      else{c.setAttribute("aria-pressed","true");state.min=+c.dataset.min;state.max=+c.dataset.max;}
-    }else if(c.dataset.mindesc!==undefined){
+    }else if(c.dataset.min!==undefined){/* handled by slider */}else if(c.dataset.mindesc!==undefined){
       const on=c.getAttribute("aria-pressed")==="true";
       c.setAttribute("aria-pressed",on?"false":"true"); state.mindesc=on?null:+c.dataset.mindesc;
     }
     aplicar();
+
+
+  // ===== SLIDER DE PRECO =====
+  (function(){
+    function fmtPreco(v){if(v>=1000000)return"R$1M+";if(v>=1000)return"R$"+Math.round(v/1000)+"k";return"R$"+v;}
+    function updSlider(){
+      const mn=document.getElementById("pRangeMin"),mx=document.getElementById("pRangeMax");
+      const lbl=document.getElementById("pMinLbl"),fill=document.getElementById("pFill");
+      if(!mn||!mx) return;
+      let lo=+mn.value,hi=+mx.value;
+      if(lo>hi-50000){if(mn===document.activeElement)hi=lo+50000;else lo=hi-50000;mn.value=lo;mx.value=hi;}
+      const pct=v=>(v/1000000)*100;
+      if(fill){fill.style.left=pct(lo)+"%";fill.style.width=(pct(hi)-pct(lo))+"%";}
+      const noFilter=(lo===0&&hi===1000000);
+      if(lbl) lbl.textContent=noFilter?"Qualquer":fmtPreco(lo)+(lo>0||hi<1000000?" – ":"")+fmtPreco(hi);
+      state.min=noFilter?null:lo;
+      state.max=noFilter?null:hi;
+      aplicar();
+    }
+    const mn=document.getElementById("pRangeMin"),mx=document.getElementById("pRangeMax");
+    if(mn) mn.addEventListener("input",updSlider);
+    if(mx) mx.addEventListener("input",updSlider);
+    updSlider();
+  })();
   }));
 
   document.getElementById("chipFav").addEventListener("click",function(){
