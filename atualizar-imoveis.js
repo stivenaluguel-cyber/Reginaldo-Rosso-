@@ -106,12 +106,43 @@ async function baixar(uf) {
   return parseCSV(texto);
 }
 
+function gerarCSV(lista, uf) {
+  const hoje = new Date();
+  const dd = String(hoje.getDate()).padStart(2, '0');
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+  const yyyy = hoje.getFullYear();
+  const data = dd + '/' + mm + '/' + yyyy;
+  const linhas = [
+    'Lista de Imoveis da Caixa;;Data de geracao:;' + data + ';;;;;;',
+    'N do imovel;UF;Cidade;Bairro;Endereco;Preco;Valor de avaliacao;Desconto;Financiamento;Descricao;Modalidade de venda;Link de acesso',
+    ''
+  ];
+  lista.forEach(function(item) {
+    linhas.push([
+      item.id || '',
+      item.uf || uf,
+      item.cidade || '',
+      item.bairro || '',
+      item.endereco || '',
+      item.preco != null ? String(item.preco) : '',
+      item.avaliacao != null ? String(item.avaliacao) : '',
+      item.desconto != null ? String(item.desconto) : '',
+      item.financiamento ? 'Sim' : 'Nao',
+      item.descricao || '',
+      item.modalidade || '',
+      item.link || ''
+    ].join(';'));
+  });
+  return '\n' + linhas.join('\n') + '\n';
+}
+
 (async () => {
   const meta = { atualizado: new Date().toISOString(), total: 0, porEstado: {} };
   for (const uf of ESTADOS) {
     try {
       const lista = await baixar(uf);
       fs.writeFileSync(`imoveis-${uf.toLowerCase()}.json`, JSON.stringify(lista));
+      fs.writeFileSync(`Lista_imoveis_${uf}.csv`, gerarCSV(lista, uf));
       meta.porEstado[uf] = lista.length;
       meta.total += lista.length;
       console.log(`${uf}: ${lista.length} imóveis`);
