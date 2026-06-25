@@ -248,7 +248,7 @@
     if(!MAP) return;
     const m=L.circleMarker([p.lat,p.lng],{radius:raio(p.n),color:"#1f324c",weight:2,fillColor:"#c6a052",fillOpacity:.85});
     const cidade=p.cidade.charAt(0)+p.cidade.slice(1).toLowerCase();
-    const link="imoveis.html#q="+encodeURIComponent(p.cidade);
+    const link="imoveis.html#cidade="+encodeURIComponent(p.cidade);
     m.bindPopup('<div class="pop"><b>'+cidade+' · '+p.uf+'</b><br>'+p.n+(p.n===1?' imóvel':' imóveis')+' disponível'+(p.n===1?'':'eis')+'<br><a href="'+link+'">Ver imóveis</a></div>');
     if(p.n>=8) m.bindTooltip(String(p.n),{permanent:true,direction:"center",className:"tip"});
     m.addTo(LAYER);
