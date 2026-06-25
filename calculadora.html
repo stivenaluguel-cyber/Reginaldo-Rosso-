@@ -328,9 +328,19 @@ footer a:hover{color:var(--gold)}
 <div class="suffix"><input type="number" id="corretagemVenda" value="6" min="0" max="10" step="0.5"></div>
 </div>
 <div class="field">
-<label>Imposto de Renda (%)</label>
-<div class="suffix"><input type="number" id="irGanho" value="15" min="0" max="30" step="1"></div>
-<span class="hint">Ganho de capital PF</span>
+<label>Imposto de Renda</label>
+<div class="suffix" style="--suf:''"><select id="irModo" style="width:100%;padding:8px 10px;border:1px solid #cdd4da;border-radius:6px;background:#fff;font-size:14px" onchange="toggleIRModo()">
+<option value="pf" selected>Pessoa Física (15%)</option>
+<option value="pj">Pessoa Jurídica (Simples)</option>
+<option value="auto">Automático</option>
+<option value="isento">Isento</option>
+</select></div>
+<span class="hint">Ganho de capital</span>
+</div>
+<div class="field" id="fieldFaturamentoPJ" style="display:none">
+<label>Faturamento Anual PJ (R$)</label>
+<div class="prefix"><input type="number" id="faturamentoPJ" placeholder="0" min="0" step="10000"></div>
+<span class="hint">Simples Nacional</span>
 </div>
 <div class="field">
 <label>Outras Despesas (R$)</label>
@@ -548,6 +558,42 @@ hint.textContent = '';
 };
 
 // Formatação BRL
+// === Cálculo de IR sobre ganho de capital ===
+function calcIR(modo, ganho, precoVenda, faturamentoPJ) {
+  if (ganho <= 0) return 0;
+  if (modo === 'isento') return 0;
+  if (modo === 'auto') {
+    // Isento se preço de venda <= R$440k (único imóvel, sem outra venda em 5 anos)
+    return precoVenda <= 440000 ? 0 : calcIR('pf', ganho, precoVenda, faturamentoPJ);
+  }
+  if (modo === 'pf') {
+    // Tabela progressiva PF ganho de capital (Lei 13.259/2016)
+    var ir = 0;
+    var faixas = [[5000000,0.15],[5000000,0.175],[20000000,0.20],[Infinity,0.225]];
+    var restante = ganho;
+    for (var i=0; i<faixas.length; i++) {
+      var fatia = Math.min(restante, faixas[i][0]);
+      ir += fatia * faixas[i][1];
+      restante -= fatia;
+      if (restante <= 0) break;
+    }
+    return ir;
+  }
+  if (modo === 'pj') {
+    // Simples Nacional — Anexo I (comércio), alíquota efetiva aproximada
+    var fat = faturamentoPJ || 0;
+    var aliq;
+    if (fat <= 180000) aliq = 0.04;
+    else if (fat <= 360000) aliq = 0.073;
+    else if (fat <= 720000) aliq = 0.095;
+    else if (fat <= 1800000) aliq = 0.107;
+    else if (fat <= 3600000) aliq = 0.143;
+    else aliq = 0.19;
+    return ganho * aliq;
+  }
+  return ganho * 0.15;
+}
+
 // === Tabelas Cartoriais ===
 var TABELAS_CART={
 RS:{esc:[[2481.78,222.84],[7445.24,252.48],[12408.7,292.39],[18612.94,346.06],[24816.76,395.6],[37225.25,468.11],[49633.84,552.7],[74451.02,628.7],[99267.78,728.63],[124084.96,828.46],[148901.62,928.07],[198535.67,1076.7],[248169.5,1277.1],[297803.55,1475.79],[347437.28,1675.34],[397071.02,1889.81],[446704.96,2074.96],[496338.9,2274.4],[545972.84,2473.74],[595606.79,2673.18],[645240.73,2871.56],[694874.57,3072.27],[744508.51,3271.92],[992677.91,3870.14],[1240847.62,4867.55],[1000000000000000,5482.91]],reg:[[2481.78,226.12],[4963.35,230.77],[7445.24,241.04],[9927.02,251.1],[12408.7,260.94],[14890.06,271],[17371.52,281.27],[19853.73,291.33],[22335.08,300.75],[24816.76,310.38],[37225.25,340.87],[49633.84,390.84],[74451.02,465.89],[99267.78,565.5],[124084.96,664.91],[148901.62,764.73],[173718.59,864.56],[198535.67,964.17],[223352.74,1064.21],[248169.5,1163.93],[297803.55,1313.3],[347437.28,1512.32],[397071.02,1711.97],[446704.96,1911.3],[496338.9,2111.7],[620423.97,2460.82],[744508.51,2958.89],[868593.26,3458.02],[992677.91,3956.2],[1116762.77,4454.91],[1240847.62,4953.61],[1000000000000000,5482.91]]},
@@ -557,6 +603,11 @@ function custCartorio(uf,tipo,valor){
 var tab=(TABELAS_CART[uf]||TABELAS_CART.RS)[tipo];
 for(var i=0;i<tab.length;i++){if(valor<=tab[i][0])return tab[i][1];}
 return tab[tab.length-1][1];
+}
+function toggleIRModo(){
+var modo=(document.getElementById('irModo')||{value:'pf'}).value;
+var pjField=document.getElementById('fieldFaturamentoPJ');
+if(pjField) pjField.style.display = modo==='pj' ? '' : 'none';
 }
 function atualizarCartorio(){
 var av=parseFloat(document.getElementById('valorAvaliacao').value)||0;
@@ -597,7 +648,6 @@ var desocupacao = num('desocupacao');
 var condMensal = num('condominioMensal');
 var iptuAnual = num('iptuAnual');
 var corrVendaPct = num('corretagemVenda') / 100;
-var irPct = num('irGanho') / 100;
 var outrasValor = num('outrasDesp');
 
 var base = avaliacao > 0 ? avaliacao : lance;
@@ -612,7 +662,9 @@ var recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance 
 
 var corrVenda = recVenda * corrVendaPct;
 var ganho = Math.max(0, recVenda - lance);
-var ir = ganho * irPct;
+var irModo = (document.getElementById('irModo')||{value:'pf'}).value||'pf';
+var faturamentoPJ = (document.getElementById('faturamentoPJ') ? parseFloat(document.getElementById('faturamentoPJ').value)||0 : 0);
+var ir = calcIR(irModo, ganho, recVenda, faturamentoPJ);
 var outras = outrasValor;
 var taxaSA = (typeof saAtivo !== 'undefined' && saAtivo)
 ? (recVenda <= 200000 ? 10000 : recVenda * 0.05)
@@ -631,7 +683,7 @@ var taxaMensal = custosFixos > 0 && meses > 0
 return { meses: meses, totalCusto: totalCusto, resultado: resultado, roi: roi, taxaMensal: taxaMensal };
 }
 
-return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, escritura: escritura, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, outras: outras, taxaSA: taxaSA, res: res };
+return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, escritura: escritura, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, irModo: irModo, outras: outras, taxaSA: taxaSA, res: res };
 }
 
 // Colorir célula ROI
@@ -699,7 +751,7 @@ var linhas = [
 ['<strong>Total investido (12 m)</strong>', '<strong>'+fBRL(c.custosFixos + c.custoMensal*12)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
 ['Receita de venda', fBRL(c.recVenda), false],
 ['(-) Corretagem venda', fBRL(c.corrVenda), false],
-['(-) IR ganho de capital', fBRL(c.ir), false],
+['(-) ['IR ganho de capital (' + c.irModo + ')', fBRL(c.ir), false],
 ['(-) Outras despesas', fBRL(c.outras), false],
 ['(-) Administração SA Gestão', c.taxaSA > 0 ? fBRL(c.taxaSA) : 'R$ 0,00', false],
 ['<strong>Resultado líquido (12 m)</strong>', '<strong style="color:'+(r12.resultado>=0?'var(--green)':'var(--red)')+'">'+fBRL(r12.resultado)+'</strong>', true, 'border-top:2px solid var(--line)'],
