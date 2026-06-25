@@ -654,7 +654,7 @@ var custosFixos = isFinanc ? (entrada + itbi + reg + escritura + comLeil + refor
 var recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance * 1.3);
 
 var corrVenda = recVenda * corrVendaPct;
-var ganho = Math.max(0, recVenda - lance);
+var ganho = Math.max(0, recVenda - (lance + itbi + escritura + reg + comLeil));
 var irModo = (document.getElementById('irModo')||{value:'pf'}).value||'pf';
 var faturamentoPJ = (document.getElementById('faturamentoPJ') ? parseFloat(document.getElementById('faturamentoPJ').value)||0 : 0);
 var ir = calcIR(irModo, ganho, recVenda, faturamentoPJ);
@@ -670,7 +670,7 @@ function res(meses){
 var manutencao = custoMensal * meses;
 var totalCusto = custosFixos + manutencao + despVenda;
 var resultado = recVenda - totalCusto;
-var roi = custosFixos > 0 ? (resultado / custosFixos) * 100 : 0;
+var roi = totalCusto > 0 ? (resultado / totalCusto) * 100 : 0;
 var taxaMensal = custosFixos > 0 && meses > 0
 ? (Math.pow(1 + roi/100, 1/meses) - 1) * 100 : 0;
 return { meses: meses, totalCusto: totalCusto, resultado: resultado, roi: roi, taxaMensal: taxaMensal };
@@ -724,7 +724,7 @@ el('kpiResultadoSub').textContent = 'em 12 meses';
 el('kpiRoiVal').textContent = fPct(r12.roi);
 el('kpiRoiSub').textContent = 'em 12 meses';
 el('kpiMensalVal').textContent = fPct(r12.taxaMensal);
-el('kpiCustoVal').textContent = fBRL(c.custosFixos);
+el('kpiCustoVal').textContent = fBRL(r12.totalCusto);
 
 el('kpiRoi').className = 'kpi ' + (r12.roi >= roiMin ? 'ok' : r12.roi > 0 ? 'warn' : 'bad');
 el('kpiResultado').className = 'kpi gold-accent ' + (r12.resultado >= 0 ? 'ok' : 'bad');
