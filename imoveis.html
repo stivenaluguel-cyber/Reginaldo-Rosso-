@@ -711,7 +711,15 @@ document.getElementById("dcond").addEventListener("change",e=>{state.dcond=e.tar
     aplicar();
 
 
-  // ===== SLIDER DE PRECO =====
+    }));
+
+  document.getElementById("chipFav").addEventListener("click",function(){
+    state.onlyFav=!state.onlyFav;
+    this.setAttribute("aria-pressed",state.onlyFav?"true":"false");
+    aplicar();
+  });
+
+// ===== SLIDER DE PRECO =====
   (function(){
     function fmtPreco(v){if(v>=1000000)return"R$1M+";if(v>=1000)return"R$"+Math.round(v/1000)+"k";return"R$"+v;}
     function updSlider(){
@@ -733,13 +741,7 @@ document.getElementById("dcond").addEventListener("change",e=>{state.dcond=e.tar
     if(mx) mx.addEventListener("input",updSlider);
     updSlider();
   })();
-  }));
 
-  document.getElementById("chipFav").addEventListener("click",function(){
-    state.onlyFav=!state.onlyFav;
-    this.setAttribute("aria-pressed",state.onlyFav?"true":"false");
-    aplicar();
-  });
   document.getElementById("sendFav").addEventListener("click",sendFavs);
 
   document.getElementById("clear").addEventListener("click",()=>{
