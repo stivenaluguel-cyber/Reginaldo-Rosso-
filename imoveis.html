@@ -746,6 +746,7 @@ document.getElementById("dcond").addEventListener("change",e=>{state.dcond=e.tar
 
   document.getElementById("clear").addEventListener("click",()=>{
     Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",dtrib:"",dcond:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc"});
+    const _mn=document.getElementById("pRangeMin"),_mx=document.getElementById("pRangeMax");if(_mn){_mn.value=0;_mx.value=1000000;const _lbl=document.getElementById("pMinLbl");if(_lbl)_lbl.textContent="Qualquer";const _fl=document.getElementById("pFill");if(_fl){_fl.style.left="0%";_fl.style.width="100%";}}
     var _cf=document.getElementById("chipFav"); if(_cf)_cf.setAttribute("aria-pressed","false");
     document.getElementById("q").value="";["cidade","tipo","modalidade","financiamento","dtrib","dcond"].forEach(id=>document.getElementById(id).value="");
     document.getElementById("ordem").value="desc";
