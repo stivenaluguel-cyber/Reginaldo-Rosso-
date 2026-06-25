@@ -107,7 +107,7 @@ async function carregarDetalhesDoBanco(){
 }
 
 // rotulos amigaveis para os campos do banco
-function simNao(v){ return v===true?"Sim":(v===false?"Nao":null); }
+function simNao(v){ return v===true?"Sim":(v===false?"Não":null); }
 function dataBR(d){ if(!d)return null; try{ const x=new Date(d); if(isNaN(x))return null; return x.toLocaleDateString("pt-BR"); }catch(_){return null;} }
 
 // Resolve financiamento com hierarquia: texto (mais confiavel) > DB > CSV > null
@@ -115,12 +115,12 @@ function dataBR(d){ if(!d)return null; try{ const x=new Date(d); if(isNaN(x))ret
 function resolverFinanciamento(det, iCsvFin, descricao) {
      // 1. Verificacao de texto: se descricao diz "exclusivamente a vista", bloqueia tudo
   const descTexto = det && det.descricao ? det.descricao : (descricao || "");
-     if (detectarAVistaExclusivo(descTexto)) return "Nao";
+     if (detectarAVistaExclusivo(descTexto)) return "Não";
      // 2. Banco tem valor explicito (true/false)?
   const dbVal = simNao(det ? det.aceita_financiamento : null);
      if (dbVal !== null) return dbVal;
      // 3. Fallback CSV
-  if (iCsvFin != null) return iCsvFin ? "Sim" : "Nao";
+  if (iCsvFin != null) return iCsvFin ? "Sim" : "Não";
      // 4. Sem dados - nao exibir chip
   return null;
 }
@@ -128,7 +128,7 @@ function resolverFinanciamento(det, iCsvFin, descricao) {
 // Resolve FGTS com hierarquia: texto > DB > null (CSV nao tem FGTS)
 function resolverFgts(det, descricao) {
      const descTexto = det && det.descricao ? det.descricao : (descricao || "");
-     if (detectarAVistaExclusivo(descTexto)) return "Nao";
+     if (detectarAVistaExclusivo(descTexto)) return "Não";
      const dbVal = simNao(det ? det.aceita_fgts : null);
      if (dbVal !== null) return dbVal;
      return null;
