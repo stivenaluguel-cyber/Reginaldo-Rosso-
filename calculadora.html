@@ -816,6 +816,9 @@ if(el3 && p.has(id)) el3.value = p.get(id);
 if(p.get('saAtivo') === '1'){ saAtivo = false; window.toggleSA(); }
 window.atualizarCamposLeilao();
 setTimeout(function(){ document.getElementById('btnCalc').click(); }, 300);
+// Expor funções ao escopo global (usadas em onchange/oninput no HTML)
+window.toggleIRModo = toggleIRModo;
+window.atualizarCartorio = atualizarCartorio;
 })();
 // Init cartorio fields on load
 if(typeof atualizarCartorio === 'function') setTimeout(atualizarCartorio, 100);
