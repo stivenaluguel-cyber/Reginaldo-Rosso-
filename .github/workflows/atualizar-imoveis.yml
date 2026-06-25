@@ -53,4 +53,5 @@ jobs:
           git add imoveis-rs.json imoveis-sc.json meta.json Lista_imoveis_RS.csv Lista_imoveis_SC.csv
           git add raw-RS.csv raw-SC.csv 2>/dev/null || true
           git commit -m "Atualiza imóveis Caixa ($(date +%F))" || echo "Sem mudanças hoje."
+          git pull --rebase --autostash origin main || true
           git push
