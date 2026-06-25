@@ -426,8 +426,8 @@ async function carregarImoveisDoBanco(){
          // financiamento: usa a mesma hierarquia de resolucao para o JSON
          // null = sem dados (frontend deve tratar como desconhecido, nao "nao aceita")
          financiamento: im.financiamento != null ? im.financiamento : null,
-         debito_tributos: im.debito_tributos || null,
-         debito_condominio: im.debito_condominio || null
+         debito_tributos: im.debito_tributos || (im._det ? (im._det.debito_tributos || null) : null),
+         debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null)
     };
  }
    const imoveisRS = imoveis.filter(im=>im.uf==="RS").map(imovelParaJson);
