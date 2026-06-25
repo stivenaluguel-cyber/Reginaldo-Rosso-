@@ -207,9 +207,9 @@ window.__AMOSTRA_META__={
   @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 
   /* ===== PRICE RANGE SLIDER ===== */
-  .pslider{min-width:0;display:flex;flex-direction:column;gap:4px}
-  .pslider-vals{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pslider-track{position:relative;height:18px;display:flex;align-items:center}
+  .pslider{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:12px;padding:4px 0}
+  .pslider-label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);font-weight:700;white-space:nowrap;flex-shrink:0;min-width:80px}
+  .pslider-track{position:relative;height:18px;display:flex;align-items:center;flex:1;min-width:200px}
   .pslider-rail{position:absolute;left:0;right:0;height:4px;background:var(--border);border-radius:2px}
   .pslider-fill{position:absolute;height:4px;background:var(--gold);border-radius:2px;pointer-events:none}
   .pslider input[type=range]{position:absolute;width:100%;margin:0;height:4px;background:transparent;-webkit-appearance:none;pointer-events:none;border:none;outline:none}
@@ -295,20 +295,21 @@ window.__AMOSTRA_META__={
         <option value="fimdesc">Finaliza: último</option>
       </select></div>
       <button class="clearbtn" id="clear">Limpar</button>
-    </div>
-    <div class="chips">
-      <button class="chip" data-uf="" aria-pressed="true">Todos os estados</button>
-      <button class="chip" data-uf="RS" aria-pressed="false">Rio Grande do Sul</button>
-      <button class="chip" data-uf="SC" aria-pressed="false">Santa Catarina</button>
-      <div class="field pslider" id="pslider">
-      <div class="pslider-vals"><label>Preço</label><span id="pMinLbl" style="font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px">Qualquer</span></div>
+    
+    <div class="field pslider" id="pslider" style="grid-column:1/-1">
+      <label class="pslider-label">Preço: <span id="pMinLbl" style="font-weight:400;text-transform:none;letter-spacing:0">Qualquer</span></label>
       <div class="pslider-track">
         <div class="pslider-rail"></div>
         <div class="pslider-fill" id="pFill"></div>
         <input type="range" id="pRangeMin" min="0" max="1000000" step="5000" value="0">
         <input type="range" id="pRangeMax" min="0" max="1000000" step="5000" value="1000000">
       </div>
-    </div>
+    </div></div>
+    <div class="chips">
+      <button class="chip" data-uf="" aria-pressed="true">Todos os estados</button>
+      <button class="chip" data-uf="RS" aria-pressed="false">Rio Grande do Sul</button>
+      <button class="chip" data-uf="SC" aria-pressed="false">Santa Catarina</button>
+      
       <button class="chip" data-mindesc="30" aria-pressed="false">Desconto 30%+</button>
       <button class="chip chip-fav" id="chipFav" aria-pressed="false">♥ Favoritos (<span id="favN">0</span>)</button>
       <button class="chip chip-send" id="sendFav" style="display:none">Enviar favoritos no WhatsApp</button>
