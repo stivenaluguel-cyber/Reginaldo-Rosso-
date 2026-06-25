@@ -91,19 +91,29 @@ def _parse_area(full_text, *labels):
 
 def _parse_debito_tributos(texto):
     t = _norm(texto)
-    if "responsabilidade do comprador" in t or "arrematante paga" in t:
+    if not t:
+        return None
+    # Caixa paga o valor que exceder 10% da avaliacao
+    if "10%" in t and ("caixa paga" in t or "paga integralmente" in t):
+        return "Caixa paga acima de 10%"
+    if "responsabilidade do comprador" in t or "arrematante paga" in t or "10%" in t:
         return "Arrematante Paga"
     if "paga integralmente" in t or "caixa paga" in t:
         return "Caixa Paga"
-    return "Arrematante Paga" if t else None
+    return "Arrematante Paga"
 
 def _parse_debito_condominio(texto):
     t = _norm(texto)
-    if "caixa paga" in t or "paga integralmente" in t:
+    if not t:
+        return None
+    # Caixa paga o valor que exceder 10% da avaliacao
+    if "10%" in t and ("caixa paga" in t or "paga integralmente" in t):
+        return "Caixa paga acima de 10%"
+    if "responsabilidade do comprador" in t or "arrematante paga" in t or "10%" in t:
+        return "Arrematante Paga"
+    if "paga integralmente" in t or "caixa paga" in t:
         return "Caixa Paga"
-    if "10%" in t:
-        return "Arrematante paga ate 10% da avaliacao"
-    return "Arrematante Paga" if t else None
+    return "Arrematante Paga"
 
 # ---------------------------------------------------------------------------
 # 1. URL DETERMINISTICA - baixa PDF direto sem Playwright
