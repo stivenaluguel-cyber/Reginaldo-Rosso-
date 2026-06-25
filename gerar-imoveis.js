@@ -181,7 +181,7 @@ const mais = [];
    if(i.avaliacao>0) mais.push(["Valor de avaliacao", brl(i.avaliacao)]);
    if(areaTot) mais.push(["Area total", Math.round(areaTot)+" m2"]);
    if(areaPriv) mais.push(["Area util/privativa", Math.round(areaPriv)+" m2"]);
-   if(det.cidade||i.cidade) mais.push(["Localizacao", cap(det.cidade||i.cidade)+(bairro?" / "+bairro:"")+" / "+i.uf]);
+   if(det.cidade||i.cidade) mais.push(["Localização", cap(det.cidade||i.cidade)+(bairro?" / "+bairro:"")+" / "+i.uf]);
    if(atualizado) mais.push(["Dados atualizados em", atualizado]);
    const maisHTML = '<div class="mais"><h2>Mais sobre o imovel</h2><div class="mais-grid">'+mais.map(m=>'<div><span>'+esc(m[0])+'</span><b>'+esc(m[1])+'</b></div>').join("")+'</div></div>';
 
@@ -196,9 +196,31 @@ const temDetalhe = (fgts!=null||fin!=null||tributos||condominio||matriculaUrl||a
    ? '<div class="note">Informacoes extraidas da ficha oficial da Caixa'+(atualizado?" (atualizado em "+esc(atualizado)+")":"")+'. Confirme sempre no edital antes de dar um lance. Preparo seu <b>Relatorio Confidencial</b> sem custo.</div>'
       : '<div class="note">Matricula, FGTS, parcelamento, tributos/condominio e valores de praca constam na ficha oficial da Caixa. Eu confiro tudo com voce antes de qualquer lance - e preparo seu <b>Relatorio Confidencial</b> sem custo.</div>';
 
-const ld = { "@context":"https://schema.org","@type":"Product","name":titulo,"image":foto,
-            "description":metaDesc,"sku":i.id,"category":i.tipo,
-            "offers":{"@type":"Offer","price":Math.round(i.preco),"priceCurrency":"BRL","availability":"https://schema.org/InStock","url":url} };
+const ld = {
+  "@context": "https://schema.org",
+  "@type": "RealEstateListing",
+  "name": titulo,
+  "description": metaDesc,
+  "url": url,
+  "image": foto,
+  "identifier": String(i.id),
+  "datePosted": new Date().toISOString().slice(0,10),
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": i.cidade||"",
+    "addressRegion": i.uf||"",
+    "addressCountry": "BR",
+    "streetAddress": i.endereco||""
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": Math.round(i.preco),
+    "priceCurrency": "BRL",
+    "availability": "https://schema.org/InStock",
+    "url": url,
+    "seller": { "@type":"RealEstateAgent","name":"Reginaldo Rosso","url":"https://reginaldorosso.com.br" }
+  }
+};
    return `<!doctype html>
    <html lang="pt-BR">
    <head>
@@ -264,11 +286,11 @@ const ld = { "@context":"https://schema.org","@type":"Product","name":titulo,"im
    ${condHTML}
 
    <div class="kv">
-   <div><span>Preco de venda</span><b>${brl(i.preco)}</b></div>
-   <div><span>Avaliacao Caixa</span><b>${brl(i.avaliacao)}</b></div>
+   <div><span>Preço de venda</span><b>${brl(i.preco)}</b></div>
+   <div><span>Avaliação Caixa</span><b>${brl(i.avaliacao)}</b></div>
    <div><span>Desconto</span><b>${i.desconto>0?Math.round(i.desconto)+"%":"-"}</b></div>
    <div><span>Modalidade</span><b>${esc(i.modalidade||"-")}</b></div>
-   <div><span>Financiamento</span><b>${fin!=null?fin:(i.financiamento!=null?(i.financiamento?"Aceita":"Nao aceita"):"-")}</b></div>
+   <div><span>Financiamento</span><b>${fin!=null?fin:(i.financiamento!=null?(i.financiamento?"Aceita":"Não aceita"):"-")}</b></div>
    <div><span>FGTS</span><b>${fgts!=null?fgts:"-"}</b></div>
    </div>
 
@@ -278,7 +300,7 @@ const ld = { "@context":"https://schema.org","@type":"Product","name":titulo,"im
 
    ${docsHTML}
 
-   ${i.descricao?`<div class="desc"><b>Descricao:</b> ${esc(i.descricao)}</div>`:""}
+   ${i.descricao?`<div class="desc"><b>Descrição:</b> ${esc(i.descricao)}</div>`:""}
 
    <div class="cta">
    <a class="btn wa" href="${wa}" target="_blank" rel="noopener">&#128242; Tenho interesse - falar no WhatsApp</a>
