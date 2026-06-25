@@ -238,13 +238,13 @@ footer a:hover{color:var(--gold)}
 </div>
 <div class="field">
 <label>Valor do Lance (R$)</label>
-<div class="prefix"><input type="number" id="valorLance" placeholder="0,00" min="0" step="1000"></div>
+<div class="prefix"><input type="number" id="valorLance" placeholder="0,00" min="0" step="1000" oninput="atualizarCartorio()"></div>
 </div>
 </div>
 <div class="field-row">
 <div class="field">
 <label>Valor de Avaliação (R$)</label>
-<div class="prefix"><input type="number" id="valorAvaliacao" placeholder="0,00" min="0" step="1000"></div>
+<div class="prefix"><input type="number" id="valorAvaliacao" placeholder="0,00" min="0" step="1000" oninput="atualizarCartorio()"></div>
 <span class="hint">Valor de mercado estimado</span>
 </div>
 <div class="field">
@@ -253,7 +253,16 @@ footer a:hover{color:var(--gold)}
 </div>
 </div>
 
-<div class="section-label">Custos Cartoriais &amp; Aquisição</div>
+<div class="section-label">Custos Cartoriais &amp; Aquisi&ccedil;&atilde;o</div>
+<div class="field-row" style="margin-bottom:6px">
+<div class="field">
+<label>Estado</label>
+<div class="suffix" style="--suf:''"><select id="uf" style="width:100%;padding:8px 10px;border:1px solid #cdd4da;border-radius:6px;background:#fff;font-size:14px" onchange="atualizarCartorio()">
+<option value="RS" selected>RS — Rio Grande do Sul</option>
+<option value="SC">SC — Santa Catarina</option>
+</select></div>
+</div>
+</div>
 <div class="field-row triple">
 <div class="field">
 <label>ITBI (%)</label>
@@ -261,11 +270,19 @@ footer a:hover{color:var(--gold)}
 <span class="hint">Sobre valor do lance</span>
 </div>
 <div class="field">
-<label>Registro (%)</label>
-<div class="suffix"><input type="number" id="registro" value="1" min="0" max="5" step="0.1"></div>
+<label>Escritura (R$)</label>
+<div class="prefix"><input type="number" id="escrituraValor" readonly style="background:#f4f6f8;cursor:default" placeholder="auto"></div>
+<span class="hint">Tabela cartorial</span>
 </div>
+<div class="field">
+<label>Registro (R$)</label>
+<div class="prefix"><input type="number" id="registroValor" readonly style="background:#f4f6f8;cursor:default" placeholder="auto"></div>
+<span class="hint">Tabela cartorial</span>
+</div>
+</div>
+<div class="field-row triple">
 <div class="field" id="fieldComissaoLeiloeiro">
-<label>Comissão Leiloeiro (%)</label>
+<label>Comiss&atilde;o Leiloeiro (%)</label>
 <div class="suffix"><input type="number" id="comissaoLeiloeiro" value="5" min="0" max="10" step="0.5"></div>
 </div>
 </div>
@@ -531,6 +548,28 @@ hint.textContent = '';
 };
 
 // Formatação BRL
+// === Tabelas Cartoriais ===
+var TABELAS_CART={
+RS:{esc:[[2481.78,222.84],[7445.24,252.48],[12408.7,292.39],[18612.94,346.06],[24816.76,395.6],[37225.25,468.11],[49633.84,552.7],[74451.02,628.7],[99267.78,728.63],[124084.96,828.46],[148901.62,928.07],[198535.67,1076.7],[248169.5,1277.1],[297803.55,1475.79],[347437.28,1675.34],[397071.02,1889.81],[446704.96,2074.96],[496338.9,2274.4],[545972.84,2473.74],[595606.79,2673.18],[645240.73,2871.56],[694874.57,3072.27],[744508.51,3271.92],[992677.91,3870.14],[1240847.62,4867.55],[1000000000000000,5482.91]],reg:[[2481.78,226.12],[4963.35,230.77],[7445.24,241.04],[9927.02,251.1],[12408.7,260.94],[14890.06,271],[17371.52,281.27],[19853.73,291.33],[22335.08,300.75],[24816.76,310.38],[37225.25,340.87],[49633.84,390.84],[74451.02,465.89],[99267.78,565.5],[124084.96,664.91],[148901.62,764.73],[173718.59,864.56],[198535.67,964.17],[223352.74,1064.21],[248169.5,1163.93],[297803.55,1313.3],[347437.28,1512.32],[397071.02,1711.97],[446704.96,1911.3],[496338.9,2111.7],[620423.97,2460.82],[744508.51,2958.89],[868593.26,3458.02],[992677.91,3956.2],[1116762.77,4454.91],[1240847.62,4953.61],[1000000000000000,5482.91]]},
+SC:{esc:[[13233.43,201.39],[19850.14,232.24],[27790.2,329.7],[34406.92,430.38],[42346.98,537.58],[51610.38,649.38],[59550.44,766.94],[68813.84,881.88],[76753.9,1006.16],[87340.06,1133.64],[96604.05,1274],[107190.79,1406.58],[117777.54,1551.14],[128364.28,1700.46],[140274.27,1855.42],[152184.54,2017.3],[164094.54,2079.45],[177327.97,2197.45],[190561.42,2307.9],[203794.85,2416.7],[217028.27,2523.94],[267028.27,2635.25],[317028.27,2646.65],[367028.27,2707.98],[417028.27,2769.35],[467028.27,2830.72],[517028.27,2892.09],[567028.27,2953.44],[617028.27,3014.81],[667028.27,3076.18],[717028.27,3137.54],[767028.27,3198.9],[817028.27,3260.27],[867028.27,3321.64],[917028.27,3383.01],[967028.27,3444.38],[1017028.27,3505.75],[1067028.27,3567.09],[1117028.27,3628.46],[1167028.27,3689.83],[1217028.27,3751.2],[1267028.27,3812.57],[1317028.27,3873.94],[1367028.27,3935.31],[1417028.27,3996.68],[1467028.27,4058.05],[1517028.27,4119.42],[1567028.27,4180.79],[1617028.27,4242.16],[1667028.27,4303.53],[1717028.27,4364.9],[1767028.27,4426.27],[1817028.27,4487.64],[1867028.27,4549.01],[1917028.27,4610.38],[1967028.27,4671.75],[2017028.27,4733.12],[2067028.27,4794.49],[2117028.27,4855.86],[2167028.27,4917.23],[2217028.27,4978.6],[2267028.27,5039.97],[2317028.27,5101.34],[2367028.27,5162.71],[2417028.27,5224.08],[2467028.27,5285.45],[2517028.27,5346.82],[2567028.27,5408.19],[2617028.27,5469.56],[2667028.27,5530.93],[2717028.27,5592.3],[2767028.27,5653.67],[2817028.27,5715.04],[2867028.27,5776.41],[2917028.27,5837.78],[2967028.27,5899.15],[3017028.27,5960.52],[3067028.27,6021.89],[3117028.27,6083.26],[3167028.27,6144.63],[3217028.27,6206],[3267028.27,6267.37],[3317028.27,6328.74],[3367028.27,6390.11],[3417028.27,6451.48],[3467028.27,6512.85],[3517028.27,6574.22],[1000000000000000,6617.81]],reg:[[13233.44,199.42],[19850.14,226.49],[27790.2,322.84],[34406.92,420.87],[42346.98,525.69],[51610.38,633.85],[59550.44,745.42],[68813.84,862.05],[76753.9,983.75],[87340.65,1108.84],[96604.05,1238.99],[107190.79,1375.91],[117777.54,1499.28],[128364.28,1624.38],[140274.37,1752.84],[152184.45,1883],[164094.54,2014.84],[177327.97,2148.37],[190561.42,2285.28],[203794.85,2423.89],[217028.27,2564.18],[267028.27,2628.04],[317028.27,2691.91],[367028.27,2755.77],[417028.27,2819.63],[467028.27,2883.49],[517028.27,2947.35],[567028.27,3011.21],[617028.27,3075.07],[667028.27,3138.93],[717028.27,3202.79],[767028.27,3266.65],[817028.27,3330.51],[867028.27,3394.37],[917028.27,3458.23],[967028.27,3522.09],[1017028.27,3585.95],[1067028.27,3649.81],[1117028.27,3713.67],[1167028.27,3777.53],[1217028.27,3841.39],[1267028.27,3905.25],[1317028.27,3969.11],[1367028.27,4032.97],[1417028.27,4096.83],[1467028.27,4160.69],[1517028.27,4224.55],[1567028.27,4288.41],[1617028.27,4352.27],[1667028.27,4416.13],[1717028.27,4479.99],[1767028.27,4543.85],[1817028.27,4607.71],[1867028.27,4671.57],[1917028.27,4735.43],[1967028.27,4799.29],[2017028.27,4863.15],[2067028.27,4927.01],[2117028.27,4990.87],[2167028.27,5054.73],[2217028.27,5118.59],[2267028.27,5182.45],[2317028.27,5246.31],[2367028.27,5310.17],[2417028.27,5374.03],[2467028.27,5437.89],[2517028.27,5501.75],[2567028.27,5565.61],[2617028.27,5629.47],[2667028.27,5693.33],[2717028.27,5757.19],[2767028.27,5821.05],[2817028.27,5884.91],[2867028.27,5948.77],[2917028.27,6012.63],[2967028.27,6076.49],[3017028.27,6140.35],[3067028.27,6204.21],[3117028.27,6268.07],[3167028.27,6331.93],[3217028.27,6395.79],[3267028.27,6459.65],[3317028.27,6523.51],[3367028.27,6587.37],[3417028.27,6651.23],[3467028.27,6715.09],[3517028.27,6778.95],[3567028.27,6842.81],[1000000000000000,6887.43]]}
+};
+function custCartorio(uf,tipo,valor){
+var tab=(TABELAS_CART[uf]||TABELAS_CART.RS)[tipo];
+for(var i=0;i<tab.length;i++){if(valor<=tab[i][0])return tab[i][1];}
+return tab[tab.length-1][1];
+}
+function atualizarCartorio(){
+var av=parseFloat(document.getElementById('valorAvaliacao').value)||0;
+var lance=parseFloat(document.getElementById('valorLance').value)||0;
+var base=av>0?av:lance;
+var uf=(document.getElementById('uf')||{value:'RS'}).value||'RS';
+var esc=base>0?custCartorio(uf,'esc',base):0;
+var reg=base>0?custCartorio(uf,'reg',base):0;
+var eEl=document.getElementById('escrituraValor');
+var rEl=document.getElementById('registroValor');
+if(eEl)eEl.value=esc.toFixed(2);
+if(rEl)rEl.value=reg.toFixed(2);
+}
 function fBRL(v){
 return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
@@ -550,7 +589,6 @@ var lance = lanceForcado !== undefined ? lanceForcado : num('valorLance');
 var avaliacao = num('valorAvaliacao');
 var precoVenda = num('precoVenda');
 var itbiPct = num('itbi') / 100;
-var regPct = num('registro') / 100;
 var comLeilPct = num('comissaoLeiloeiro') / 100;
 var debitos = num('debitos');
 var condAtras = num('condominioAtrasado');
@@ -562,10 +600,13 @@ var corrVendaPct = num('corretagemVenda') / 100;
 var irPct = num('irGanho') / 100;
 var outrasValor = num('outrasDesp');
 
+var base = avaliacao > 0 ? avaliacao : lance;
+var uf = (document.getElementById('uf') || {value:'RS'}).value || 'RS';
 var itbi = lance * itbiPct;
-var reg = lance * regPct;
+var escritura = custCartorio(uf, 'esc', base);
+var reg = custCartorio(uf, 'reg', base);
 var comLeil = lance * comLeilPct;
-var custosFixos = lance + itbi + reg + comLeil + debitos + condAtras + reforma + desocupacao;
+var custosFixos = lance + itbi + reg + escritura + comLeil + debitos + condAtras + reforma + desocupacao;
 
 var recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance * 1.3);
 
@@ -590,7 +631,7 @@ var taxaMensal = custosFixos > 0 && meses > 0
 return { meses: meses, totalCusto: totalCusto, resultado: resultado, roi: roi, taxaMensal: taxaMensal };
 }
 
-return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, outras: outras, taxaSA: taxaSA, res: res };
+return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, escritura: escritura, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, outras: outras, taxaSA: taxaSA, res: res };
 }
 
 // Colorir célula ROI
@@ -647,6 +688,7 @@ el('kpiResultado').className = 'kpi gold-accent ' + (r12.resultado >= 0 ? 'ok' :
 var linhas = [
 ['Lance (valor pago)', fBRL(lance), true],
 ['ITBI', fBRL(c.itbi), false],
+['Escritura', fBRL(c.escritura), false],
 ['Registro em cartório', fBRL(c.reg), false],
 ['Comissão leiloeiro', fBRL(c.comLeil), false],
 ['Débitos assumidos', fBRL(c.debitos), false],
@@ -723,6 +765,8 @@ if(p.get('saAtivo') === '1'){ saAtivo = false; window.toggleSA(); }
 window.atualizarCamposLeilao();
 setTimeout(function(){ document.getElementById('btnCalc').click(); }, 300);
 })();
+// Init cartorio fields on load
+if(typeof atualizarCartorio === 'function') setTimeout(atualizarCartorio, 100);
 </script>
 </body>
 </html>
