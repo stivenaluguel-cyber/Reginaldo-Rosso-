@@ -732,7 +732,7 @@ var linhas = [
 ['<strong>Total investido (12 m)</strong>', '<strong>'+fBRL(c.custosFixos + c.custoMensal*12)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
 ['Receita de venda', fBRL(c.recVenda), false],
 ['(-) Corretagem venda', fBRL(c.corrVenda), false],
-['(-) ['(-) IR ganho de capital (' + c.irModo + ')', fBRL(c.ir), false],
+['(-) IR ganho de capital (' + c.irModo + ')', fBRL(c.ir), false],
 ['(-) Outras despesas', fBRL(c.outras), false],
 ['(-) Administração SA Gestão', c.taxaSA > 0 ? fBRL(c.taxaSA) : 'R$ 0,00', false],
 ['<strong>Resultado líquido (12 m)</strong>', '<strong style="color:'+(r12.resultado>=0?'var(--green)':'var(--red)')+'">'+fBRL(r12.resultado)+'</strong>', true, 'border-top:2px solid var(--line)'],
