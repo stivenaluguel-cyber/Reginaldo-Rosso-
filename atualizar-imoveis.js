@@ -23,7 +23,7 @@ const key = s => (s || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/
 // "182.000,00" -> 182000.00 ; "44,16443" -> 44.16
 function num(v) {
   if (v == null) return null;
-  const s = v.toString().trim().replace(/\./g, "").replace(",", ".").replace(/[^0-9.\-]/g, "");
+  const raw = v.toString().trim(); const d = Math.max(raw.lastIndexOf('.'), raw.lastIndexOf(',')); const s = d < 0 ? raw.replace(/[^0-9-]/g, '') : raw.slice(0, d).replace(/[^0-9-]/g, '') + '.' + raw.slice(d + 1).replace(/[^0-9]/g, '');
   if (s === "") return null;
   const n = parseFloat(s);
   return isNaN(n) ? null : n;
