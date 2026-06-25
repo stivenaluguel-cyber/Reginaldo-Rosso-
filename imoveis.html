@@ -85,6 +85,8 @@ window.__AMOSTRA_META__={
   .fones{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
   .fones a{color:var(--gold-soft);font-size:.86rem;font-weight:600;display:flex;align-items:center;gap:6px}
   .fones a:hover{color:#fff}.fones svg{width:14px;height:14px;fill:var(--gold)}
+  .fav-btn{display:none;position:relative;background:none;border:0;cursor:pointer;padding:6px;color:var(--cream)}
+  .fav-btn.has-favs{display:flex;align-items:center;justify-content:center}
   .burger{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:6px}
   .burger span{width:25px;height:2px;background:var(--cream);display:block}
   .mobile{display:none;background:var(--navy-d)}
@@ -103,7 +105,7 @@ window.__AMOSTRA_META__={
 
   .filters{position:sticky;top:69px;z-index:30;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
   .fbar{display:grid;grid-template-columns:1.3fr repeat(4,1fr) 1.3fr 1.3fr 1fr auto;gap:10px}
-  .field label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 5px 2px;font-weight:700}
+  .field label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:0 0 5px 2px;font-weight:700}
   .field input,.field select{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-weight:500;font-size:.92rem;padding:11px 12px;outline:none}
   .field input:focus,.field select:focus{border-color:var(--gold)}
   .field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px;background-size:5px 5px;background-repeat:no-repeat}
@@ -118,7 +120,7 @@ window.__AMOSTRA_META__={
   .card{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;aspect-ratio:4/3.3;background:linear-gradient(135deg,var(--navy2),var(--navy-d));box-shadow:0 10px 26px -16px rgba(31,50,76,.5);transition:transform .18s,box-shadow .2s}
   .card:hover{transform:translateY(-4px);box-shadow:0 20px 40px -18px rgba(31,50,76,.55)}
   .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .card .pholder{position:absolute;inset:0;display:grid;place-items:center;color:#5b7da3;font-weight:600;font-size:1rem}
+  .card .pholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,#1a2d44,#27405f);color:#4a6a8a}
   .card .grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,25,40,.5) 0%,rgba(15,25,40,0) 26%,rgba(15,25,40,0) 40%,rgba(15,25,40,.92) 100%)}
   .card .badges{position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:2}
   .card .uf{background:rgba(23,38,56,.9);color:#fff;border-radius:7px;padding:4px 9px;font-size:.72rem;font-weight:700;letter-spacing:.05em}
@@ -233,6 +235,7 @@ window.__AMOSTRA_META__={
         </div>
       </div>
     </div>
+<button class="fav-btn" id="favHeaderBtn" title="Meus favoritos" onclick="document.getElementById('chipFav').click()" style="display:none;position:relative"><svg width="20" height="20" viewBox="0 0 24 24" fill="#e0566a" stroke="#e0566a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><span id="favHeaderN" style="position:absolute;top:0;right:0;background:#e0566a;color:#fff;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1">0</span></button>
 <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
   <div class="mobile" id="mobile">
@@ -343,6 +346,10 @@ window.__AMOSTRA_META__={
     const sb=document.getElementById("sendFav"); if(sb) sb.style.display=n?"inline-flex":"none";
     const fc=document.getElementById("chipFav");
     if(fc && n===0 && state.onlyFav){ state.onlyFav=false; fc.setAttribute("aria-pressed","false"); }
+    const hb=document.getElementById("favHeaderBtn");
+    const hn=document.getElementById("favHeaderN");
+    if(hb){ if(n>0){hb.style.display="flex";}else{hb.style.display="none";} }
+    if(hn){ hn.textContent=n>0?n:""; }
   }
   function sendFavs(){
     const L=favList(); if(!L.length) return;
@@ -437,8 +444,9 @@ ALL.forEach(item=>{if(!item.debito_tributos)item.debito_tributos=_parseTrib(item
       if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; quando=(window.__AMOSTRA_META__||{}).atualizado; }
 
       const elU=document.getElementById("updatedTxt");
-      if(geracao){ elU.textContent="Lista da Caixa gerada em "+geracao+" · "+ALL.length+" imóveis"; }
-      else if(quando){ const d=new Date(quando); elU.textContent="Lista atualizada em "+d.toLocaleDateString("pt-BR")+" · "+ALL.length+" imóveis"; }
+      function diasAtras(s){if(!s)return null;const diff=Math.floor((new Date()-new Date(s))/864e5);if(diff===0)return"hoje";if(diff===1)return"ontem";if(diff<7)return"há "+diff+" dias";if(diff<30)return"há "+Math.floor(diff/7)+" semana"+(Math.floor(diff/7)>1?"s":"");return"há "+Math.floor(diff/30)+" mês"+(Math.floor(diff/30)>1?"es":"");}
+      if(geracao){ const rel=diasAtras(geracao); elU.textContent="Lista Caixa: "+(rel||geracao)+" · "+ALL.length+" imóveis"; }
+      else if(quando){ const rel=diasAtras(quando); elU.textContent="Atualizado "+(rel||new Date(quando).toLocaleDateString("pt-BR"))+" · "+ALL.length+" imóveis"; }
       else{ elU.textContent=ALL.length+" imóveis disponíveis"; }
       preencherFiltros();
       aplicarHash();
@@ -543,7 +551,7 @@ function aplicar(){
       const foto=fotoDe(i);
       const img = foto ? `<img src="${foto}" loading="lazy" referrerpolicy="no-referrer" alt="" onerror="this.style.display='none'">` : "";
       el.innerHTML=`
-        <div class="pholder">${i.tipo||'Imóvel'}</div>
+        <div class="pholder"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#c6a052" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4a6a8a">${i.tipo||'Imóvel'}</span></div>
         ${img}
         <div class="grad"></div>
         <div class="badges">
