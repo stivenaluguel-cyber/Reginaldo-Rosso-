@@ -322,7 +322,7 @@ footer a:hover{color:var(--gold)}
 </div>
 
 <div class="section-label">Venda &amp; Tributos</div>
-<div class="field-row triple">
+<div class="field-row">
 <div class="field">
 <label>Corretagem Venda (%)</label>
 <div class="suffix"><input type="number" id="corretagemVenda" value="6" min="0" max="10" step="0.5"></div>
@@ -337,10 +337,13 @@ footer a:hover{color:var(--gold)}
 </select></div>
 <span class="hint">Ganho de capital</span>
 </div>
-<div class="field" id="fieldFaturamentoPJ" style="display:none">
+</div>
+<div class="field-row" id="rowFaturamentoPJ" style="display:none">
+<div class="field" id="fieldFaturamentoPJ">
 <label>Faturamento Anual PJ (R$)</label>
 <div class="prefix"><input type="number" id="faturamentoPJ" placeholder="0" min="0" step="10000"></div>
 <span class="hint">Simples Nacional</span>
+</div>
 </div>
 </div>
 <div class="field">
@@ -577,8 +580,8 @@ function calcIR(modo, ganho, precoVenda, faturamentoPJ) {
 }
 function toggleIRModo(){
   var modo=(document.getElementById('irModo')||{value:'pf'}).value;
-  var pjField=document.getElementById('fieldFaturamentoPJ');
-  if(pjField) pjField.style.display=modo==='pj'?'':'none';
+  var row=document.getElementById('rowFaturamentoPJ');
+  if(row) row.style.display=modo==='pj'?'':'none';
 }
 // === Tabelas Cartoriais ===
 var TABELAS_CART={
