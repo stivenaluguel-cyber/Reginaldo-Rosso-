@@ -634,13 +634,22 @@ var iptuAnual = num('iptuAnual');
 var corrVendaPct = num('corretagemVenda') / 100;
 var outrasValor = num('outrasDesp');
 
+var isFinanc = (function(){ var btn = document.querySelector('#pagToggle button.active'); return btn ? btn.getAttribute('data-pag') === 'financiamento' : false; })();
+var entradaPct = isFinanc ? (num('entrada') / 100) : 1;
+var prazoMeses = isFinanc ? (num('prazoMeses') || 420) : 0;
+var cetAA = isFinanc ? (num('cetAA') || 12) : 0;
+var entrada = isFinanc ? lance * entradaPct : lance;
+var lanceFin = isFinanc ? (lance - entrada + debitos + condAtras) : 0;
+var cetMes = isFinanc && cetAA > 0 ? (Math.pow(1 + cetAA / 100, 1/12) - 1) : 0;
+var prestacaoMensal = (isFinanc && lanceFin > 0 && cetMes > 0 && prazoMeses > 0) ? lanceFin * cetMes / (1 - Math.pow(1 + cetMes, -prazoMeses)) : 0;
+
 var base = avaliacao > 0 ? avaliacao : lance;
 var uf = (document.getElementById('uf') || {value:'RS'}).value || 'RS';
 var itbi = lance * itbiPct;
 var escritura = custCartorio(uf, 'esc', base);
 var reg = custCartorio(uf, 'reg', base);
 var comLeil = lance * comLeilPct;
-var custosFixos = lance + itbi + reg + escritura + comLeil + debitos + condAtras + reforma + desocupacao;
+var custosFixos = isFinanc ? (entrada + itbi + reg + escritura + comLeil + reforma + desocupacao) : (lance + itbi + reg + escritura + comLeil + debitos + condAtras + reforma + desocupacao);
 
 var recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance * 1.3);
 
@@ -655,7 +664,7 @@ var taxaSA = (typeof saAtivo !== 'undefined' && saAtivo)
 : 0;
 var despVenda = corrVenda + ir + outras + taxaSA;
 
-var custoMensal = condMensal + (iptuAnual / 12);
+var custoMensal = condMensal + (iptuAnual / 12) + prestacaoMensal;
 
 function res(meses){
 var manutencao = custoMensal * meses;
@@ -667,9 +676,8 @@ var taxaMensal = custosFixos > 0 && meses > 0
 return { meses: meses, totalCusto: totalCusto, resultado: resultado, roi: roi, taxaMensal: taxaMensal };
 }
 
-return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, escritura: escritura, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, irModo: irModo, outras: outras, taxaSA: taxaSA, res: res };
+return { custosFixos: custosFixos, recVenda: recVenda, despVenda: despVenda, custoMensal: custoMensal, itbi: itbi, reg: reg, escritura: escritura, comLeil: comLeil, debitos: debitos, condAtras: condAtras, reforma: reforma, desocupacao: desocupacao, corrVenda: corrVenda, ir: ir, irModo: irModo, outras: outras, taxaSA: taxaSA, isFinanc: isFinanc, entrada: entrada, lanceFin: lanceFin, prestacaoMensal: prestacaoMensal, res: res };
 }
-
 // Colorir célula ROI
 function roiCell(roi, roiMin){
 var val = fPct(roi);
@@ -722,15 +730,16 @@ el('kpiRoi').className = 'kpi ' + (r12.roi >= roiMin ? 'ok' : r12.roi > 0 ? 'war
 el('kpiResultado').className = 'kpi gold-accent ' + (r12.resultado >= 0 ? 'ok' : 'bad');
 
 var linhas = [
-['Lance (valor pago)', fBRL(lance), true],
+c.isFinanc ? ['Entrada (valor pago)', fBRL(c.entrada), true] : ['Lance (valor pago)', fBRL(lance), true],
 ['ITBI', fBRL(c.itbi), false],
 ['Escritura', fBRL(c.escritura), false],
 ['Registro em cartório', fBRL(c.reg), false],
 ['Comissão leiloeiro', fBRL(c.comLeil), false],
-['Débitos assumidos', fBRL(c.debitos), false],
-['Condomínio em atraso', fBRL(c.condAtras), false],
+c.isFinanc ? null : ['Débitos assumidos', fBRL(c.debitos), false],
+c.isFinanc ? null : ['Condomínio em atraso', fBRL(c.condAtras), false],
 ['Reforma / adequação', fBRL(c.reforma), false],
 ['Custo desocupação', fBRL(c.desocupacao), false],
+c.isFinanc ? ['Prestação financiamento (mensal)', fBRL(c.prestacaoMensal), false] : null,
 ['Manutenção mensal (12 m)', fBRL(c.custoMensal * 12), false],
 ['<strong>Total investido (12 m)</strong>', '<strong>'+fBRL(c.custosFixos + c.custoMensal*12)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
 ['Receita de venda', fBRL(c.recVenda), false],
@@ -740,7 +749,7 @@ var linhas = [
 ['(-) Administração SA Gestão', c.taxaSA > 0 ? fBRL(c.taxaSA) : 'R$ 0,00', false],
 ['<strong>Resultado líquido (12 m)</strong>', '<strong style="color:'+(r12.resultado>=0?'var(--green)':'var(--red)')+'">'+fBRL(r12.resultado)+'</strong>', true, 'border-top:2px solid var(--line)'],
 ];
-el('detalheBody').innerHTML = linhas.map(function(l){
+el('detalheBody').innerHTML = linhas.filter(Boolean).map(function(l){
 var style = l[3] ? ' style="'+l[3]+'"' : '';
 return '<div'+style+' style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.88rem'+(l[2]?';font-weight:700':'')+'">'
 +'<span>'+l[0]+'</span><span>'+l[1]+'</span></div>';
