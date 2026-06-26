@@ -2,14 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<!-- Google Analytics (GA4) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-S00J9QCC99"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-S00J9QCC99');
-</script>
+<link rel="preload" href="/fonts/montserrat-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/montserrat-700.woff2" as="font" type="font/woff2" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f324c">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -35,15 +29,18 @@
 <meta name="twitter:description" content="Leilão e venda direta da Caixa com grandes descontos no RS e SC. Corretor credenciado, suporte completo e Relatório Confidencial gratuito.">
 <meta name="twitter:image" content="https://reginaldorosso.com.br/og-image.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"RealEstateAgent","name":"Reginaldo Rosso — Imóveis Caixa","url":"https://reginaldorosso.com.br/","image":"https://reginaldorosso.com.br/og-image.png","description":"Corretor credenciado Caixa, especialista em leilões e venda direta de imóveis no Rio Grande do Sul e Santa Catarina.","telephone":"+5551991104976","areaServed":["Rio Grande do Sul","Santa Catarina"],"address":{"@type":"PostalAddress","addressLocality":"Criciúma","addressRegion":"SC","addressCountry":"BR"}}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  @font-face{font-family:'Montserrat';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/montserrat-400.woff2') format('woff2')}
+  @font-face{font-family:'Montserrat';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/montserrat-500.woff2') format('woff2')}
+  @font-face{font-family:'Montserrat';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/montserrat-600.woff2') format('woff2')}
+  @font-face{font-family:'Montserrat';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/montserrat-700.woff2') format('woff2')}
+  @font-face{font-family:'Montserrat';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/montserrat-800.woff2') format('woff2')}
   :root{
     --navy:#1f324c; --navy2:#27405f; --navy-d:#172638;
     --gold:#c6a052; --gold-soft:#d9c79f; --cream:#e7dcc2;
-    --bg:#eef1f4; --card:#fff; --ink:#1f324c; --ink2:#33485f; --muted:#6b7c8e; --line:#e2e7ec;
+    --bg:#eef1f4; --card:#fff; --ink:#1f324c; --ink2:#33485f; --muted:#4f5e72; --line:#e2e7ec;
   }
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
   body{font-family:'Montserrat',-apple-system,system-ui,Arial,sans-serif;color:var(--ink2);background:var(--bg);line-height:1.6;font-size:16px}
@@ -85,7 +82,7 @@
   .hero .selo{display:inline-block;margin-top:10px;background:var(--navy);color:var(--cream);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;padding:7px 16px;border-radius:30px;font-weight:600}
 
   /* busca */
-  .busca{position:relative;max-width:920px;margin:34px auto 0;background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(31,50,76,.16);padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
+  .busca{position:relative;max-width:920px;margin:34px auto 0;min-height:75px;background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(31,50,76,.16);padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
   .busca .f{flex:1;min-width:150px;display:flex;flex-direction:column;text-align:left;padding:8px 12px;border-right:1px solid var(--line)}
   .busca .f:last-of-type{border-right:0}
   .busca label{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:3px}
@@ -97,7 +94,7 @@
   /* ===== SECOES ===== */
   section{padding:66px 0}
   .stitle{text-align:center;margin-bottom:10px}
-  .stitle .k{color:var(--gold);font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+  .stitle .k{color:#7d6127;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
   .stitle h2{font-size:2rem;margin-top:8px;font-weight:700}
   .stitle p{color:var(--muted);max-width:680px;margin:12px auto 0}
 
@@ -106,7 +103,7 @@
   .bem p{margin-bottom:16px;color:var(--ink2)}
   .credbox{background:var(--bg);border-left:4px solid var(--gold);border-radius:10px;padding:22px 24px}
   .credbox b{color:var(--navy);font-size:1.05rem}
-  .credbox .creci{color:var(--gold);font-weight:700;font-size:.9rem;letter-spacing:.04em;margin:4px 0 8px}
+  .credbox .creci{color:#7d6127;font-weight:700;font-size:.9rem;letter-spacing:.04em;margin:4px 0 8px}
   .credbox span{color:var(--muted);font-size:.92rem}
 
   /* faixa imoveis */
@@ -119,8 +116,8 @@
   .btn-gold:hover{background:#d8b56a;transform:translateY(-2px)}
   .btn-navy{background:var(--navy);color:#fff}
   .btn-navy:hover{background:var(--navy2);transform:translateY(-2px)}
-  .btn-wa{background:#25D366;color:#fff}
-  .btn-wa:hover{background:#1ebe5a;transform:translateY(-2px)}
+  .btn-wa{background:#196e42;color:#fff}
+  .btn-wa:hover{background:#155c38;transform:translateY(-2px)}
   .btn-ghost{background:transparent;border:1.5px solid rgba(255,255,255,.4);color:#fff}
   .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
 
@@ -164,7 +161,7 @@
   /* footer */
   footer{background:var(--navy-d);color:#aebccb;padding:54px 22px 26px;font-size:.9rem}
   .fgrid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px}
-  footer h4{color:#fff;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:16px;font-weight:700}
+  footer h3{color:#fff;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:16px;font-weight:700}
   footer a{display:block;color:#aebccb;padding:5px 0}
   footer a:hover{color:var(--gold)}
   .fbrand b{color:#fff;font-size:1.1rem;display:block}
@@ -280,6 +277,7 @@
 <a class="mf" href="tel:5548999359022">📞 Reginaldo (48) 99935-9022 · SC</a>
   </div>
 </header>
+<main>
 
 <!-- ===== HERO ===== -->
 <div class="hero">
@@ -290,11 +288,11 @@
 
   <div class="busca">
     <div class="f">
-      <label>Estado</label>
+      <label for="bEstado">Estado</label>
       <select id="bEstado"><option value="">Todos</option><option value="RS">Rio Grande do Sul</option><option value="SC">Santa Catarina</option></select>
     </div>
     <div class="f">
-      <label>Tipo de imóvel</label>
+      <label for="bTipo">Tipo de imóvel</label>
       <select id="bTipo"><option value="">Todos</option><option>Apartamento</option><option>Casa</option><option>Terreno</option><option>Sobrado</option><option>Loja</option></select>
     </div>
     <div class="f">
@@ -477,7 +475,7 @@
         </div>
         <div class="lf-row">
           <input name="email" type="email" placeholder="Seu e-mail (opcional)">
-          <select name="estado"><option value="">Estado de interesse</option><option>Rio Grande do Sul</option><option>Santa Catarina</option></select>
+          <label for="lfEstado" class="sr-only">Estado de interesse</label><select id="lfEstado" name="estado"><option value="">Estado de interesse</option><option>Rio Grande do Sul</option><option>Santa Catarina</option></select>
         </div>
         <textarea name="mensagem" placeholder="Tem alguma cidade ou imóvel em mente? (opcional)" rows="3"></textarea>
         <input type="hidden" name="access_key" value="efe281ee-c450-4faa-bfe0-dbb185f349ab">
@@ -553,6 +551,7 @@
 function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open');}
 </script>
 <!-- ===== FOOTER ===== -->
+</main>
 <footer>
   <div class="fgrid">
     <div class="fbrand">
@@ -561,7 +560,7 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
       <p>Corretor Credenciado Caixa, especialista em leilões e venda direta de imóveis no Rio Grande do Sul e Santa Catarina. Parte da SA | Rede de Parceiros.</p>
     </div>
     <div>
-      <h4>Navegação</h4>
+      <h3>Navegação</h3>
       <a href="imoveis.html">Imóveis Caixa</a>
       <a href="#relatorio">Relatório Confidencial</a>
       <a href="#porque">Por que comigo</a>
@@ -571,7 +570,7 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
       <a href="/como-comprar-imovel-da-caixa-com-desconto.html">Passo a passo completo</a>
     </div>
     <div>
-      <h4>Contato</h4>
+      <h3>Contato</h3>
       <a href="https://wa.me/5551991104976" target="_blank" rel="noopener">WhatsApp RS — (51) 99110-4976</a>
       <a href="https://wa.me/5548991642332" target="_blank" rel="noopener">WhatsApp SC — (48) 99164-2332</a>
       <a href="https://sagestao.com" target="_blank" rel="noopener">Criciúma · SC</a>
@@ -625,6 +624,25 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
       }catch(e){ msg.className='lf-msg err'; msg.textContent='Não consegui enviar agora — me chame no WhatsApp, por favor.'; }
       btn.disabled=false; btn.textContent=old;
     });
+  })();
+</script>
+
+<script>
+  (function(){
+    var loaded=false;
+    function loadGA(){
+      if(loaded)return;loaded=true;
+      var s=document.createElement('script');
+      s.src='https://www.googletagmanager.com/gtag/js?id=G-S00J9QCC99';
+      s.async=true;
+      document.head.appendChild(s);
+      window.dataLayer=window.dataLayer||[];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js',new Date());
+      gtag('config','G-S00J9QCC99');
+    }
+    ['scroll','click','touchstart','keydown'].forEach(function(e){window.addEventListener(e,loadGA,{once:true,passive:true});});
+    setTimeout(loadGA,3000);
   })();
 </script>
 </body>
