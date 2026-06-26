@@ -467,7 +467,6 @@ ALL.forEach(item=>{if(!item.debito_tributos)item.debito_tributos=_parseTrib(item
       if(geracao){ const rel=diasAtras(geracao); elU.textContent="Lista Caixa: "+ALL.length+" imóveis"; }
       else if(quando){ const rel=diasAtras(quando); elU.textContent="Atualizado "+(rel||new Date(quando).toLocaleDateString("pt-BR"))+" · "+ALL.length+" imóveis"; }
       else{ elU.textContent=ALL.length+" imóveis disponíveis"; }
-            ALL.forEach(function(item){if(!item.debito_tributos)item.debito_tributos=_parseTrib(item.descricao);if(!item.debito_condominio)item.debito_condominio=_parseCond(item.descricao);});
 preencherFiltros();
       aplicarHash();
       aplicar();
@@ -516,12 +515,12 @@ function aplicar(){
       if(state.financiamento==="sim" && i.financiamento!==true) return false;
       if(state.financiamento==="nao" && i.financiamento!==false) return false;
 
-      if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem"))) return false;
+      if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&!i.debito_tributos.includes("10%"))) return false;
       if(state.dtrib==="caixa" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("caixa")&&!i.debito_tributos.includes("10%"))) return false;
-      if(state.dtrib==="caixa10" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("caixa")&&i.debito_tributos.includes("10%"))) return false;
-      if(state.dcond==="arrem" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem"))) return false;
+      if(state.dtrib==="caixa10" && !(i.debito_tributos&&(i.debito_tributos.toLowerCase().includes("acima")||i.debito_tributos.toLowerCase().includes("superior")||(i.debito_tributos.toLowerCase().startsWith("caixa")&&i.debito_tributos.includes("10%"))||(i.debito_tributos.toLowerCase().startsWith("arrem")&&i.debito_tributos.includes("10%"))))) return false;
+      if(state.dcond==="arrem" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&!i.debito_condominio.includes("10%"))) return false;
       if(state.dcond==="caixa" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("caixa")&&!i.debito_condominio.includes("10%"))) return false;
-      if(state.dcond==="caixa10" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("caixa")&&i.debito_condominio.includes("10%"))) return false;
+      if(state.dcond==="caixa10" && !(i.debito_condominio&&(i.debito_condominio.toLowerCase().includes("acima")||i.debito_condominio.toLowerCase().includes("superior")||(i.debito_condominio.toLowerCase().startsWith("caixa")&&i.debito_condominio.includes("10%"))||(i.debito_condominio.toLowerCase().startsWith("arrem")&&i.debito_condominio.includes("10%"))))) return false;
       if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
       if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
       if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
