@@ -207,7 +207,29 @@
 .faq-a{display:none;padding:0 24px 20px;color:var(--ink2);font-size:.97rem;line-height:1.75}
 .faq-item.open .faq-a{display:block}
 .faq-cta{text-align:center;margin-top:38px}
-</style>
+
+/* ===== CONFIANCA E RESULTADOS ===== */
+.confianca{background:var(--bg)}
+.confianca .stitle{margin-bottom:32px}
+.seals{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:28px}
+.seal{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 20px;font-size:.92rem;font-weight:600;color:var(--ink2)}
+.seal .seal-icon{font-size:1.5rem;line-height:1}
+.stats{background:linear-gradient(180deg,var(--navy2),var(--navy));padding:66px 0}
+.stats .stitle .k{color:var(--gold-soft)}
+.stats .stitle h2{color:#fff}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-top:42px;border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden}
+.stat-item{background:rgba(255,255,255,.06);padding:32px 20px;text-align:center;border-right:1px solid rgba(255,255,255,.1)}
+.stat-item:last-child{border-right:0}
+.stat-num{font-size:2.4rem;font-weight:800;color:var(--gold);line-height:1;display:block;margin-bottom:8px}
+.stat-label{font-size:.82rem;color:#a0b4c8;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.casos{background:#fff}
+.cases-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:42px}
+.case-card{border:1px solid var(--line);border-radius:14px;padding:28px 24px;background:var(--bg);transition:.2s}
+.case-card:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 8px 24px rgba(31,50,76,.1)}
+.case-icon{font-size:2rem;margin-bottom:14px;display:block}
+.case-card p{font-size:.92rem;color:var(--ink2);line-height:1.7;margin:0}
+.confianca-cta{text-align:center;margin-top:48px}
+@media(max-width:920px){.stats-grid{grid-template-columns:repeat(2,1fr)}.cases-grid{grid-template-columns:1fr}.seals{flex-direction:column;align-items:center}.stat-item:nth-child(2){border-right:0}.stat-item:nth-child(3){border-right:1px solid rgba(255,255,255,.1)}}</style>
 </head>
 <body>
 
@@ -359,7 +381,84 @@
   </div>
 </section>
 
-<!-- ===== CONTATO ===== -->
+
+
+<!-- ===== CONFIANCA E RESULTADOS ===== -->
+
+<!-- BLOCO 1: Atendimento Confidencial -->
+<section class="confianca" id="confianca">
+<div class="wrap">
+<div class="stitle">
+<div class="k">Atendimento Confidencial e Sob Medida</div>
+<h2>Discrição é parte do serviço</h2>
+</div>
+<p style="text-align:center;max-width:680px;margin:0 auto 8px;color:var(--ink2);line-height:1.75;">Meus clientes valorizam discrição — e eu garanto isso. Seu nome, seus valores e suas intenções de compra são tratados com sigilo absoluto. Aqui você não vira depoimento de vitrine: vira um arremate seguro e protegido.</p>
+<div class="seals">
+<div class="seal"><span class="seal-icon">🔒</span><span>Sigilo Absoluto</span></div>
+<div class="seal"><span class="seal-icon">🏛️</span><span>Credenciado oficialmente pela Caixa</span></div>
+<div class="seal"><span class="seal-icon">📋</span><span>Relatório Confidencial em cada negócio</span></div>
+</div>
+</div>
+</section>
+
+<!-- BLOCO 2: Números de destaque -->
+<!-- PLACEHOLDER: substitua os valores abaixo pelos números reais antes de publicar -->
+<section class="stats" id="resultados">
+<div class="wrap">
+<div class="stitle">
+<div class="k">Resultados que Falam por Si</div>
+<h2 style="color:#fff">Números do meu trabalho</h2>
+</div>
+<div class="stats-grid">
+<div class="stat-item">
+<!-- PLACEHOLDER: troque "+150" pelo número real de imóveis analisados -->
+<span class="stat-num">+150</span>
+<span class="stat-label">imóveis analisados</span>
+</div>
+<div class="stat-item">
+<span class="stat-num">RS e SC</span>
+<span class="stat-label">áreas de atuação</span>
+</div>
+<div class="stat-item">
+<!-- PLACEHOLDER: troque "Até 50%" pelo desconto máximo real que você já obteve -->
+<span class="stat-num">Até 50%</span>
+<span class="stat-label">de desconto em arremates</span>
+</div>
+<div class="stat-item">
+<span class="stat-num">100%</span>
+<span class="stat-label">gratuito para o arrematante</span>
+</div>
+</div>
+</div>
+</section>
+
+<!-- BLOCO 3: Casos reais anônimos -->
+<!-- AVISO: os casos abaixo são exemplos ilustrativos baseados em situações reais. Nenhum dado identifica clientes. -->
+<section class="casos" id="casos">
+<div class="wrap">
+<div class="stitle">
+<div class="k">Casos Reais (Identidades Preservadas)</div>
+<h2>O que acontece quando o arremate é feito com cuidado</h2>
+</div>
+<div class="cases-grid">
+<div class="case-card">
+<span class="case-icon">🏠</span>
+<p>Apartamento em bairro nobre de Porto Alegre arrematado com 38% de desconto. Identifiquei e descontei uma dívida de condomínio oculta antes do lance.</p>
+</div>
+<div class="case-card">
+<span class="case-icon">⚖️</span>
+<p>Investidor evitou um imóvel ocupado com ação judicial em andamento. A análise da matrícula no Relatório Confidencial impediu um prejuízo de anos.</p>
+</div>
+<div class="case-card">
+<span class="case-icon">📄</span>
+<p>Cliente usou FGTS e financiamento Caixa em uma venda direta, fechando o imóvel abaixo do valor de mercado com toda a documentação verificada.</p>
+</div>
+</div>
+<div class="confianca-cta">
+<a class="btn btn-gold" href="https://wa.me/5551982017867?text=Ol%C3%A1%20Reginaldo!%20Quero%20o%20Relat%C3%B3rio%20Confidencial%20Gr%C3%A1tis." target="_blank" rel="noopener">QUERO ESSE MESMO CUIDADO NO MEU ARREMATE</a>
+</div>
+</div>
+</section><!-- ===== CONTATO ===== -->
 <section class="cta" id="contato">
   <div class="wrap">
     <div class="stitle">
