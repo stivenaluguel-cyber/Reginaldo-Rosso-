@@ -410,8 +410,19 @@ async function carregarImoveisDoBanco(){
 
  const hoje = new Date().toISOString().slice(0,10);
    const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html"];
+   const artigos = [
+     "/venda-direta-caixa-vale-a-pena.html",
+     "/quem-paga-corretor-credenciado-caixa.html",
+     "/imovel-ocupado-caixa-e-seguro.html",
+     "/como-comprar-imovel-da-caixa-com-desconto.html",
+     "/corretor-credenciado-caixa-porto-alegre.html",
+     "/corretor-credenciado-caixa-florianopolis.html",
+     "/como-dar-lance-imovel-caixa.html",
+     "/como-funciona-leilao-imovel-caixa.html"
+   ];
    let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
    for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":"0.8")+"</priority></url>\n";
+   for(const u of artigos) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>\n";
    for(const im of imoveis) sm += " <url><loc>"+BASE+"/imovel/"+im.id+".html</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n";
    sm += "</urlset>\n";
    fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
