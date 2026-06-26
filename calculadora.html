@@ -330,21 +330,15 @@ footer a:hover{color:var(--gold)}
 <div class="field">
 <label>Imposto de Renda</label>
 <div class="suffix" style="--suf:''"><select id="irModo" style="width:100%;padding:8px 10px;border:1px solid #cdd4da;border-radius:6px;background:#fff;font-size:14px" onchange="toggleIRModo()">
-<option value="pf" selected>Pessoa Física (15%)</option>
-<option value="pj">Pessoa Jurídica (Simples)</option>
-<option value="auto">Automático</option>
-<option value="isento">Isento</option>
+<option value="pf" selected>PF — Padrão (15% sobre o lucro)</option>
+<option value="isento">PF — Isento (reinvestimento / único imóvel)</option>
+<option value="pj_imob">PJ — Imobiliária (5,93% sobre a venda)</option>
+<option value="pj_pat">PJ — Patrimônio / Outros CNAEs (15% sobre o lucro)</option>
 </select></div>
 <span class="hint">Ganho de capital</span>
 </div>
 </div>
-<div class="field-row" id="rowFaturamentoPJ" style="display:none">
-<div class="field" id="fieldFaturamentoPJ">
-<label>Faturamento Anual PJ (R$)</label>
-<div class="prefix"><input type="number" id="faturamentoPJ" placeholder="0" min="0" step="10000"></div>
-<span class="hint">Simples Nacional</span>
-</div>
-</div>
+
 <div class="field-row">
 <div class="field">
 <label>Outras Despesas (R$)</label>
@@ -563,25 +557,15 @@ hint.textContent = '';
 
 // Formatação BRL
 // === IR sobre ganho de capital ===
-function calcIR(modo, ganho, precoVenda, faturamentoPJ) {
-  if (ganho <= 0) return 0;
-  if (modo === 'isento') return 0;
-  if (modo === 'auto') {
-    return precoVenda <= 440000 ? 0 : calcIR('pf', ganho, precoVenda, faturamentoPJ);
-  }
-  if (modo === 'pj') {
-    var fat = faturamentoPJ || 0;
-    var aliq = fat<=180000?0.04:fat<=360000?0.073:fat<=720000?0.095:fat<=1800000?0.107:fat<=3600000?0.143:0.19;
-    return ganho * aliq;
-  }
-  var ir=0, restante=ganho, faixas=[[5000000,0.15],[5000000,0.175],[20000000,0.20],[1e15,0.225]];
-  for(var i=0;i<faixas.length;i++){var fatia=Math.min(restante,faixas[i][0]);ir+=fatia*faixas[i][1];restante-=fatia;if(restante<=0)break;}
-  return ir;
+function calcIR(modo, ganho, recVenda) {
+if (ganho <= 0 && modo !== 'pj_imob') return 0;
+if (modo === 'isento') return 0;
+if (modo === 'pj_imob') return recVenda * 0.0593;
+if (modo === 'pj_pat') return ganho <= 0 ? 0 : ganho * 0.15;
+return ganho * 0.15;
 }
 function toggleIRModo(){
-  var modo=(document.getElementById('irModo')||{value:'pf'}).value;
-  var row=document.getElementById('rowFaturamentoPJ');
-  if(row) row.style.display=modo==='pj'?'':'none';
+var modo=(document.getElementById('irModo')||{value:'pf'}).value;
 }
 // === Tabelas Cartoriais ===
 var TABELAS_CART={
@@ -656,8 +640,7 @@ var recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance 
 var corrVenda = recVenda * corrVendaPct;
 var ganho = Math.max(0, recVenda - (lance + itbi + escritura + reg + comLeil));
 var irModo = (document.getElementById('irModo')||{value:'pf'}).value||'pf';
-var faturamentoPJ = (document.getElementById('faturamentoPJ') ? parseFloat(document.getElementById('faturamentoPJ').value)||0 : 0);
-var ir = calcIR(irModo, ganho, recVenda, faturamentoPJ);
+var ir = calcIR(irModo, ganho, recVenda);
 var outras = outrasValor;
 var taxaSA = (typeof saAtivo !== 'undefined' && saAtivo)
 ? (recVenda <= 200000 ? 10000 : recVenda * 0.05)
@@ -667,21 +650,18 @@ var despVenda = corrVenda + ir + outras + taxaSA;
 var custoMensal = condMensal + (iptuAnual / 12);
 
 function res(meses){
-var manutencao = custoMensal * meses;
 var parcelasPagas = prestacaoMensal * meses;
 if(isFinanc){
-var fator = cetMes > 0 ? Math.pow(1 + cetMes, meses) : 1;
-var saldoDevedor = cetMes > 0 ? lanceFin * fator - prestacaoMensal * (fator - 1) / cetMes : Math.max(0, lanceFin - prestacaoMensal * meses);
-if(saldoDevedor < 0) saldoDevedor = 0;
+var saldoDevedor = lanceFin;
 var custosIniciais = itbi + reg + escritura + comLeil + debitos + condAtras + reforma + desocupacao;
-var capitalInvestido = entrada + custosIniciais + parcelasPagas + manutencao;
+var capitalInvestido = entrada + custosIniciais + parcelasPagas;
 var receitaLiquida = recVenda - despVenda - saldoDevedor;
 var lucro = receitaLiquida - capitalInvestido;
 var roi = capitalInvestido > 0 ? (lucro / capitalInvestido) * 100 : 0;
 var taxaMensal = capitalInvestido > 0 && meses > 0 && roi > -100 ? (Math.pow(1 + roi/100, 1/meses) - 1) * 100 : 0;
 return { meses:meses, totalCusto:capitalInvestido, resultado:lucro, roi:roi, taxaMensal:taxaMensal, saldoDevedor:saldoDevedor, capitalInvestido:capitalInvestido };
 } else {
-var capitalInvestido = custosFixos + manutencao;
+var capitalInvestido = custosFixos;
 var receitaLiquida = recVenda - despVenda;
 var lucro = receitaLiquida - capitalInvestido;
 var roi = capitalInvestido > 0 ? (lucro / capitalInvestido) * 100 : 0;
@@ -754,7 +734,6 @@ c.isFinanc ? ['Entrada (valor pago)', fBRL(c.entrada), true] : ['Lance (valor pa
 ['Reforma / adequa\u00e7\u00e3o', fBRL(c.reforma), false],
 ['Custo desocupa\u00e7\u00e3o', fBRL(c.desocupacao), false],
 c.isFinanc ? ['Parcelas pagas (12 m)', fBRL(c.prestacaoMensal * 12), false] : null,
-['Manuten\u00e7\u00e3o mensal (12 m)', fBRL(c.custoMensal * 12), false],
 ['<strong>Capital investido (12 m)</strong>', '<strong>'+fBRL(r12.capitalInvestido)+'</strong>', true, 'border-top:2px solid var(--line);margin-top:6px'],
 ['Receita de venda', fBRL(c.recVenda), false],
 ['(-) Corretagem venda', fBRL(c.corrVenda), false],
