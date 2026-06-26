@@ -1,0 +1,26 @@
+name: Download Fonts
+on:
+  workflow_dispatch:
+
+jobs:
+  download-fonts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Montserrat fonts
+        run: |
+          mkdir -p fonts
+          curl -L "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aXp-p7K4KLg.woff2" -o fonts/montserrat-400.woff2
+          curl -L "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtZ6Hw5aXp-p7K4KLg.woff2" -o fonts/montserrat-500.woff2
+          curl -L "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCu173w5aXp-p7K4KLg.woff2" -o fonts/montserrat-600.woff2
+          curl -L "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM73w5aXp-p7K4KLg.woff2" -o fonts/montserrat-700.woff2
+          curl -L "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCvr73w5aXp-p7K4KLg.woff2" -o fonts/montserrat-800.woff2
+          ls -la fonts/
+      - name: Commit fonts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add fonts/
+          git diff --staged --quiet || git commit -m "Add self-hosted Montserrat woff2 fonts" && git push
