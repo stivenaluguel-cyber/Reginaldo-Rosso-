@@ -282,8 +282,8 @@ window.__AMOSTRA_META__={
       <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option></select></div>
-<div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option></select></div>
-<div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option></select></div>
+<div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="arrem10">Arrematante paga até 10%</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option><option value="nao-info">Não informado</option></select></div>
+<div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="arrem10">Arrematante paga até 10%</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option><option value="nao-info">Não informado</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
         <option value="precoasc">Preço: menor → maior</option>
         <option value="precodesc">Preço: maior → menor</option>
@@ -413,7 +413,7 @@ window.__AMOSTRA_META__={
         const res=await fetch(nome+"?t="+Date.now(),{cache:"no-store"});
         if(!res.ok) continue;
         const buf=await res.arrayBuffer();
-        const txt=new TextDecoder("iso-8859-1").decode(buf); // listas da Caixa são latin1
+        const txt=new TextDecoder("utf-8").decode(buf); // CSVs da Caixa são UTF-8
         if(/cidade/i.test(txt)&&txt.length>200){
           const mg=txt.match(/gera[çc][aã]o[^0-9]*(\d{2}\/\d{2}\/\d{4})/i);
           return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified"),geracao:mg?mg[1]:null};
@@ -515,12 +515,16 @@ function aplicar(){
       if(state.financiamento==="sim" && i.financiamento!==true) return false;
       if(state.financiamento==="nao" && i.financiamento!==false) return false;
 
-      if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&!i.debito_tributos.includes("10%"))) return false;
-      if(state.dtrib==="caixa" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("caixa")&&!i.debito_tributos.includes("10%"))) return false;
+      if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
+      if(state.dtrib==="arrem10" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&i.debito_tributos.toLowerCase().includes("10%"))) return false;
+      if(state.dtrib==="caixa" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("caixa")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
       if(state.dtrib==="caixa10" && !(i.debito_tributos&&(i.debito_tributos.toLowerCase().includes("acima")||i.debito_tributos.toLowerCase().includes("superior")||(i.debito_tributos.toLowerCase().startsWith("caixa")&&i.debito_tributos.includes("10%"))||(i.debito_tributos.toLowerCase().startsWith("arrem")&&i.debito_tributos.includes("10%"))))) return false;
-      if(state.dcond==="arrem" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&!i.debito_condominio.includes("10%"))) return false;
-      if(state.dcond==="caixa" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("caixa")&&!i.debito_condominio.includes("10%"))) return false;
+      if(state.dtrib==="nao-info" && i.debito_tributos) return false;
+      if(state.dcond==="arrem" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&!i.debito_condominio.toLowerCase().includes("10%"))) return false;
+      if(state.dcond==="arrem10" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&i.debito_condominio.toLowerCase().includes("10%"))) return false;
+      if(state.dcond==="caixa" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("caixa")&&!i.debito_condominio.toLowerCase().includes("10%"))) return false;
       if(state.dcond==="caixa10" && !(i.debito_condominio&&(i.debito_condominio.toLowerCase().includes("acima")||i.debito_condominio.toLowerCase().includes("superior")||(i.debito_condominio.toLowerCase().startsWith("caixa")&&i.debito_condominio.includes("10%"))||(i.debito_condominio.toLowerCase().startsWith("arrem")&&i.debito_condominio.includes("10%"))))) return false;
+      if(state.dcond==="nao-info" && i.debito_condominio) return false;
       if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
       if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
       if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
