@@ -282,8 +282,8 @@ window.__AMOSTRA_META__={
       <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option></select></div>
-<div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="arrem10">Arrematante paga até 10%</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option><option value="nao-info">Não informado</option></select></div>
-<div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="arrem10">Arrematante paga até 10%</option><option value="caixa">Caixa paga</option><option value="caixa10">Caixa paga acima de 10%</option><option value="nao-info">Não informado</option></select></div>
+<div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Débito limitado a 10%</option><option value="nao-info">Não informado</option></select></div>
+<div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Débito limitado a 10%</option><option value="nao-info">Não informado</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
         <option value="precoasc">Preço: menor → maior</option>
         <option value="precodesc">Preço: maior → menor</option>
@@ -515,13 +515,11 @@ function aplicar(){
       if(state.financiamento==="sim" && i.financiamento!==true) return false;
       if(state.financiamento==="nao" && i.financiamento!==false) return false;
 
-      if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
-      if(state.dtrib==="arrem10" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&i.debito_tributos.toLowerCase().includes("10%"))) return false;
+         if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
       if(state.dtrib==="caixa" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("caixa")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
       if(state.dtrib==="caixa10" && !(i.debito_tributos&&(i.debito_tributos.toLowerCase().includes("acima")||i.debito_tributos.toLowerCase().includes("superior")||(i.debito_tributos.toLowerCase().startsWith("caixa")&&i.debito_tributos.includes("10%"))||(i.debito_tributos.toLowerCase().startsWith("arrem")&&i.debito_tributos.includes("10%"))))) return false;
       if(state.dtrib==="nao-info" && i.debito_tributos) return false;
-      if(state.dcond==="arrem" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&!i.debito_condominio.toLowerCase().includes("10%"))) return false;
-      if(state.dcond==="arrem10" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&i.debito_condominio.toLowerCase().includes("10%"))) return false;
+         if(state.dcond==="arrem" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&!i.debito_condominio.toLowerCase().includes("10%"))) return false;
       if(state.dcond==="caixa" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("caixa")&&!i.debito_condominio.toLowerCase().includes("10%"))) return false;
       if(state.dcond==="caixa10" && !(i.debito_condominio&&(i.debito_condominio.toLowerCase().includes("acima")||i.debito_condominio.toLowerCase().includes("superior")||(i.debito_condominio.toLowerCase().startsWith("caixa")&&i.debito_condominio.includes("10%"))||(i.debito_condominio.toLowerCase().startsWith("arrem")&&i.debito_condominio.includes("10%"))))) return false;
       if(state.dcond==="nao-info" && i.debito_condominio) return false;
