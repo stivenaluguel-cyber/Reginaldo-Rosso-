@@ -13,6 +13,34 @@ const GA = "G-S00J9QCC99";
 const WHATS = { RS: "5551991104976", SC: "5548991642332" };
 const OUT_DIR = path.join(__dirname, "imovel");
 
+// ============================================================
+// LGPD: IDs de imoveis cujas fotos sao prints de documentos
+// (matriculas, fichas com dados pessoais de ex-mutuarios).
+// Esses imoveis usarao o placeholder em vez da foto da Caixa.
+// Adicione novos IDs conforme identificados.
+// ============================================================
+const EXCLUIR_FOTOS = new Set([
+  "10202963",  // Dom Pedrito - Getulio Vargas - print exibe nome de pessoa fisica
+]);
+
+// Placeholder SVG: icone de casa + texto, no padrao visual do site
+const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#1e2b3f"/>
+  <g transform="translate(320,100)">
+    <polygon points="80,0 160,70 145,70 145,150 15,150 15,70 0,70" fill="none" stroke="#c6a052" stroke-width="6" stroke-linejoin="round"/>
+    <rect x="55" y="90" width="50" height="60" fill="#c6a052" opacity="0.3" rx="4"/>
+    <rect x="62" y="97" width="14" height="20" fill="#c6a052" opacity="0.6" rx="2"/>
+    <rect x="84" y="97" width="14" height="20" fill="#c6a052" opacity="0.6" rx="2"/>
+  </g>
+  <text x="400" y="310" font-family="Montserrat,Arial,sans-serif" font-size="22" font-weight="700" fill="#c6a052" text-anchor="middle">Foto disponivel na ficha da Caixa</text>
+  <text x="400" y="345" font-family="Montserrat,Arial,sans-serif" font-size="15" fill="#7a9bc0" text-anchor="middle">Acesse a ficha oficial para visualizar as imagens</text>
+  <rect x="120" y="370" width="560" height="2" fill="#c6a052" opacity="0.3" rx="1"/>
+  <text x="400" y="400" font-family="Montserrat,Arial,sans-serif" font-size="13" fill="#4a6480" text-anchor="middle">Reginaldo Rosso | Imoveis Caixa - RS &amp; SC</text>
+</svg>`;
+
+// URL do placeholder como data URI
+const PLACEHOLDER_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PLACEHOLDER_SVG);
+
 function num(s){ if(s==null)return 0; let t=String(s).replace(/[^\d.,-]/g,""); if(!t)return 0;
                 const lc=Math.max(t.lastIndexOf(","),t.lastIndexOf(".")); if(lc>=0){const dec=t.slice(lc+1); if(dec.length<=2){t=t.slice(0,lc).replace(/[.,]/g,"")+"."+dec;}else{t=t.replace(/[.,]/g,"");}} else t=t.replace(/[.,]/g,"");
                 const n=parseFloat(t); return isNaN(n)?0:n; }
@@ -136,7 +164,9 @@ function resolverFgts(det, descricao) {
 
 function pagina(i){
    const det = i._det || {};
-   const foto = "https://venda-imoveis.caixa.gov.br/fotos/F"+i.id+"21.jpg";
+   // Foto principal: usa placeholder para imoveis com prints de documentos (LGPD)
+  const fotoBase = "https://venda-imoveis.caixa.gov.br/fotos/F"+i.id+"21.jpg";
+  const foto = EXCLUIR_FOTOS.has(String(i.id)) ? PLACEHOLDER_URL : fotoBase;
    const url = BASE+"/imovel/"+i.id+".html";
    const cidade = cap(i.cidade), bairro = cap(i.bairro);
    const titulo = i.tipo+" em "+cidade+(bairro?" - "+bairro:"")+"/"+i.uf;
@@ -442,7 +472,8 @@ async function carregarImoveisDoBanco(){
          // null = sem dados (frontend deve tratar como desconhecido, nao "nao aceita")
          financiamento: im.financiamento != null ? im.financiamento : null,
          debito_tributos: im.debito_tributos || (im._det ? (im._det.debito_tributos || null) : null),
-         debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null)
+         debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null),
+         excluir_foto: EXCLUIR_FOTOS.has(String(im.id))
     };
  }
    const imoveisRS = imoveis.filter(im=>im.uf==="RS").map(imovelParaJson);
