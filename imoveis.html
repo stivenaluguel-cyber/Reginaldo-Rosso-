@@ -358,6 +358,14 @@ gtag('config','AW-872430371');
   const WHATS = { RS:"5551991104976", SC:"5548991642332" };
   // Mostrar foto da Caixa (hotlink). Se aparecer muita foto quebrada, deixe false.
   const USAR_FOTOS = true;
+// LGPD: IDs de imoveis cujas fotos sao prints de documentos (lista de exclusao manual).
+// Sincronize com EXCLUIR_FOTOS em gerar-imoveis.js ao adicionar novos casos.
+const EXCLUIR_FOTOS_HTML = new Set([
+  "10202963",  // Dom Pedrito - Getulio Vargas - print exibe nome de pessoa fisica
+]);
+// Placeholder para cards sem foto (SVG data URI, padrao visual do site)
+const PLACEHOLDER_SVG_CARD = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260"><rect width="400" height="260" fill="#1e2b3f"/><g transform="translate(160,50)"><polygon points="40,0 80,35 72,35 72,75 8,75 8,35 0,35" fill="none" stroke="#c6a052" stroke-width="3" stroke-linejoin="round"/><rect x="28" y="45" width="24" height="30" fill="#c6a052" opacity="0.25" rx="2"/></g><text x="200" y="160" font-family="Montserrat,Arial,sans-serif" font-size="13" font-weight="700" fill="#c6a052" text-anchor="middle">Foto na ficha da Caixa</text><text x="200" y="180" font-family="Montserrat,Arial,sans-serif" font-size="10" fill="#7a9bc0" text-anchor="middle">Consulte a ficha oficial</text></svg>`;
+const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PLACEHOLDER_SVG_CARD);
   const fotoURL = id => `https://venda-imoveis.caixa.gov.br/fotos/F${String(id).padStart(13,'0')}21.jpg`;
 </script>
 <script>
@@ -569,7 +577,12 @@ function aplicar(){
     render();
   }
 
-  function fotoDe(i){ return USAR_FOTOS ? fotoURL(i.id) : null; }
+  function fotoDe(i){
+  if(!USAR_FOTOS) return null;
+  // LGPD: imóveis com prints de documentos usam placeholder
+  if(EXCLUIR_FOTOS_HTML.has(String(i.id)) || i.excluir_foto === true) return PLACEHOLDER_CARD_URL;
+  return fotoURL(i.id);
+}
   function specsDe(i){
     const d=i.descricao||"";const out=[];
     let m=d.match(/([\d.,]+)\s*de [\u00e1a]rea privativa/i)||d.match(/([\d.,]+)\s*de [\u00e1a]rea total/i)||d.match(/([\d.,]+)\s*m[\u00b22]/i);
