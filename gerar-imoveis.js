@@ -421,6 +421,8 @@ async function carregarImoveisDoBanco(){
      "/como-funciona-leilao-imovel-caixa.html"
    ,
      "/como-usar-fgts-imovel-caixa.html"
+   ,
+     "/documentos-para-comprar-imovel-caixa.html"
    ];
    let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
    for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":"0.8")+"</priority></url>\n";
