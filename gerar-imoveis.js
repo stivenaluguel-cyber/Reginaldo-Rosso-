@@ -173,6 +173,81 @@ async function carregarDetalhesDoBanco(){
 function simNao(v){ return v===true?"Sim":(v===false?"Não":null); }
 function dataBR(d){ if(!d)return null; try{ const x=new Date(d); if(isNaN(x))return null; return x.toLocaleDateString("pt-BR"); }catch(_){return null;} }
 
+// Parseia data no formato 'DD/MM/YYYY' (manual, evita new Date(string) que inverte mes/dia)
+function parseDateBR(s) {
+  if (!s || typeof s !== "string") return null;
+  const p = s.split("/");
+  if (p.length !== 3) return null;
+  const d = parseInt(p[0], 10), m = parseInt(p[1], 10), y = parseInt(p[2], 10);
+  if (isNaN(d) || isNaN(m) || isNaN(y) || m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return new Date(y, m - 1, d); // meia-noite local
+}
+
+// Retorna dias inteiros ate data_fim a partir do momento da geracao.
+// Positivo = futuro, 0 = hoje, negativo = passou.
+function diasAteEncerramento(dataFimStr) {
+  if (!dataFimStr) return null;
+  const alvo = parseDateBR(dataFimStr);
+  if (!alvo) return null;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  return Math.round((alvo - hoje) / 86400000);
+}
+
+// Gera HTML do chip/linha de prazo para paginas de detalhe (retorna "" se nao deve renderizar)
+function htmlPrazoDetalhe(dataFimStr) {
+  if (!dataFimStr) return "";
+  const n = diasAteEncerramento(dataFimStr);
+  if (n === null || n < 0) return ""; // passou ou invalido: nao renderiza
+  const label = n === 0 ? "Encerra hoje!" : (n === 1 ? "Encerra amanha!" : "Leil\u00e3o encerra em " + n + " dias (" + esc(dataFimStr) + ")");
+  if (n <= 7) {
+    return `<div class="price-block__row price-block__prazo">
+<span class="price-block__label">Prazo</span>
+<span class="chip-warn">${label}</span>
+</div>`;
+  }
+  return `<div class="price-block__row price-block__prazo">
+<span class="price-block__label">Prazo</span>
+<span>${label}</span>
+</div>`;
+}
+
+// Gera chip de ocupacao para paginas de detalhe (retorna "" se nao reconhecido)
+function htmlOcupacaoDetalhe(ocupacaoStr) {
+  if (!ocupacaoStr) return "";
+  const norm = ocupacaoStr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if (norm.includes("desocupado")) return `<div class="price-block__row price-block__ocup">
+<span class="price-block__label">Ocupa\u00e7\u00e3o</span>
+<span class="chip-ok">Desocupado</span>
+</div>`;
+  if (norm.includes("ocupado")) return `<div class="price-block__row price-block__ocup">
+<span class="price-block__label">Ocupa\u00e7\u00e3o</span>
+<span class="chip-warn">Ocupado \u2014 desocupa\u00e7\u00e3o entra na an\u00e1lise</span>
+</div>`;
+  // valor nao reconhecido: registra no log e nao renderiza
+  if (ocupacaoStr) console.warn("ocupacao nao reconhecida:", JSON.stringify(ocupacaoStr));
+  return "";
+}
+
+// Versao curta para cards de listagem e hubs
+function htmlPrazoCard(dataFimStr) {
+  if (!dataFimStr) return "";
+  const n = diasAteEncerramento(dataFimStr);
+  if (n === null || n < 0) return "";
+  const p = dataFimStr.split("/");
+  const curto = p.length === 3 ? p[0] + "/" + p[1] : dataFimStr;
+  if (n <= 7) return `<span class="chip-warn card-chip">Encerra ${esc(curto)}</span>`;
+  return `<span class="card-chip-plain">Encerra ${esc(curto)}</span>`;
+}
+
+function htmlOcupacaoCard(ocupacaoStr) {
+  if (!ocupacaoStr) return "";
+  const norm = ocupacaoStr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if (norm.includes("desocupado")) return `<span class="chip-ok card-chip">Desocupado</span>`;
+  if (norm.includes("ocupado")) return `<span class="chip-warn card-chip">Ocupado</span>`;
+  return "";
+}
+
 // Resolve financiamento com hierarquia: texto (mais confiavel) > DB > CSV > null
 // Se o texto diz "a vista exclusivo", SEMPRE false independente do resto
 function resolverFinanciamento(det, iCsvFin, descricao) {
@@ -342,6 +417,8 @@ ${im.desconto > 0 ? `<span class="off">${Math.round(im.desconto)}% OFF</span>` :
 <div class="card-tipo">${esc(im.tipo)}</div>
 <div class="card-price">${brl(im.preco)}</div>
 ${im.avaliacao > 0 && im.desconto > 0 ? `<div class="card-aval">(avaliação: ${brl(im.avaliacao)})</div>` : ""}
+${htmlPrazoCard(im.data_fim || (im._det ? im._det.data_fim : null) || null)}
+${htmlOcupacaoCard(im.ocupacao || (im._det ? im._det.ocupacao : null) || null)}
 </div>
 </a>`;
   }).join("\n");
@@ -703,11 +780,13 @@ fgts===null
   : (fgts==='Sim' ? '<span style="color:var(--green)">✅ Aceita</span>' : 'Somente à vista')
 }</b>
      </div>
-     <div class="price-block__costs">
+${htmlPrazoDetalhe(det.data_fim || null)}
+${htmlOcupacaoDetalhe(det.ocupacao || null)}
+          <div class="price-block__costs">
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="${roiUrl}" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em ${new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}.</p>
    </div>
 
    ${regrasHTML}
@@ -806,7 +885,9 @@ async function carregarImoveisDoBanco(){
                                ,
                                status: row.status||"Disponivel"
                                };
-         im._det = row;
+         im.data_fim = row.data_fim || null;
+    im.ocupacao = row.ocupacao || null;
+    im._det = row;
          return im;
       });
       console.log("Banco: "+lista.length+" imoveis Disponiveis (RS/SC) carregados como fonte primaria.");
