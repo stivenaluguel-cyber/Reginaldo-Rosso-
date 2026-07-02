@@ -28,6 +28,21 @@
    <link rel="stylesheet" href="../imovel.css">
    <style>
 /* bloco financeiro: hierarquia tipografica */
+/* widget de alertas por e-mail */
+.alerta-card{background:#fff;border:1px solid #d4c08a;border-radius:12px;padding:1.25rem;margin:1.25rem 0;box-shadow:0 2px 8px rgba(30,43,63,.07)}
+.alerta-card__title{font-size:1rem;font-weight:700;color:#1e2b3f;margin:0 0 .4rem}
+.alerta-card__sub{font-size:.85rem;color:#6b7280;margin:0 0 1rem;line-height:1.5}
+.alerta-card__sub--sem-data{color:#92400e;background:#fef3c7;border-radius:6px;padding:.4rem .6rem;font-size:.82rem;margin:0 0 1rem;display:block}
+.alerta-form{display:flex;flex-direction:column;gap:.6rem}
+.alerta-form input[type=text],.alerta-form input[type=email]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#1e2b3f;outline:none;transition:border-color .2s}
+.alerta-form input:focus{border-color:#c6a052}
+.alerta-form label.check{display:flex;align-items:flex-start;gap:.4rem;font-size:.8rem;color:#4b5563;cursor:pointer;line-height:1.4}
+.alerta-form label.check input{margin-top:3px;flex-shrink:0;accent-color:#c6a052}
+.alerta-btn{background:#1e2b3f;color:#c6a052;border:none;border-radius:7px;padding:.65rem 1rem;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;font-family:inherit}
+.alerta-btn:hover{background:#27405f}
+.alerta-btn:disabled{opacity:.6;cursor:default}
+.alerta-ok{color:#166534;background:#dcfce7;border-radius:7px;padding:.75rem 1rem;font-size:.9rem;font-weight:600;text-align:center}
+.alerta-err{color:#991b1b;background:#fee2e2;border-radius:7px;padding:.6rem .75rem;font-size:.82rem;margin-top:.25rem}
 .price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
 .price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
 .price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
@@ -77,6 +92,7 @@
    <h1>Sao Leopoldo &middot; Centro</h1>
    <div class="addr">RUA SAO PAULO, N. 531, Apto 1901, QD 6A ST B BOX 29 E 34 BOX 72 BOX 73</div>
    <div class="specs"><span>3 dormitórios</span></div>
+<div class="alerta-card" id="alerta-widget"><p class="alerta-card__title">&#128276; Quer ser avisado sobre este leilão?</p><span class="alerta-card__sub--sem-data">&#9888; Ainda não temos a data de encerramento deste leilão. Deixe seu e-mail e avisamos assim que sair.</span><form class="alerta-form" id="alerta-form" novalidate><input type="text" id="alerta-nome" placeholder="Seu nome" required maxlength="100"><input type="email" id="alerta-email" placeholder="Seu e-mail" required><label class="check"><input type="checkbox" id="alerta-consent" required> Aceito receber e-mails sobre este leilão. Posso cancelar quando quiser.</label><div id="alerta-err-box" class="alerta-err" style="display:none"></div><button type="submit" class="alerta-btn" id="alerta-btn">Ativar alertas</button></form></div><script>(function(){var form=document.getElementById("alerta-form");if(!form)return;var btn=document.getElementById("alerta-btn");var errBox=document.getElementById("alerta-err-box");var widget=document.getElementById("alerta-widget");function showErr(m){errBox.textContent=m;errBox.style.display="block";}function hideErr(){errBox.style.display="none";}form.addEventListener("submit",async function(e){e.preventDefault();hideErr();var nome=document.getElementById("alerta-nome").value.trim();var email=document.getElementById("alerta-email").value.trim();var consent=document.getElementById("alerta-consent").checked;if(!nome){showErr("Por favor informe seu nome.");return;}if(!email||!/^[^@]+@[^@]+\\.[^@]+$/.test(email)){showErr("E-mail inválido.");return;}if(!consent){showErr("Marque o aceite para continuar.");return;}btn.disabled=true;btn.textContent="Enviando...";try{var res=await fetch("${WORKER_URL}/api/inscrever-alerta",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imovel_id:"${i.id}",nome:nome,email:email})});var data=await res.json();if(data.ok){if(data.duplicate){widget.innerHTML="<p class=\"alerta-ok\">Você já está inscrito neste imóvel.</p>";}else{widget.innerHTML="<p class=\"alerta-ok\">&#x2705; Prontinho! Você vai receber alertas em "+email+".</p>";}}else{showErr(data.error||"Erro ao enviar.");btn.disabled=false;btn.textContent="Ativar alertas";}}catch(ex){showErr("Erro de rede.");btn.disabled=false;btn.textContent="Ativar alertas";}});})();</script>
    <div class="price-block" id="price-block">
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
@@ -108,7 +124,7 @@
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=extrajudicial&valorLance=1070688&valorAvaliacao=1680000&comissaoLeiloeiro=5" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 20:52.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 21:22.</p>
    </div>
 
    
