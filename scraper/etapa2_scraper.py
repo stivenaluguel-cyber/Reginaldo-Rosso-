@@ -1,19 +1,24 @@
 """
-Etapa 2 - Enriquecimento
-=========================
-Estrategia dupla:
-  1. URL DETERMINISTICA: matric/edital/laudo em /editais/{kind}/{UF}/{id}.pdf
-     - Tenta baixar via httpx (rapido, sem Playwright).
-     - Se retornar 200 + content-type=pdf, faz upload p/ B2 e salva URL.
-  2. PLAYWRIGHT (detalhe-imovel.asp): aguarda 6s para AJAX carregar,
-     extrai texto via CSS selector 'body *', parseia areas, debitos, FGTS,
-     financiamento, descricao, modalidade.
-Campos gravados: area_total, area_privativa, debito_tributos,
-debito_condominio, aceita_fgts, aceita_financiamento,
-matricula_s3_url, scraped_at.
+Etapa 2 - Enriquecimento (v2 - incremental + novos campos)
+============================================================
+Estrategia:
+1. URL DETERMINISTICA: matricula/edital em /editais/{kind}/{UF}/{id}.pdf
+   - Via httpx (rapido, sem Playwright).
+2. PLAYWRIGHT (detalhe-imovel.asp): extrai texto completo, parseia:
+   - area_total, area_privativa, debito_tributos, debito_condominio,
+   - aceita_fgts, aceita_financiamento, descricao (sanitizada),
+   - tipo_real (Apartamento/Casa/Terreno/etc.), quartos, data_fim,
+   - matricula_s3_url, scraped_at.
+
+Novos campos v2: fgts (alias aceita_fgts), area (m2), quartos, data_fim.
+Sanitizacao: trunca descricao no primeiro marcador de lixo de navegacao.
+Incremental: so raspa imoveis com campos detalhados vazios (ver db.py).
+Rate limit: delay aleatorio 1-2s entre requests + User-Agent Chrome real.
+Aborte-e-salve: em 403/429, para imediatamente e preserva progresso.
 """
 import asyncio
 import logging
+import random
 import re
 import unicodedata
 from datetime import datetime, timezone
@@ -37,8 +42,36 @@ from db import upsert_imovel, set_matricula_url  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
-# URL base dos PDFs determinísticos da Caixa
 _PDF_EDITAIS = "https://venda-imoveis.caixa.gov.br/editais"
+
+# ---------------------------------------------------------------------------
+# Marcadores de lixo de navegacao para sanitizacao de descricao
+# ---------------------------------------------------------------------------
+_LIXO_MARCADORES = [
+    "baixar edital e anexos",
+    "baixar edital",
+    "de seu lance",
+    "outros produtos",
+    "voltar galeria",
+    "cartoes caixa",
+    "contas caixa",
+    "saiba mais",
+    "acesse aqui",
+    "clique aqui",
+]
+
+def _sanitizar_descricao(texto):
+    """Remove lixo de navegacao do site da Caixa truncando no primeiro marcador."""
+    if not texto:
+        return ""
+    t = texto.strip()
+    tl = t.lower()
+    for marcador in _LIXO_MARCADORES:
+        idx = tl.find(marcador)
+        if idx > 0:
+            t = t[:idx].strip(" .,;:-")
+            tl = t.lower()
+    return t[:1500]  # limite seguro
 
 # ---------------------------------------------------------------------------
 # Utilitarios de texto
@@ -93,7 +126,6 @@ def _parse_debito_tributos(texto):
     t = _norm(texto)
     if not t:
         return None
-    # Caixa paga o valor que exceder 10% da avaliacao
     if "10%" in t and ("caixa paga" in t or "paga integralmente" in t):
         return "Caixa paga acima de 10%"
     if "responsabilidade do comprador" in t or "arrematante paga" in t or "10%" in t:
@@ -106,7 +138,6 @@ def _parse_debito_condominio(texto):
     t = _norm(texto)
     if not t:
         return None
-    # Caixa paga o valor que exceder 10% da avaliacao
     if "10%" in t and ("caixa paga" in t or "paga integralmente" in t):
         return "Caixa paga acima de 10%"
     if "responsabilidade do comprador" in t or "arrematante paga" in t or "10%" in t:
@@ -115,16 +146,74 @@ def _parse_debito_condominio(texto):
         return "Caixa Paga"
     return "Arrematante Paga"
 
+def _parse_tipo(full_text, descricao_csv=""):
+    """Detecta tipo real do imovel a partir do texto da pagina ou descricao CSV."""
+    textos = [full_text or "", descricao_csv or ""]
+    for texto in textos:
+        t = _norm(texto)
+        if "apartamento" in t:
+            return "Apartamento"
+        if "sobrado" in t:
+            return "Sobrado"
+        if "casa" in t:
+            return "Casa"
+        if "terreno" in t or "lote" in t or "gleba" in t:
+            return "Terreno"
+        if "loja" in t or "sala comercial" in t or "comercial" in t or "galpao" in t or "predio" in t:
+            return "Imovel Comercial"
+        if "rural" in t or "chacara" in t or "sitio" in t or "fazenda" in t:
+            return "Imovel Rural"
+    return None  # Nao identificado - mantem o que ja tinha
+
+def _parse_quartos(full_text):
+    """Extrai numero de quartos/dormitorios do texto."""
+    t = _norm(full_text)
+    patterns = [
+        r"(\d+)\s*(?:quarto|dormitorio|dorm)",
+        r"(\d+)\s*(?:qto)",
+    ]
+    for pat in patterns:
+        m = re.search(pat, t)
+        if m:
+            n = int(m.group(1))
+            if 1 <= n <= 20:
+                return n
+    return None
+
+def _parse_data_fim(full_text):
+    """Extrai data-limite do leilao/venda (formato dd/mm/yyyy ou similar)."""
+    t = full_text or ""
+    # Busca por rotulos comuns da Caixa
+    rotulos = [
+        r"(?:data\s+de\s+(?:encerramento|fim|vencimento|limite)|encerra\s+em|valido\s+ate)[:\s]+",
+        r"(?:primeiro\s+leil[aã]o|segundo\s+leil[aã]o|venda\s+online)[^\n]*?-\s*",
+    ]
+    date_pattern = r"(\d{2}/\d{2}/\d{4})"
+    for rot in rotulos:
+        m = re.search(rot + date_pattern, t, re.IGNORECASE)
+        if m:
+            return m.group(m.lastindex)
+    # Fallback: qualquer data no texto (prioriza datas futuras)
+    datas = re.findall(r"(\d{2}/\d{2}/\d{4})", t)
+    from datetime import date
+    hoje = date.today()
+    for d in datas:
+        try:
+            dt = datetime.strptime(d, "%d/%m/%Y").date()
+            if dt >= hoje:
+                return d
+        except Exception:
+            pass
+    return None
+
 # ---------------------------------------------------------------------------
 # 1. URL DETERMINISTICA - baixa PDF direto sem Playwright
 # ---------------------------------------------------------------------------
 def _baixar_pdf_determinisitco(numero_imovel, uf):
-    """Tenta baixar matricula via URL deterministica /editais/matricula/UF/ID.pdf.
-    Retorna bytes do PDF ou None."""
+    """Tenta baixar matricula via URL deterministica /editais/matricula/UF/ID.pdf."""
     if not uf:
         return None
     uf_upper = uf.strip().upper()
-    url = f"{_PDF_EDITAIS}/matricula/{uf_upper}/{numero_imovel}.pdf"
     headers = {
         "User-Agent": USER_AGENT,
         "Referer": "https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp",
@@ -133,21 +222,16 @@ def _baixar_pdf_determinisitco(numero_imovel, uf):
     }
     try:
         with httpx.Client(timeout=30, follow_redirects=True) as cli:
-            r = cli.get(url, headers=headers)
-            ctype = r.headers.get("content-type", "")
-            logger.info(
-                f"[det-pdf {numero_imovel}] UF={uf_upper} "
-                f"status={r.status_code} ctype={ctype[:40]}"
-            )
-            if r.status_code == 200 and "pdf" in ctype.lower():
-                return r.content
-            # Fallback: tenta edital se matricula nao existe
-            url2 = f"{_PDF_EDITAIS}/edital/{uf_upper}/{numero_imovel}.pdf"
-            r2 = cli.get(url2, headers=headers)
-            ctype2 = r2.headers.get("content-type", "")
-            if r2.status_code == 200 and "pdf" in ctype2.lower():
-                logger.info(f"[det-pdf {numero_imovel}] edital OK como fallback")
-                return r2.content
+            for kind in ("matricula", "edital"):
+                url = f"{_PDF_EDITAIS}/{kind}/{uf_upper}/{numero_imovel}.pdf"
+                r = cli.get(url, headers=headers)
+                ctype = r.headers.get("content-type", "")
+                if r.status_code == 200 and "pdf" in ctype.lower() and r.content:
+                    logger.info(f"[det-pdf {numero_imovel}] {kind} OK ({len(r.content)}B)")
+                    return r.content
+                if r.status_code in (403, 429):
+                    logger.warning(f"[det-pdf {numero_imovel}] HTTP {r.status_code} - rate limit")
+                    return None
     except Exception as e:
         logger.warning(f"[det-pdf {numero_imovel}] erro httpx: {e}")
     return None
@@ -197,15 +281,9 @@ async def _capturar_pdf_playwright(page, numero_imovel):
     await page.route("**/*atricula*", capture_pdf)
     await page.route("**/*edital*", capture_pdf)
 
-    # Tenta clicar em links de matricula/edital/documentos
     seletores_docs = [
-        "a:has-text('Matrícula')",
-        "a:has-text('Matricula')",
-        "a:has-text('matrícula')",
-        "a[href*='matricula']",
-        "a[href*='Matricula']",
-        "a[href$='.pdf']",
-        "a[onclick*='atricula']",
+        "a:has-text('Matrícula')", "a:has-text('Matricula')",
+        "a[href*='matricula']", "a[href$='.pdf']",
         "input[value*='atricula']",
     ]
     for sel in seletores_docs:
@@ -216,14 +294,7 @@ async def _capturar_pdf_playwright(page, numero_imovel):
                 try:
                     el = loc.nth(i)
                     if await el.is_visible(timeout=1500):
-                        try:
-                            async with page.context.expect_page() as popinfo:
-                                await el.click(timeout=3000)
-                            pop = await popinfo.value
-                            await pop.wait_for_load_state("networkidle", timeout=10000)
-                            await pop.close()
-                        except Exception:
-                            await el.click(timeout=3000)
+                        await el.click(timeout=3000)
                         await page.wait_for_timeout(2000)
                         if pdf_bytes_list:
                             return pdf_bytes_list[-1]
@@ -232,7 +303,6 @@ async def _capturar_pdf_playwright(page, numero_imovel):
         except Exception:
             continue
 
-    # Extrai hrefs de PDF dos links da pagina
     try:
         hrefs = await page.eval_on_selector_all(
             "a",
@@ -257,25 +327,20 @@ async def _capturar_pdf_playwright(page, numero_imovel):
 # 4. Extrai dados textuais da pagina de detalhe via Playwright
 # ---------------------------------------------------------------------------
 async def _extrair_dados_playwright(page, numero_imovel):
-    """Aguarda AJAX carregar e extrai campos da pagina de detalhe da Caixa."""
+    """Aguarda AJAX carregar e extrai todos os campos da pagina de detalhe."""
     dados = {}
     try:
-        # Aguarda o conteudo AJAX carregar (ate 20s)
-        # A pagina da Caixa carrega os dados do imovel via JS apos DOMContentLoaded
-        await page.wait_for_timeout(6000)  # Aguarda AJAX
-        # Tenta esperar por seletores com dados reais
-        for sel in ["#lblTitulo", ".titulo", "h1", "#pnlDetalhe", "#pnlImovel",
-                    "table", "#divDetalhe", ".detalhe", "#divPrincipal"]:
+        # Aguarda AJAX (pagina da Caixa usa JS para carregar dados)
+        await page.wait_for_timeout(5000)
+        for sel in ["#lblTitulo", ".titulo", "h1", "#pnlDetalhe", "table", "#divPrincipal"]:
             try:
-                await page.wait_for_selector(sel, timeout=5000)
+                await page.wait_for_selector(sel, timeout=4000)
                 break
             except Exception:
                 continue
 
-        # Extrai texto completo da pagina
         full_text = ""
         try:
-            # Pega texto de todos os elementos relevantes
             full_text = await page.inner_text("body")
         except Exception:
             try:
@@ -285,50 +350,83 @@ async def _extrair_dados_playwright(page, numero_imovel):
 
         logger.info(
             f"[diag {numero_imovel}] texto={len(full_text)} chars | "
-            f"trecho={repr(_strip_accents(full_text)[:300].replace(chr(10), ' '))}"
+            f"trecho={repr(_strip_accents(full_text)[:200].replace(chr(10), ' '))}"
         )
 
-        if len(full_text) < 500:
+        if len(full_text) < 300:
             logger.warning(f"[diag {numero_imovel}] pagina muito curta, AJAX nao carregou")
             return dados
 
-        # Extrai campos
+        # === Areas ===
         dados["area_total"] = _parse_area(
-            full_text, "Area total", "Area do terreno", "Área total", "Área do terreno"
+            full_text, "Area total", "Area do terreno", "Área total", "Área do terreno",
+            "area total", "area terreno",
         )
         dados["area_privativa"] = _parse_area(
             full_text, "Area privativa", "Área privativa",
-            "Area util", "Área útil", "Area construida", "Área construída"
+            "Area util", "Área útil", "Area construida", "Área construída",
+            "area util", "area privativa",
         )
+        # Campo consolidado 'area' para o frontend (privativa se existir, senao total)
+        dados["area"] = dados.get("area_privativa") or dados.get("area_total")
 
-        deb_t = _find_value(full_text, "Tributos", "IPTU") or ""
+        # === Debitos ===
+        deb_t = _find_value(full_text, "Tributos", "IPTU", "tributos", "iptu") or ""
         dados["debito_tributos"] = _parse_debito_tributos(deb_t)
 
-        deb_c = _find_value(full_text, "Condominio", "Condomínio") or ""
+        deb_c = _find_value(full_text, "Condominio", "Condomínio", "condominio") or ""
         dados["debito_condominio"] = _parse_debito_condominio(deb_c)
 
+        # === FGTS e Financiamento ===
         nt = _norm(full_text)
-        dados["aceita_fgts"] = (
+        aceita_fgts = (
             "aceita fgts" in nt or (
                 "fgts" in nt
                 and "nao aceita fgts" not in nt
                 and "nao utiliza fgts" not in nt
+                and "sem fgts" not in nt
             )
         )
-        dados["aceita_financiamento"] = (
+        dados["aceita_fgts"] = aceita_fgts
+        dados["fgts"] = aceita_fgts  # alias para o frontend
+
+        aceita_fin = (
             "aceita financiamento" in nt or (
                 "financiamento" in nt
                 and "nao aceita financiamento" not in nt
                 and "nao permite financiamento" not in nt
+                and "exclusivamente a vista" not in nt
+                and "somente recursos proprios" not in nt
             )
         )
+        dados["aceita_financiamento"] = aceita_fin
 
-        desc = _find_value(full_text, "Descricao", "Descrição")
-        if desc:
-            dados["descricao"] = desc[:1000]
+        # === Descricao (sanitizada) ===
+        desc_raw = _find_value(full_text, "Descricao", "Descrição", "descricao", "descricao do imovel") or ""
+        if not desc_raw:
+            # Fallback: texto geral da pagina (primeiros 800 chars depois do titulo)
+            idx_titulo = nt.find("detalhe do imovel")
+            if idx_titulo > 0:
+                desc_raw = full_text[idx_titulo:idx_titulo + 1000]
+        dados["descricao"] = _sanitizar_descricao(desc_raw)
+
+        # === Tipo real ===
+        tipo = _parse_tipo(full_text)
+        if tipo:
+            dados["tipo_real"] = tipo
+
+        # === Quartos ===
+        quartos = _parse_quartos(full_text)
+        if quartos is not None:
+            dados["quartos"] = quartos
+
+        # === Data-fim do leilao/venda ===
+        data_fim = _parse_data_fim(full_text)
+        if data_fim:
+            dados["data_fim"] = data_fim
 
     except Exception as e:
-        logger.warning(f"[diag {numero_imovel}] erro extração playwright: {e}")
+        logger.warning(f"[diag {numero_imovel}] erro extracao playwright: {e}")
 
     return dados
 
@@ -336,8 +434,7 @@ async def _extrair_dados_playwright(page, numero_imovel):
 # 4b. FASE RAPIDA: download de matriculas em massa (httpx, sem Playwright)
 # ---------------------------------------------------------------------------
 async def _baixar_uma_matricula(client, semaphore, numero_imovel, uf):
-    """Baixa a matricula de 1 imovel via URL deterministica e faz upload p/ B2.
-    Retorna (numero_imovel, s3_url) ou (numero_imovel, None)."""
+    """Baixa a matricula de 1 imovel via URL deterministica e faz upload p/ B2."""
     if not uf:
         return (numero_imovel, None)
     uf_upper = uf.strip().upper()
@@ -363,16 +460,16 @@ async def _baixar_uma_matricula(client, semaphore, numero_imovel, uf):
                     except Exception as e:
                         logger.warning(f"[massa {numero_imovel}] upload B2 falhou: {e}")
                         return (numero_imovel, None)
+                if r.status_code in (403, 429):
+                    logger.warning(f"[massa {numero_imovel}] rate limit HTTP {r.status_code}")
+                    return (numero_imovel, None)
             except Exception as e:
                 logger.debug(f"[massa {numero_imovel}] erro {url}: {e}")
                 continue
     return (numero_imovel, None)
 
-
 async def baixar_matriculas_em_massa(pares, concurrency=16):
-    """Baixa matriculas de muitos imoveis em paralelo via httpx (sem Playwright).
-    pares: lista de (numero_imovel, uf). Atualiza matricula_s3_url no banco.
-    Retorna (ok, falhas)."""
+    """Baixa matriculas de muitos imoveis em paralelo via httpx (sem Playwright)."""
     if not pares:
         logger.info("Fase matriculas: nenhum imovel pendente.")
         return (0, 0)
@@ -403,21 +500,32 @@ async def baixar_matriculas_em_massa(pares, concurrency=16):
                         falhas += 1
                 else:
                     falhas += 1
-            logger.info(f"Fase matriculas: progresso {min(i+200,len(tasks))}/{len(tasks)} | ok={ok} falhas={falhas}")
+            logger.info(
+                f"Fase matriculas: {min(i+200,len(tasks))}/{len(tasks)} | ok={ok} falhas={falhas}"
+            )
     logger.info(f"Fase matriculas concluida: {ok} baixadas | {falhas} sem matricula/erro")
     return (ok, falhas)
 
+# ---------------------------------------------------------------------------
+# 5. Funcao principal: scrape_imovel
+# ---------------------------------------------------------------------------
+# Sinal global para abortar lote em caso de rate limit severo
+RATE_LIMIT_ATIVO = False
 
-# ---------------------------------------------------------------------------
-# 5. Funcao principal
-# ---------------------------------------------------------------------------
 async def scrape_imovel(numero_imovel, uf=None, browser=None):
-    """Raspa um imovel. Retorna dict com dados enriquecidos ou None."""
+    """
+    Raspa um imovel. Retorna dict com dados enriquecidos ou None.
+
+    Rate limit: se receber 403/429 da pagina de detalhe, seta RATE_LIMIT_ATIVO=True
+    para que o pipeline pare o lote e salve o progresso.
+    Delay: aguarda 1-2s antes de cada request (definido no chamador via pipeline.py).
+    """
+    global RATE_LIMIT_ATIVO
     dados = {"numero_imovel": str(numero_imovel), "status": "Disponivel"}
     if uf:
         dados["uf"] = uf.strip().upper()
 
-    # --- Etapa 2a: baixar matricula via URL deterministica (sem Playwright) ---
+    # --- Etapa 2a: baixar matricula via URL deterministica ---
     pdf_content = _baixar_pdf_determinisitco(numero_imovel, uf)
     if pdf_content:
         try:
@@ -427,7 +535,7 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
         except Exception as e:
             logger.warning(f"[det {numero_imovel}] upload B2 falhou: {e}")
     else:
-        logger.info(f"[det {numero_imovel}] PDF nao encontrado na URL deterministica")
+        logger.debug(f"[det {numero_imovel}] PDF nao encontrado na URL deterministica")
 
     # --- Etapa 2b: dados textuais via Playwright ---
     url = URL_BASE_DETALHE + str(numero_imovel)
@@ -456,7 +564,27 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
             page = await context.new_page()
             await stealth_async(page)
 
+            # Intercepta status HTTP para detectar rate limit
+            rate_limited = False
+
+            async def on_response(resp):
+                nonlocal rate_limited
+                if "detalhe-imovel" in resp.url and resp.status in (403, 429):
+                    rate_limited = True
+                    logger.warning(f"[det {numero_imovel}] HTTP {resp.status} - rate limit detectado!")
+
+            page.on("response", on_response)
+
             await page.goto(url, timeout=TIMEOUT_MS, wait_until="domcontentloaded")
+
+            if rate_limited:
+                RATE_LIMIT_ATIVO = True
+                logger.warning(f"[det {numero_imovel}] Abortando lote por rate limit (403/429)")
+                try:
+                    await context.close()
+                except Exception:
+                    pass
+                return None
 
             if await _handle_captcha(page):
                 try:
@@ -464,11 +592,9 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
                 except Exception:
                     pass
 
-            # Extrai dados textuais
             dados_pw = await _extrair_dados_playwright(page, numero_imovel)
             dados.update({k: v for k, v in dados_pw.items() if v is not None})
 
-            # Tenta capturar PDF via Playwright se nao teve pela URL deterministica
             if not dados.get("matricula_s3_url"):
                 pdf_pw = await _capturar_pdf_playwright(page, numero_imovel)
                 if pdf_pw:
@@ -496,13 +622,10 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
 
         except PWTimeout:
             logger.warning(
-                f"Timeout imovel {numero_imovel} "
-                f"(tentativa {attempt + 1}/{MAX_RETRIES})"
+                f"Timeout imovel {numero_imovel} (tentativa {attempt + 1}/{MAX_RETRIES})"
             )
         except Exception as e:
-            logger.error(
-                f"Erro imovel {numero_imovel} (tentativa {attempt + 1}): {e}"
-            )
+            logger.error(f"Erro imovel {numero_imovel} (tentativa {attempt + 1}): {e}")
         finally:
             try:
                 if context:
@@ -519,15 +642,10 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
 
         await asyncio.sleep(5 * (attempt + 1))
 
-    # Se Playwright falhou mas ja temos PDF, retorna dados parciais
     if dados.get("matricula_s3_url"):
         dados["scraped_at"] = datetime.now(timezone.utc)
-        logger.info(
-            f"[det {numero_imovel}] Playwright falhou mas matricula ja capturada"
-        )
+        logger.info(f"[det {numero_imovel}] Playwright falhou mas matricula ja capturada")
         return dados
 
-    logger.error(
-        f"Falha definitiva imovel {numero_imovel} apos {MAX_RETRIES} tentativas"
-    )
+    logger.error(f"Falha definitiva imovel {numero_imovel} apos {MAX_RETRIES} tentativas")
     return None
