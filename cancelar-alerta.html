@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Cancelar alertas de leilão | Reginaldo Rosso</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',Arial,sans-serif;background:#f4f4f4;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem}
+.card{background:#fff;border-radius:14px;padding:2.5rem 2rem;max-width:480px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08);text-align:center}
+.logo{color:#1e2b3f;font-size:1.1rem;font-weight:800;margin-bottom:2rem;display:block}
+.logo span{color:#c6a052}
+h1{font-size:1.4rem;font-weight:800;color:#1e2b3f;margin-bottom:.75rem}
+.sub{font-size:.95rem;color:#6b7280;margin-bottom:1.5rem;line-height:1.6}
+.state{display:none}
+.state.active{display:block}
+/* loading */
+.spinner{width:40px;height:40px;border:4px solid #e5e0d0;border-top:4px solid #c6a052;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* success */
+.icon-ok{font-size:3rem;margin-bottom:1rem}
+.msg-ok{color:#166534;background:#dcfce7;border-radius:8px;padding:1rem 1.25rem;font-size:.95rem;font-weight:600;margin-bottom:1.5rem}
+/* error */
+.msg-err{color:#991b1b;background:#fee2e2;border-radius:8px;padding:1rem 1.25rem;font-size:.9rem;margin-bottom:1.5rem}
+.btn{display:inline-block;background:#1e2b3f;color:#c6a052;text-decoration:none;padding:.7rem 1.5rem;border-radius:8px;font-size:.9rem;font-weight:700;transition:background .2s;margin-top:.5rem}
+.btn:hover{background:#27405f}
+footer{margin-top:2rem;font-size:.75rem;color:#9ca3af;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <a href="index.html" class="logo">Reginaldo Rosso &middot; <span>Imóveis Caixa</span></a>
+
+  <!-- Estado: carregando -->
+  <div class="state active" id="st-loading">
+    <div class="spinner"></div>
+    <h1>Cancelando alertas...</h1>
+    <p class="sub">Aguarde um instante.</p>
+  </div>
+
+  <!-- Estado: token ausente -->
+  <div class="state" id="st-no-token">
+    <h1>Link inválido</h1>
+    <p class="sub">Este link de cancelamento é inválido ou já foi utilizado.</p>
+    <a href="index.html" class="btn">Ir para o site</a>
+  </div>
+
+  <!-- Estado: sucesso -->
+  <div class="state" id="st-ok">
+    <div class="icon-ok">✅</div>
+    <h1>Alertas cancelados</h1>
+    <p class="msg-ok">Você não receberá mais alertas sobre este imóvel.</p>
+    <p class="sub" style="margin-bottom:1.5rem">Se quiser receber alertas novamente no futuro, basta se inscrever de novo na página do imóvel.</p>
+    <a href="index.html" class="btn">Ver imóveis disponíveis</a>
+  </div>
+
+  <!-- Estado: erro -->
+  <div class="state" id="st-err">
+    <h1>Algo deu errado</h1>
+    <p class="msg-err" id="err-msg">Não foi possível cancelar os alertas. Tente novamente mais tarde.</p>
+    <a href="index.html" class="btn">Ir para o site</a>
+  </div>
+</div>
+
+<footer>
+  Reginaldo Rosso &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
+  reginaldorosso.com.br
+</footer>
+
+<script>
+(function() {
+  var WORKER_URL = "https://inscrever-alerta.reginaldo-rosso.workers.dev";
+
+  function show(id) {
+    var states = document.querySelectorAll('.state');
+    for (var i = 0; i < states.length; i++) {
+      states[i].classList.remove('active');
+    }
+    var el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  }
+
+  // Ler o token da URL
+  var params = new URLSearchParams(window.location.search);
+  var token = params.get('token');
+
+  if (!token || token.length < 10) {
+    show('st-no-token');
+    return;
+  }
+
+  // Chamar o Worker para cancelar
+  fetch(WORKER_URL + '/api/cancelar-alerta', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.ok) {
+      show('st-ok');
+    } else {
+      document.getElementById('err-msg').textContent = data.error || 'Erro desconhecido.';
+      show('st-err');
+    }
+  })
+  .catch(function(err) {
+    document.getElementById('err-msg').textContent = 'Erro de rede: ' + err.message;
+    show('st-err');
+  });
+})();
+</script>
+
+</body>
+</html>
