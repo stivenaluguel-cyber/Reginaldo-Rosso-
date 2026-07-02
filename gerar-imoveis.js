@@ -139,8 +139,10 @@ async function carregarDetalhesDoBanco(){
       await cli.connect();
       const r = await cli.query(
          "SELECT numero_imovel, uf, cidade, bairro, endereco, preco_avaliacao, preco_minimo, " +
-         "modalidade, descricao, area_total, area_privativa, debito_tributos, debito_condominio, " +
-         "aceita_fgts, aceita_financiamento, matricula_s3_url, status, scraped_at " +
+         "modalidade, descricao, area_total, area_privativa, area, " +
+         "debito_tributos, debito_condominio, " +
+         "aceita_fgts, fgts, aceita_financiamento, tipo_real, quartos, data_fim, " +
+         "matricula_s3_url, status, scraped_at " +
          "FROM imoveis_caixa"
          );
       for(const row of r.rows){ mapa[String(row.numero_imovel).replace(/\D/g,"")] = row; }
@@ -632,7 +634,7 @@ for(const im of imoveis){
          debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null),
          excluir_foto: EXCLUIR_FOTOS.has(String(im.id)),
          fgts: im._det ? (im._det.aceita_fgts != null ? im._det.aceita_fgts : null) : null,
-         area: im._det ? (im._det.area_privativa != null ? im._det.area_privativa : (im._det.area_total != null ? im._det.area_total : null)) : null,
+         area: im._det ? (im._det.area != null ? im._det.area : (im._det.area_privativa != null ? im._det.area_privativa : (im._det.area_total != null ? im._det.area_total : null))) : null,
          quartos: im._det ? (im._det.quartos != null ? im._det.quartos : null) : null,
          data_fim: im._det ? (im._det.data_fim != null ? im._det.data_fim : null) : null,
          tipo_real: im._det ? (im._det.tipo_real != null ? im._det.tipo_real : null) : null
