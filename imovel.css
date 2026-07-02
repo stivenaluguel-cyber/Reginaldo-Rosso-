@@ -80,3 +80,28 @@ footer b{color:#fff}
 .doc{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;font-weight:700;color:var(--navy);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:11px 16px;transition:border-color .15s}
 .doc:hover{border-color:var(--gold)}
 @media(max-width:480px){.mais-grid{grid-template-columns:1fr}}
+
+
+/* ===== Bloco de decisão financeira ===== */
+.price-block{background:#fff;border:1px solid var(--line);border-radius:14px;padding:0;margin-bottom:18px;overflow:hidden}
+.price-block__row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);gap:12px}
+.price-block__row:last-child{border-bottom:0}
+.price-block__label{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;flex-shrink:0}
+.price-block__aval .price.old{font-size:1rem;margin:0;text-decoration:line-through;color:var(--muted)}
+.price-block__lance .price{font-size:1.8rem;font-weight:800;color:var(--navy);margin:0}
+.price-savings{font-size:2.1rem;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.price-block__chip{display:inline-block;background:var(--navy2);color:var(--gold-soft);border-radius:999px;padding:4px 12px;font-size:.8rem;font-weight:700}
+.price-block__fin b,.price-block__fgts b{color:var(--ink);font-size:.95rem}
+.price-block__costs{padding:14px 16px;font-size:.85rem;color:var(--ink2);background:#f8f9fb;border-top:1px solid var(--line);display:flex;flex-direction:column}
+.price-block__costs .btn.roi-btn{align-self:flex-start;padding:10px 18px;font-size:.88rem}
+.price-block__disclaimer{padding:8px 16px 10px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--line);font-style:italic}
+@media(max-width:480px){.price-block__lance .price{font-size:1.5rem}.price-savings{font-size:1.7rem}}
+
+/* ===== Sticky footer mobile CTA ===== */
+.sticky-cta{display:none;position:fixed;bottom:0;left:0;right:0;z-index:80;background:var(--navy);border-top:2px solid var(--gold);padding:10px 16px calc(10px + env(safe-area-inset-bottom));align-items:center;gap:12px;flex-wrap:nowrap;box-shadow:0 -4px 18px rgba(0,0,0,.22)}
+.sticky-cta__savings{color:var(--gold);font-weight:700;font-size:.88rem;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sticky-cta__btn{flex-shrink:0;padding:11px 18px;font-size:.85rem;white-space:nowrap}
+@media(max-width:768px){
+  .sticky-cta--visible{display:flex}
+  body.has-sticky{padding-bottom:72px}
+}
