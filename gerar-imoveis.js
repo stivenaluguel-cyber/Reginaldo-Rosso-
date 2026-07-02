@@ -69,8 +69,8 @@ function cap(s){ s=String(s||"").toLowerCase(); const _part=new Set(["do","da","
 function tipoDe(desc){ const d=(desc||"").toLowerCase();
                       if(/apartamento/.test(d))return "Apartamento"; if(/sobrado/.test(d))return "Sobrado";
                       if(/casa/.test(d))return "Casa"; if(/terreno|lote|gleba/.test(d))return "Terreno";
-                      if(/loja|sala|comercial|predio|predio|galpao|galpao/.test(d))return "Imovel comercial";
-                      if(/rural|chacara|chacara|sitio|sitio|fazenda/.test(d))return "Imovel rural"; return "Imovel"; }
+                      if(/loja|sala|comercial|predio|predio|galpao|galpao/.test(d))return "Imóvel comercial";
+                      if(/rural|chacara|chacara|sitio|sitio|fazenda/.test(d))return "Imóvel rural"; return "Imóvel"; }
 function specs(desc){ const d=desc||""; const out=[];
                      let m=d.match(/([\d.,]+)\s*de [aa]rea privativa/i)||d.match(/([\d.,]+)\s*de [aa]rea total/i);
                      if(m){const a=Math.round(num(m[1])); if(a>0)out.push(a+" m2");}
@@ -290,14 +290,19 @@ Valores e situação sujeitos a alteração — confirme sempre no edital e na f
 
 function pagina(i){
    const det = i._det || {};
+// B2/B3: tipo real do banco (quando houver) e kicker de modalidade
+const tipoReal = (det.tipo_real && String(det.tipo_real).trim()) ? String(det.tipo_real).trim() : "";
+const tipoExib = tipoReal || i.tipo;
+const modalidadeCaps = (i.modalidade && String(i.modalidade).trim()) ? String(i.modalidade).trim().toUpperCase() : "";
+const kicker = (tipoReal ? tipoReal.toUpperCase() : (modalidadeCaps || "IMÓVEL"));
    // Foto principal: usa placeholder para imoveis com prints de documentos (LGPD)
   const fotoBase = "https://venda-imoveis.caixa.gov.br/fotos/F"+i.id+"21.jpg";
   const foto = EXCLUIR_FOTOS.has(String(i.id)) ? PLACEHOLDER_URL : fotoBase;
    const url = BASE+"/imovel/"+i.id+".html";
    const cidade = cap(i.cidade), bairro = cap(i.bairro);
-   const titulo = i.tipo+" em "+cidade+(bairro?" - "+bairro:"")+"/"+i.uf;
+   const titulo = tipoExib+" em "+cidade+(bairro?" - "+bairro:"")+"/"+i.uf;
    const descNum = (i.desconto>0?Math.round(i.desconto)+"% de desconto: de "+brl(i.avaliacao)+" por "+brl(i.preco):brl(i.preco));
-   const metaDesc = (titulo+". "+descNum+". Imovel da Caixa com Reginaldo Rosso, corretor credenciado em RS e SC.").slice(0,300);
+   const metaDesc = (titulo+". "+descNum+". Imóvel da Caixa com Reginaldo Rosso, corretor credenciado em RS e SC.").slice(0,300);
    const wa = "https://wa.me/"+(WHATS[i.uf]||WHATS.RS)+"?text="+encodeURIComponent("Ola Reginaldo! Tenho interesse no imovel cod. "+i.id+" - "+titulo+" ("+brl(i.preco)+"). Link: "+url);
    const fichaCaixa = i.link || ("https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="+i.id);
    const tipoLeilao = /venda\s*(on[\s-]?line|direta)/i.test(i.modalidade||"") ? "venda_direta" : "extrajudicial";
@@ -319,10 +324,8 @@ const fgts = resolverFgts(det, i.descricao);
    const atualizado = dataBR(det.scraped_at);
 
 // ---- condicoes (chips) ----
-const cond = [];
-   if(fin!=null) cond.push((fin==="Sim"?"ok":"no")+"|Imovel "+(fin==="Sim"?"ACEITA":"NAO ACEITA")+" Financiamento");
-   if(fgts!=null) cond.push((fgts==="Sim"?"ok":"no")+"|Imovel "+(fgts==="Sim"?"ACEITA":"NAO ACEITA")+" FGTS");
-   const condHTML = cond.length? '<div class="cond">'+cond.map(c=>{const[k,t]=c.split("|");return '<span class="chip '+(k==="ok"?"chip-ok":"chip-no")+'">'+(k==="ok"?"&#10003; ":"&#10007; ")+esc(t)+'</span>';}).join("")+'</div>' : '';
+// B1: badges vermelhos removidos — info ja consta nos cards FINANCIAMENTO/FGTS
+    const condHTML = '';
 
 // ---- regras tributos / condominio ----
 const regras = [];
@@ -332,8 +335,8 @@ const regras = [];
 
 // ---- bloco "Mais sobre o imóvel" (detalhes tecnicos) ----
 const mais = [];
-   mais.push(["Tipo", i.tipo + (i.modalidade?" / "+i.modalidade:"")]);
-   mais.push(["Codigo Caixa", i.id]);
+   mais.push(["Tipo", tipoExib + (i.modalidade?" / "+i.modalidade:"")]);
+   mais.push(["Código Caixa", i.id]);
    if(i.avaliacao>0) mais.push(["Valor de avaliação", brl(i.avaliacao)]);
    if(areaTot) mais.push(["Área total", Math.round(areaTot)+" m2"]);
    if(areaPriv) mais.push(["Área útil/privativa", Math.round(areaPriv)+" m2"]);
@@ -343,14 +346,14 @@ const mais = [];
 
 // ---- documentos ----
 const docs = [];
-   if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" download target="_blank" rel="noopener">&#128196; Baixar Matricula (PDF)</a>']);
+   if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" download target="_blank" rel="noopener">&#128196; Baixar Matrícula (PDF)</a>']);
    else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; Matrícula</a>']);
    const docsHTML = '<div class="docs"><h2>Documentos</h2><div class="docs-row">'+docs.join("")+'</div></div>';
 
 const temDetalhe = (fgts!=null||fin!=null||tributos||condominio||matriculaUrl||areaPriv);
    const notaHTML = temDetalhe
    ? '<div class="note">Informacoes extraidas da ficha oficial da Caixa'+(atualizado?" (atualizado em "+esc(atualizado)+")":"")+'. Confirme sempre no edital antes de dar um lance. Preparo seu <b>Relatório Confidencial</b> sem custo.</div>'
-      : '<div class="note">Matricula, FGTS, parcelamento, tributos/condominio e valores de praca constam na ficha oficial da Caixa. Eu confiro tudo com voce antes de qualquer lance - e preparo seu <b>Relatório Confidencial</b> sem custo.</div>';
+      : '<div class="note">Matrícula, FGTS, parcelamento, tributos/condominio e valores de praca constam na ficha oficial da Caixa. Eu confiro tudo com voce antes de qualquer lance - e preparo seu <b>Relatório Confidencial</b> sem custo.</div>';
 
 const ld = {
   "@context": "https://schema.org",
@@ -392,7 +395,7 @@ const ld = {
    <meta property="og:locale" content="pt_BR">
    <meta property="og:site_name" content="Reginaldo Rosso - Imoveis Caixa">
    <meta property="og:title" content="${esc(titulo)} - ${brl(i.preco)}">
-   <meta property="og:description" content="${esc(descNum)}. Imovel da Caixa com Reginaldo Rosso.">
+   <meta property="og:description" content="${esc(descNum)}. Imóvel da Caixa com Reginaldo Rosso.">
    <meta property="og:url" content="${url}">
    <meta property="og:image" content="${foto}">
    <meta property="og:image" content="${BASE}/og-image.png">
@@ -440,7 +443,7 @@ const ld = {
    </div>
 
    <div class="body">
-   <div class="ctype">${esc(i.tipo)}</div>
+   <div class="ctype">${esc(kicker)}</div>
    <h1>${esc(cidade)}${bairro?` &middot; ${esc(bairro)}`:""}</h1>
    <div class="addr">${esc(i.endereco||"")}</div>
    ${specsHTML}
@@ -496,7 +499,7 @@ const ld = {
    <script>
    document.getElementById('sh').addEventListener('click',async function(){
    const url=location.href, t=${JSON.stringify(titulo+" - "+brl(i.preco))};
-   const txt=t+"\nImovel da Caixa com Reginaldo Rosso:\n"+url;
+   const txt=t+"\nImóvel da Caixa com Reginaldo Rosso:\n"+url;
    if(window.gtag)gtag('event','share',{item_id:'${i.id}'});
    try{ if(navigator.share){ await navigator.share({title:t,text:txt,url}); return; } }catch(e){ return; }
    try{ await navigator.clipboard.writeText(txt); this.textContent='\u2713 Link copiado!'; setTimeout(()=>{this.textContent='\u{1F517} Compartilhar';},2000);}catch(e){ window.prompt('Copie o link:',url); }
