@@ -24,6 +24,11 @@ import pandas as pd
 from playwright.async_api import async_playwright, BrowserContext
 
 import db
+try:
+    from parser_caixa import parse_descricao_csv, parse_financiamento_csv
+except ImportError:
+    parse_descricao_csv = lambda t: {}
+    parse_financiamento_csv = lambda v: None
 from config import USER_AGENT, LOCALE, TIMEZONE
 
 logger = logging.getLogger(__name__)
@@ -221,6 +226,7 @@ def _parse_csv(conteudo, estado):
             "modalidade":     find_col_by_kws(["modalidade", "modal"]),
             "descricao":      find_col_by_kws(["descricao", "descri", "tipo"]),
             "link_detalhe":   find_col_by_kws(["link", "url", "acesso"]),
+            "financiamento_csv": find_col_by_kws(["financiamento", "financ"]),
         }
 
         CAMPOS_FLOAT = {"preco_avaliacao", "preco_minimo"}
@@ -246,6 +252,18 @@ def _parse_csv(conteudo, estado):
                         pass
                 else:
                     imovel[campo] = val
+            # --- Parser CSV: tipo_real, area, financiamento ---
+            desc_csv = imovel.get("descricao") or ""
+            csv_parsed = parse_descricao_csv(desc_csv)
+            if csv_parsed.get("tipo_real"):
+                imovel["tipo_real"] = csv_parsed["tipo_real"]
+            if csv_parsed.get("area"):
+                imovel["area"] = csv_parsed["area"]
+            # Financiamento da coluna booleana do CSV (mais confiavel)
+            fin_raw = str(row.get(col_map.get("financiamento_csv") or "", "") or "").strip()
+            fin_bool = parse_financiamento_csv(fin_raw)
+            if fin_bool is not None:
+                imovel["aceita_financiamento"] = fin_bool
             imoveis.append(imovel)
             contador += 1
 
