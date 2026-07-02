@@ -9,31 +9,63 @@ logger = logging.getLogger(__name__)
 # ── Schema SQL ────────────────────────────────────────────────────
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS imoveis_caixa (
-    id                      BIGSERIAL PRIMARY KEY,
-    numero_imovel           VARCHAR(30) UNIQUE NOT NULL,
-    status                  VARCHAR(20) NOT NULL DEFAULT 'Disponivel',
-    uf                      CHAR(2),
-    cidade                  VARCHAR(100),
-    bairro                  VARCHAR(100),
-    endereco                TEXT,
-    preco_avaliacao         NUMERIC(14,2),
-    preco_minimo            NUMERIC(14,2),
-    modalidade              VARCHAR(60),
-    descricao               TEXT,
-    area_total              NUMERIC(12,2),
-    area_privativa          NUMERIC(12,2),
-    debito_tributos         VARCHAR(60),
-    debito_condominio       VARCHAR(80),
-    aceita_fgts             BOOLEAN,
-    aceita_financiamento    BOOLEAN,
-    matricula_s3_url        TEXT,
-    scraped_at              TIMESTAMP WITH TIME ZONE,
-    created_at              TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at              TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    numero_imovel VARCHAR(30) UNIQUE NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'Disponivel',
+    uf CHAR(2),
+    cidade VARCHAR(100),
+    bairro VARCHAR(100),
+    endereco TEXT,
+    preco_avaliacao NUMERIC(14,2),
+    preco_minimo NUMERIC(14,2),
+    modalidade VARCHAR(60),
+    descricao TEXT,
+    area_total NUMERIC(12,2),
+    area_privativa NUMERIC(12,2),
+    area NUMERIC(12,2),
+    debito_tributos VARCHAR(60),
+    debito_condominio VARCHAR(80),
+    aceita_fgts BOOLEAN,
+    fgts BOOLEAN,
+    aceita_financiamento BOOLEAN,
+    tipo_real VARCHAR(50),
+    quartos SMALLINT,
+    data_fim VARCHAR(20),
+    matricula_s3_url TEXT,
+    scraped_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_imoveis_status ON imoveis_caixa(status);
-CREATE INDEX IF NOT EXISTS idx_imoveis_uf     ON imoveis_caixa(uf);
+CREATE INDEX IF NOT EXISTS idx_imoveis_uf ON imoveis_caixa(uf);
 CREATE INDEX IF NOT EXISTS idx_imoveis_scraped ON imoveis_caixa(scraped_at);
+"""
+
+# Script de migracao: adiciona colunas novas em banco existente (idempotente)
+MIGRATE_SQL = """
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='imoveis_caixa' AND column_name='area') THEN
+        ALTER TABLE imoveis_caixa ADD COLUMN area NUMERIC(12,2);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='imoveis_caixa' AND column_name='fgts') THEN
+        ALTER TABLE imoveis_caixa ADD COLUMN fgts BOOLEAN;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='imoveis_caixa' AND column_name='tipo_real') THEN
+        ALTER TABLE imoveis_caixa ADD COLUMN tipo_real VARCHAR(50);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='imoveis_caixa' AND column_name='quartos') THEN
+        ALTER TABLE imoveis_caixa ADD COLUMN quartos SMALLINT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='imoveis_caixa' AND column_name='data_fim') THEN
+        ALTER TABLE imoveis_caixa ADD COLUMN data_fim VARCHAR(20);
+    END IF;
+END$$;
 """
 
 @contextmanager
@@ -49,16 +81,18 @@ def get_connection():
         conn.close()
 
 def init_db():
-    """Cria as tabelas se não existirem."""
+    """Cria as tabelas e executa migracoes se necessario."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(CREATE_TABLE_SQL)
-    logger.info("Banco de dados inicializado.")
+            try:
+                cur.execute(MIGRATE_SQL)
+                logger.info("Banco de dados inicializado e migrado.")
+            except Exception as e:
+                logger.warning(f"Migracao parcial (normal em primeiro run): {e}")
 
 def get_ids_by_uf(ufs) -> set:
-    """Retorna numero_imovel ativos (Disponivel) apenas dos estados informados.
-    Usado para crosscheck filtrado por UF (ex.: focar somente RS/SC).
-    """
+    """Retorna numero_imovel ativos apenas dos estados informados."""
     if not ufs:
         return set()
     ufs = [u.upper() for u in ufs]
@@ -78,10 +112,14 @@ def get_all_ids() -> set:
             cur.execute("SELECT numero_imovel FROM imoveis_caixa WHERE status = 'Disponivel'")
             return {row[0] for row in cur.fetchall()}
 
-def get_pendentes_enriquecimento(ufs, limit=1000) -> list:
-    """Retorna numero_imovel ativos que ainda NAO foram enriquecidos
-    (sem area_total ou sem matricula), para reprocessar a Etapa 2.
-    Filtra pelos estados informados (ex.: RS/SC). Prioriza os nunca raspados."""
+def get_pendentes_enriquecimento(ufs, limit=150) -> list:
+    """
+    Retorna numero_imovel ativos que ainda precisam de enriquecimento textual.
+    Criterio v2: falta descricao OU falta tipo_real OU falta aceita_fgts
+                 (campos de texto que so vem da pagina de detalhe).
+    NAO inclui 'matricula_s3_url IS NULL' para nao inflar a fila.
+    Limite padrao reduzido para 150/run (incremental anti-timeout).
+    """
     if not ufs:
         return []
     ufs = [u.upper() for u in ufs]
@@ -90,16 +128,20 @@ def get_pendentes_enriquecimento(ufs, limit=1000) -> list:
             cur.execute(
                 "SELECT numero_imovel FROM imoveis_caixa "
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
-                "AND (scraped_at IS NULL OR area_total IS NULL OR matricula_s3_url IS NULL) "
+                "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
+                "     OR aceita_fgts IS NULL) "
                 "ORDER BY (scraped_at IS NOT NULL), updated_at "
                 "LIMIT %s",
                 (ufs, limit),
             )
             return [row[0] for row in cur.fetchall()]
 
-
-def get_pendentes_com_uf(ufs, limit=1000) -> list:
-    """Retorna lista de (numero_imovel, uf) para imoveis pendentes de enriquecimento."""
+def get_pendentes_com_uf(ufs, limit=150) -> list:
+    """
+    Retorna (numero_imovel, uf) de imoveis pendentes de enriquecimento textual.
+    Criterio v2: falta descricao OU tipo_real OU aceita_fgts (nao apenas matricula).
+    Limite 150/run para evitar timeout do GitHub Actions (50 min).
+    """
     if not ufs:
         return []
     ufs = [u.upper() for u in ufs]
@@ -108,7 +150,8 @@ def get_pendentes_com_uf(ufs, limit=1000) -> list:
             cur.execute(
                 "SELECT numero_imovel, uf FROM imoveis_caixa "
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
-                "AND (scraped_at IS NULL OR area_total IS NULL OR matricula_s3_url IS NULL) "
+                "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
+                "     OR aceita_fgts IS NULL) "
                 "ORDER BY (scraped_at IS NOT NULL), updated_at "
                 "LIMIT %s",
                 (ufs, limit),
@@ -128,8 +171,7 @@ def get_uf_por_ids(ids: list) -> dict:
             return {row[0]: row[1] for row in cur.fetchall()}
 
 def get_pendentes_matricula_com_uf(ufs, limit=5000) -> list:
-    """Retorna (numero_imovel, uf) de imoveis ativos SEM matricula ainda.
-    Foco exclusivo no download da matricula (rapido via httpx, sem Playwright)."""
+    """Retorna (numero_imovel, uf) de imoveis ativos SEM matricula ainda."""
     if not ufs:
         return []
     ufs = [u.upper() for u in ufs]
@@ -146,7 +188,7 @@ def get_pendentes_matricula_com_uf(ufs, limit=5000) -> list:
             return [(row[0], row[1]) for row in cur.fetchall()]
 
 def set_matricula_url(numero_imovel: str, s3_url: str):
-    """Atualiza apenas a matricula_s3_url de um imovel (update leve)."""
+    """Atualiza apenas a matricula_s3_url de um imovel."""
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -161,7 +203,6 @@ def mark_unavailable(ids: list):
         return
     with get_connection() as conn:
         with conn.cursor() as cur:
-            # Processar em lotes de 500 para evitar SQL muito longo
             batch_size = 500
             total = 0
             for i in range(0, len(ids), batch_size):
@@ -172,59 +213,56 @@ def mark_unavailable(ids: list):
                     (batch,)
                 )
                 total += cur.rowcount
-    logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
+            logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
+
 def upsert_imovel(data: dict):
-    """
-    Insere ou atualiza um imóvel.
-    data deve ter as chaves correspondentes às colunas da tabela.
-    """
+    """Insere ou atualiza um imovel. data deve ter as chaves correspondentes as colunas."""
     cols = [
-        'numero_imovel','status','uf','cidade','bairro','endereco',
-        'preco_avaliacao','preco_minimo','modalidade','descricao',
-        'area_total','area_privativa','debito_tributos','debito_condominio',
-        'aceita_fgts','aceita_financiamento','matricula_s3_url','scraped_at'
+        'numero_imovel', 'status', 'uf', 'cidade', 'bairro', 'endereco',
+        'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
+        'area_total', 'area_privativa', 'area',
+        'debito_tributos', 'debito_condominio',
+        'aceita_fgts', 'fgts', 'aceita_financiamento',
+        'tipo_real', 'quartos', 'data_fim',
+        'matricula_s3_url', 'scraped_at',
     ]
     values = [data.get(c) for c in cols]
     placeholders = ', '.join(['%s'] * len(cols))
-    # Colunas que preservam valor existente se EXCLUDED for NULL (evita sobrescrever dados do CSV)
+    # Preserva campos CSV existentes se EXCLUDED for NULL
     preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
     update_set = ', '.join(
         [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
          else f"{c}=EXCLUDED.{c}"
          for c in cols if c != 'numero_imovel']
     )
-
     sql = f"""
-        INSERT INTO imoveis_caixa ({', '.join(cols)})
-        VALUES ({placeholders})
-        ON CONFLICT (numero_imovel) DO UPDATE SET
-            {update_set},
-            updated_at = NOW()
+    INSERT INTO imoveis_caixa ({', '.join(cols)})
+    VALUES ({placeholders})
+    ON CONFLICT (numero_imovel) DO UPDATE SET
+      {update_set},
+      updated_at = NOW()
     """
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(sql, values)
 
-
 def upsert_imoveis_bulk(lista, batch_size=500):
-    """Insere ou atualiza varios imoveis em lote (MUITO mais rapido que um-por-um).
-    Usa execute_values numa unica conexao com batches.
-    """
+    """Insere ou atualiza varios imoveis em lote."""
     if not lista:
         return 0
-    # Deduplicar por numero_imovel (PostgreSQL ON CONFLICT nao aceita
-    # a mesma chave duas vezes no mesmo comando). Mantem a ultima ocorrencia.
     vistos = {}
     for item in lista:
         vistos[item.get("numero_imovel")] = item
     lista = list(vistos.values())
     cols = [
-        'numero_imovel','status','uf','cidade','bairro','endereco',
-        'preco_avaliacao','preco_minimo','modalidade','descricao',
-        'area_total','area_privativa','debito_tributos','debito_condominio',
-        'aceita_fgts','aceita_financiamento','matricula_s3_url','scraped_at'
+        'numero_imovel', 'status', 'uf', 'cidade', 'bairro', 'endereco',
+        'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
+        'area_total', 'area_privativa', 'area',
+        'debito_tributos', 'debito_condominio',
+        'aceita_fgts', 'fgts', 'aceita_financiamento',
+        'tipo_real', 'quartos', 'data_fim',
+        'matricula_s3_url', 'scraped_at',
     ]
-    # Colunas que preservam valor existente se EXCLUDED for NULL
     preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
     update_set = ', '.join(
         [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
@@ -232,11 +270,11 @@ def upsert_imoveis_bulk(lista, batch_size=500):
          for c in cols if c != 'numero_imovel']
     )
     sql = f"""
-        INSERT INTO imoveis_caixa ({', '.join(cols)})
-        VALUES %s
-        ON CONFLICT (numero_imovel) DO UPDATE SET
-            {update_set},
-            updated_at = NOW()
+    INSERT INTO imoveis_caixa ({', '.join(cols)})
+    VALUES %s
+    ON CONFLICT (numero_imovel) DO UPDATE SET
+      {update_set},
+      updated_at = NOW()
     """
     total = 0
     with get_connection() as conn:
