@@ -1,18 +1,26 @@
 """
-Pipeline Principal - Caixa Economica Federal Scraper (v2)
+Pipeline Principal - Caixa Economica Federal Scraper (v3)
 ==========================================================
 Orquestra as etapas:
 1. Etapa 1: Download CSV + crosscheck (Playwright stealth, RS/SC)
 2. Etapa 2: Enriquecimento incremental dos imoveis pendentes
 
+MODO VIGIA (--vigia):
+   Modo rapido que so roda a deteccao de novos/encerrados.
+   - Baixa CSV e compara IDs com o banco
+   - Se nada mudou: encerra em ~1 min (sem raspagem, sem commit)
+   - Se houver novos: insere no banco + raspa paginas de detalhe
+   - Se houver removidos: marca como Indisponivel no banco
+   - Emite outputs para o workflow do GitHub Actions
+
 INCREMENTAL v2: a cada run, seleciona APENAS imoveis com campos detalhados
-vazios (descricao, tipo_real, aceita_fgts). Lote de 100-150/run (env ETAPA2_BATCH_LIMIT).
-Com 7 runs/dia, completa ~1000 imoveis/dia — toda a base em 1-2 dias.
+vazios. Lote de 100-150/run (env ETAPA2_BATCH_LIMIT=130).
 
 RATE LIMIT: delay aleatorio 1-2s entre requests da Etapa 2. Em 403/429,
 aborta o lote imediatamente mas salva todo o progresso do run.
 
-Agendamento (BRT / UTC-3): 04:00, 07:00, 08:30, 09:30, 12:00, 18:00, 19:00
+Agendamento carga noturna (BRT / UTC-3): 01h-07h (0 4-10 * * * UTC)
+Agendamento vigia manha (BRT): 08h45-11h30 a cada 15 min
 """
 import asyncio
 import argparse
@@ -27,8 +35,10 @@ from playwright.async_api import async_playwright
 from config import MAX_WORKERS
 from etapa1_csv import _executar as etapa1_executar
 from etapa2_scraper import scrape_imovel, baixar_matriculas_em_massa, RATE_LIMIT_ATIVO
-from db import upsert_imovel, get_pendentes_com_uf, get_uf_por_ids, get_pendentes_matricula_com_uf
-import etapa2_scraper as _e2  # para acessar RATE_LIMIT_ATIVO como variavel global
+from db import (upsert_imovel, upsert_imoveis_bulk, get_pendentes_com_uf,
+                get_uf_por_ids, get_pendentes_matricula_com_uf,
+                get_ids_by_uf, mark_unavailable)
+import etapa2_scraper as _e2
 
 # -- Logging -------------------------------------------------------
 LOG_DIR = Path(__file__).parent / "logs"
@@ -52,6 +62,13 @@ def setup_logging():
 
 logger = logging.getLogger(__name__)
 
+def _set_github_output(key: str, value: str):
+    """Escreve um output para o GitHub Actions (GITHUB_OUTPUT)."""
+    gho = os.getenv("GITHUB_OUTPUT")
+    if gho:
+        with open(gho, "a", encoding="utf-8") as f:
+            f.write(f"{key}={value}\n")
+
 # -- Etapa 2 incremental com delay e detecao de rate limit ---------
 async def run_etapa2(lote: list):
     """
@@ -64,7 +81,6 @@ async def run_etapa2(lote: list):
         logger.info("Nenhum ID para enriquecer.")
         return
 
-    # Normaliza para lista de (numero_imovel, uf)
     pares = []
     for item in lote:
         if isinstance(item, (list, tuple)) and len(item) >= 2:
@@ -90,7 +106,6 @@ async def run_etapa2(lote: list):
             async with semaphore:
                 if abortado or _e2.RATE_LIMIT_ATIVO:
                     return
-                # Delay aleatorio 1-2s (rate limit preventivo)
                 await asyncio.sleep(random.uniform(1.0, 2.0))
                 try:
                     dados = await scrape_imovel(numero_imovel, uf=uf, browser=browser)
@@ -122,13 +137,91 @@ async def run_etapa2(lote: list):
         f"{len(pares)} no lote | progresso salvo"
     )
 
+# -- Modo VIGIA: deteccao rapida de novos e encerrados -------------
+async def run_vigia():
+    """
+    Modo rapido de vigia da manha:
+    1. Baixa CSV e compara com banco
+    2. Se nada mudou: exit imediato (sem raspagem)
+    3. Novos IDs: insere no banco + raspa detalhes
+    4. IDs removidos: marca Indisponivel no banco
+    Emite GitHub Actions outputs: mudancas, novos, encerrados
+    """
+    start = datetime.now()
+    logger.info(f"=== Vigia Manha iniciado em {start.strftime('%Y-%m-%d %H:%M:%S')} ===")
+
+    focos = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
+
+    try:
+        # Etapa 1: baixa CSV e obtem IDs atuais
+        logger.info("--- Vigia: baixando CSV da Caixa ---")
+        resultado = await etapa1_executar()
+        ids_no_csv = set(resultado.get("ids_no_csv", []))
+        ids_novos = resultado.get("ids_novos", [])
+        total_csv = resultado.get("total_csv", 0)
+        logger.info(f"CSV: {total_csv} imoveis | {len(ids_novos)} novos detectados")
+
+        # Obtem IDs ativos no banco para os estados focados
+        ids_no_banco = get_ids_by_uf(focos)
+        logger.info(f"Banco: {len(ids_no_banco)} imoveis ativos em {focos}")
+
+        # Detecta removidos: ativos no banco mas fora do CSV atual
+        ids_removidos = [i for i in ids_no_banco if i not in ids_no_csv]
+
+        logger.info(
+            f"Vigia resultado: {len(ids_novos)} novos | "
+            f"{len(ids_removidos)} encerrados/removidos"
+        )
+
+        # Se nada mudou: encerra sem fazer nada
+        if not ids_novos and not ids_removidos:
+            logger.info("=== Vigia: NENHUMA MUDANCA detectada. Encerrando. ===")
+            _set_github_output("mudancas", "false")
+            _set_github_output("novos", "0")
+            _set_github_output("encerrados", "0")
+            return
+
+        # Processa removidos: marca Indisponivel no banco
+        if ids_removidos:
+            logger.info(f"Marcando {len(ids_removidos)} imoveis como Indisponivel...")
+            mark_unavailable(ids_removidos)
+            logger.info(f"[ENCERRADOS] {len(ids_removidos)} imoveis marcados como Indisponivel: {ids_removidos[:10]}{'...' if len(ids_removidos)>10 else ''}")
+
+        # Processa novos: raspa detalhes
+        if ids_novos:
+            logger.info(f"Raspando {len(ids_novos)} imoveis novos...")
+            uf_map = {}
+            try:
+                uf_map = get_uf_por_ids(ids_novos)
+            except Exception as e:
+                logger.warning(f"Nao foi possivel buscar UFs dos novos: {e}")
+            pares = [(nid, uf_map.get(nid)) for nid in ids_novos]
+            await run_etapa2(pares)
+
+        # Emite outputs para o workflow
+        _set_github_output("mudancas", "true")
+        _set_github_output("novos", str(len(ids_novos)))
+        _set_github_output("encerrados", str(len(ids_removidos)))
+        logger.info(
+            f"=== Vigia concluido: {len(ids_novos)} novos processados, "
+            f"{len(ids_removidos)} encerrados ===")
+
+    except Exception as e:
+        logger.exception(f"Erro fatal no vigia: {e}")
+        _set_github_output("mudancas", "false")
+        _set_github_output("novos", "0")
+        _set_github_output("encerrados", "0")
+        sys.exit(1)
+    finally:
+        elapsed = (datetime.now() - start).total_seconds()
+        logger.info(f"=== Vigia finalizado em {elapsed:.0f}s ===")
+
 # -- Pipeline completo ---------------------------------------------
 async def run_pipeline():
     start = datetime.now()
-    logger.info(f"=== Pipeline v2 iniciado em {start.strftime('%Y-%m-%d %H:%M:%S')} ===")
+    logger.info(f"=== Pipeline v3 iniciado em {start.strftime('%Y-%m-%d %H:%M:%S')} ===")
 
     try:
-        # Etapa 1: Download CSV + crosscheck
         logger.info("--- Etapa 1: Download CSV e crosscheck ---")
         resultado = await etapa1_executar()
         ids_novos = resultado.get("ids_novos", [])
@@ -141,7 +234,6 @@ async def run_pipeline():
             f"estados ok={len(estados_ok)} | falha={len(estados_falha)}"
         )
 
-        # === FASE RAPIDA: baixar matriculas pendentes (httpx, sem Playwright) ===
         focos_mat = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
         mat_limit = int(os.getenv("MATRICULA_BATCH_LIMIT", "20000"))
         mat_conc = int(os.getenv("MATRICULA_CONCURRENCY", "16"))
@@ -152,14 +244,9 @@ async def run_pipeline():
         except Exception as e:
             logger.exception(f"Falha na fase rapida de matriculas: {e}")
 
-        # === ETAPA 2: Enriquecimento INCREMENTAL ===
-        # Limite por run: 100-150 (env ETAPA2_BATCH_LIMIT, default 120)
-        # Criterio de selecao: imoveis com descricao=NULL OR tipo_real=NULL OR aceita_fgts=NULL
-        # (campos de texto que so existem na pagina de detalhe, NAO apenas matricula)
-        batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "120"))
+        batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "130"))
         focos = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
 
-        # Monta pares (numero_imovel, uf) para ids_novos primeiro
         uf_map = {}
         ids_lote_novos = ids_novos[:batch_limit] if batch_limit > 0 else ids_novos
         if ids_lote_novos:
@@ -169,7 +256,6 @@ async def run_pipeline():
                 logger.warning(f"Nao foi possivel buscar UFs dos novos IDs: {e}")
         pares_lote = [(nid, uf_map.get(nid)) for nid in ids_lote_novos]
 
-        # Complementa com pendentes (campos vazios) ate o limite do lote
         vagas = batch_limit - len(pares_lote)
         if vagas > 0 and focos:
             try:
@@ -200,19 +286,23 @@ async def run_pipeline():
         sys.exit(1)
     finally:
         elapsed = (datetime.now() - start).total_seconds()
-        logger.info(f"=== Pipeline v2 finalizado em {elapsed:.0f}s ===")
+        logger.info(f"=== Pipeline v3 finalizado em {elapsed:.0f}s ===")
 
 # -- CLI -----------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Pipeline Scraper Caixa v2")
+    parser = argparse.ArgumentParser(description="Pipeline Scraper Caixa v3")
     parser.add_argument("--etapa", type=int, choices=[1, 2])
     parser.add_argument("--id", type=str)
     parser.add_argument("--uf", type=str, default=None)
+    parser.add_argument("--vigia", action="store_true",
+                        help="Modo vigia da manha: detecta novos/encerrados rapidamente")
     args = parser.parse_args()
 
     setup_logging()
 
-    if args.etapa == 1:
+    if args.vigia:
+        asyncio.run(run_vigia())
+    elif args.etapa == 1:
         resultado = asyncio.run(etapa1_executar())
         print(f"Novos IDs: {len(resultado.get('ids_novos', []))}")
         print(f"Total CSV: {resultado.get('total_csv', 0)}")
