@@ -141,7 +141,7 @@ async function carregarDetalhesDoBanco(){
          "SELECT numero_imovel, uf, cidade, bairro, endereco, preco_avaliacao, preco_minimo, " +
          "modalidade, descricao, area_total, area_privativa, area, " +
          "debito_tributos, debito_condominio, " +
-         "aceita_fgts, fgts, aceita_financiamento, tipo_real, quartos, data_fim, " +
+         "aceita_fgts, fgts, aceita_financiamento, tipo_real, quartos, data_fim, ocupacao, " +
          "matricula_s3_url, status, scraped_at " +
          "FROM imoveis_caixa"
          );
@@ -525,7 +525,7 @@ async function carregarImoveisDoBanco(){
       const r = await cli.query(
          "SELECT numero_imovel, uf, cidade, bairro, endereco, preco_avaliacao, preco_minimo, " +
          "modalidade, descricao, area_total, area_privativa, debito_tributos, debito_condominio, " +
-         "aceita_fgts, aceita_financiamento, matricula_s3_url, status, scraped_at " +
+         "aceita_fgts, aceita_financiamento, quartos, data_fim, ocupacao, matricula_s3_url, status, scraped_at " +
          "FROM imoveis_caixa " +
          "WHERE status IN ('Disponivel','Indisponivel') AND uf IN ('RS','SC') " +
          "AND cidade IS NOT NULL " +
@@ -637,7 +637,8 @@ for(const im of imoveis){
          area: im._det ? (im._det.area != null ? im._det.area : (im._det.area_privativa != null ? im._det.area_privativa : (im._det.area_total != null ? im._det.area_total : null))) : null,
          quartos: im._det ? (im._det.quartos != null ? im._det.quartos : null) : null,
          data_fim: im._det ? (im._det.data_fim != null ? im._det.data_fim : null) : null,
-         tipo_real: im._det ? (im._det.tipo_real != null ? im._det.tipo_real : null) : null
+         tipo_real: im._det ? (im._det.tipo_real != null ? im._det.tipo_real : null) : null,
+         ocupacao: im._det ? (im._det.ocupacao != null ? im._det.ocupacao : null) : null
     };
  }
    const imoveisRS = imoveis.filter(im=>im.uf==="RS"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
