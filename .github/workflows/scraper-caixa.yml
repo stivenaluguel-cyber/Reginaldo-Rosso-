@@ -1,15 +1,23 @@
 name: Scraper Caixa Economica Federal
+# CAMADA 1 — CARGA NOTURNA (base completa)
+# Roda entre 01h e 07h Brasília (04h-10h UTC) em 7 runs seguidos.
+# Objetivo: garantir que a base esteja 100% raspada/atualizada ANTES das 08h BRT.
 
 on:
   schedule:
-    - cron: '0 7 * * *'    # 04:00 BRT
-    - cron: '0 10 * * *'   # 07:00 BRT
-    - cron: '30 11 * * *'  # 08:30 BRT
-    - cron: '30 12 * * *'  # 09:30 BRT
-    - cron: '0 15 * * *'   # 12:00 BRT
-    - cron: '0 21 * * *'   # 18:00 BRT
-    - cron: '0 22 * * *'   # 19:00 BRT
+    - cron: '0 4 * * *'  # 01:00 BRT
+    - cron: '0 5 * * *'  # 02:00 BRT
+    - cron: '0 6 * * *'  # 03:00 BRT
+    - cron: '0 7 * * *'  # 04:00 BRT
+    - cron: '0 8 * * *'  # 05:00 BRT
+    - cron: '0 9 * * *'  # 06:00 BRT
+    - cron: '0 10 * * *' # 07:00 BRT
   workflow_dispatch:
+
+# Evita sobreposicao: se um run ainda esta rodando, o proximo aguarda.
+concurrency:
+  group: scraper-caixa
+  cancel-in-progress: false
 
 jobs:
   scraper:
@@ -50,6 +58,7 @@ jobs:
           MAX_RETRIES=3
           HEADLESS=true
           TIMEOUT_MS=60000
+          ETAPA2_BATCH_LIMIT=130
           ENVEOF
 
       - name: Pipeline
