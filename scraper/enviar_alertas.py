@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_ENDPOINT = "https://api.resend.com/emails"
-REMETENTE = "Reginaldo Rosso <alertas@alertas.reginaldorosso.com.br>"
+REMETENTE = "Reginaldo Rosso <alertas@reginaldorosso.com.br>"
 SITE_BASE = "https://reginaldorosso.com.br"
 
 WHATS = {"RS": "5551982017867", "SC": "5548999359022"}
