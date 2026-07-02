@@ -604,6 +604,13 @@ async def _executar() -> dict:
                 except Exception as e2:
                     logger.warning(f"etapa1: upsert {im.get('numero_imovel')}: {e2}")
 
+    # --- Atualiza campos parseados do CSV para TODOS os imoveis (nao so novos) ---
+    if todos_imoveis:
+        try:
+            db.update_csv_parsed_bulk(todos_imoveis)
+        except Exception as e:
+            logger.warning(f"etapa1: update_csv_parsed_bulk falhou: {e}")
+
     logger.info(
         f"etapa1: FINAL total_csv={len(ids_csv)} | banco={len(ids_banco)} | "
         f"removidos={len(ids_removidos)} | novos={len(ids_novos)} | "
