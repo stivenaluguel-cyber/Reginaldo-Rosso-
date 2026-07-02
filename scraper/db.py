@@ -286,3 +286,50 @@ def upsert_imoveis_bulk(lista, batch_size=500):
                 total += len(batch)
     logger.info(f"upsert_imoveis_bulk: {total} imoveis processados em lote")
     return total
+
+
+def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
+    """
+    Atualiza em lote os campos extraidos pelo parser do CSV:
+    tipo_real, area, aceita_financiamento, descricao (se vazio).
+    Chamado pela etapa1 para TODOS os imoveis do CSV (nao so os novos).
+    So sobrescreve se o campo de destino for NULL (preserva dados da etapa2).
+    """
+    if not lista:
+        return 0
+    import psycopg2.extras as extras
+    total = 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            for i in range(0, len(lista), batch_size):
+                batch = lista[i:i + batch_size]
+                rows = []
+                for item in batch:
+                    rows.append((
+                        item.get("numero_imovel"),
+                        item.get("tipo_real"),
+                        item.get("area"),
+                        item.get("aceita_financiamento"),
+                        item.get("descricao"),
+                    ))
+                if not rows:
+                    continue
+                sql = """
+                UPDATE imoveis_caixa AS t
+                SET
+                    tipo_real           = COALESCE(t.tipo_real, v.tipo_real),
+                    area                = COALESCE(t.area, v.area),
+                    aceita_financiamento = COALESCE(t.aceita_financiamento, v.aceita_financiamento),
+                    descricao           = COALESCE(NULLIF(t.descricao, ''), v.descricao),
+                    updated_at          = NOW()
+                FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao)
+                WHERE t.numero_imovel = v.numero_imovel
+                  AND (t.tipo_real IS NULL OR t.area IS NULL
+                       OR t.aceita_financiamento IS NULL
+                       OR t.descricao IS NULL OR t.descricao = '')
+                """
+                extras.execute_values(cur, sql, rows, template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text)")
+                total += cur.rowcount
+        conn.commit()
+    logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
+    return total
