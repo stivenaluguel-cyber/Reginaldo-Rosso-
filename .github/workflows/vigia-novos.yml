@@ -16,6 +16,9 @@ on:
   # Disparo manual com 1 clique na aba Actions
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 # Evita sobreposicao com a carga noturna e entre runs do vigia.
 # Se um run ainda esta rodando, o proximo aguarda.
 concurrency:
