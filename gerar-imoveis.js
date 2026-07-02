@@ -65,7 +65,7 @@ function num(s){ if(s==null)return 0; let t=String(s).replace(/[^\d.,-]/g,""); i
                 const n=parseFloat(t); return isNaN(n)?0:n; }
 function brl(n){ return "R$ "+Math.round(n).toLocaleString("pt-BR"); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-function cap(s){ s=String(s||"").toLowerCase(); return s.replace(/(^|[\s\-\/])([a-za-u])/g,(m,a,b)=>a+b.toUpperCase()); }
+function cap(s){ s=String(s||"").toLowerCase(); const _part=new Set(["do","da","de","dos","das","e","em","no","na","nos","nas"]); return s.replace(/(^|[\s\-\/])(\w+)/g,(m,a,b)=>a+(_part.has(b)&&a?b:b.charAt(0).toUpperCase()+b.slice(1))); }
 function tipoDe(desc){ const d=(desc||"").toLowerCase();
                       if(/apartamento/.test(d))return "Apartamento"; if(/sobrado/.test(d))return "Sobrado";
                       if(/casa/.test(d))return "Casa"; if(/terreno|lote|gleba/.test(d))return "Terreno";
@@ -223,27 +223,27 @@ const regras = [];
    if(condominio) regras.push(["Condominio", condominio]);
    const regrasHTML = regras.length? '<div class="regras"><h2>Debitos e responsabilidades</h2>'+regras.map(r=>'<div class="regra"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</div>').join("")+'</div>' : '';
 
-// ---- bloco "Mais sobre o imovel" (detalhes tecnicos) ----
+// ---- bloco "Mais sobre o imóvel" (detalhes tecnicos) ----
 const mais = [];
    mais.push(["Tipo", i.tipo + (i.modalidade?" / "+i.modalidade:"")]);
    mais.push(["Codigo Caixa", i.id]);
-   if(i.avaliacao>0) mais.push(["Valor de avaliacao", brl(i.avaliacao)]);
-   if(areaTot) mais.push(["Area total", Math.round(areaTot)+" m2"]);
-   if(areaPriv) mais.push(["Area util/privativa", Math.round(areaPriv)+" m2"]);
+   if(i.avaliacao>0) mais.push(["Valor de avaliação", brl(i.avaliacao)]);
+   if(areaTot) mais.push(["Área total", Math.round(areaTot)+" m2"]);
+   if(areaPriv) mais.push(["Área útil/privativa", Math.round(areaPriv)+" m2"]);
    if(det.cidade||i.cidade) mais.push(["Localização", cap(det.cidade||i.cidade)+(bairro?" / "+bairro:"")+" / "+i.uf]);
    if(atualizado) mais.push(["Dados atualizados em", atualizado]);
-   const maisHTML = '<div class="mais"><h2>Mais sobre o imovel</h2><div class="mais-grid">'+mais.map(m=>'<div><span>'+esc(m[0])+'</span><b>'+esc(m[1])+'</b></div>').join("")+'</div></div>';
+   const maisHTML = '<div class="mais"><h2>Mais sobre o imóvel</h2><div class="mais-grid">'+mais.map(m=>'<div><span>'+esc(m[0])+'</span><b>'+esc(m[1])+'</b></div>').join("")+'</div></div>';
 
 // ---- documentos ----
 const docs = [];
    if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" download target="_blank" rel="noopener">&#128196; Baixar Matricula (PDF)</a>']);
-   else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; MatrÃ­cula</a>']);
+   else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; Matrícula</a>']);
    const docsHTML = '<div class="docs"><h2>Documentos</h2><div class="docs-row">'+docs.join("")+'</div></div>';
 
 const temDetalhe = (fgts!=null||fin!=null||tributos||condominio||matriculaUrl||areaPriv);
    const notaHTML = temDetalhe
-   ? '<div class="note">Informacoes extraidas da ficha oficial da Caixa'+(atualizado?" (atualizado em "+esc(atualizado)+")":"")+'. Confirme sempre no edital antes de dar um lance. Preparo seu <b>Relatorio Confidencial</b> sem custo.</div>'
-      : '<div class="note">Matricula, FGTS, parcelamento, tributos/condominio e valores de praca constam na ficha oficial da Caixa. Eu confiro tudo com voce antes de qualquer lance - e preparo seu <b>Relatorio Confidencial</b> sem custo.</div>';
+   ? '<div class="note">Informacoes extraidas da ficha oficial da Caixa'+(atualizado?" (atualizado em "+esc(atualizado)+")":"")+'. Confirme sempre no edital antes de dar um lance. Preparo seu <b>Relatório Confidencial</b> sem custo.</div>'
+      : '<div class="note">Matricula, FGTS, parcelamento, tributos/condominio e valores de praca constam na ficha oficial da Caixa. Eu confiro tudo com voce antes de qualquer lance - e preparo seu <b>Relatório Confidencial</b> sem custo.</div>';
 
 const ld = {
   "@context": "https://schema.org",
@@ -310,9 +310,19 @@ const ld = {
    <a href="tel:5551991104976">(51) 99110-4976 - RS</a>
    <a href="tel:5548991642332">(48) 99164-2332 - SC</a>
    </div>
-   </div></header>
+   </div>
+   </div>
+   <nav class="main-nav" style="background:#27405f;padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center">
+   <a href="../index.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Início</a>
+   <a href="../imoveis.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Imóveis Caixa</a>
+   <a href="../mapa.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
+   <a href="../como-funciona.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Como Funciona</a>
+   <a href="../calculadora.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
+   <a href="../index.html#contato" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
+   </nav>
+   </header>
 
-   <div class="crumb"><a href="../index.html">Inicio</a> &rsaquo; <a href="../imoveis.html">Imoveis Caixa</a> &rsaquo; <a href="../imoveis.html#q=${encodeURIComponent(i.cidade)}">${esc(cidade)}</a> &rsaquo; <span>cod. ${esc(i.id)}</span></div>
+   <div class="crumb"><a href="../index.html">Início</a> &rsaquo; <a href="../imoveis.html">Imóveis Caixa</a> &rsaquo; <a href="../imoveis.html#q=${encodeURIComponent(i.cidade)}">${esc(cidade)}</a> &rsaquo; <span>cod. ${esc(i.id)}</span></div>
 
    <main class="det">
    <div class="ph">
@@ -328,7 +338,7 @@ const ld = {
    <div class="addr">${esc(i.endereco||"")}</div>
    ${specsHTML}
    <div class="price-row">
-   <div class="price">${brl(i.preco)}${i.avaliacao>i.preco?`<span class="old">avaliacao ${brl(i.avaliacao)}</span>`:""}</div>
+   <div class="price">${brl(i.preco)}${i.avaliacao>i.preco?`<span class="old">avaliação ${brl(i.avaliacao)}</span>`:""}</div>
    <a class="btn roi-btn" href="${roiUrl}" title="Calcular ROI deste imovel">&#128202; Calcular ROI</a>
    </div>
 
@@ -339,8 +349,16 @@ const ld = {
    <div><span>Avaliação Caixa</span><b>${brl(i.avaliacao)}</b></div>
    <div><span>Desconto</span><b>${i.desconto>0?Math.round(i.desconto)+"%":"-"}</b></div>
    <div><span>Modalidade</span><b>${esc(i.modalidade||"-")}</b></div>
-   <div><span>Financiamento</span><b>${fin!=null?fin:(i.financiamento!=null?(i.financiamento?"Aceita":"Não aceita"):"-")}</b></div>
-   <div><span>FGTS</span><b>${fgts!=null?fgts:"-"}</b></div>
+   <div><span>Financiamento</span><b>${
+        fin===null
+          ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre financiamento do imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:#c6a052">Confirmo pra você — me chame</a>`
+          : (fin==='Sim' ? '<span style="color:#22c55e">✅ Aceita</span>' : 'Somente à vista')
+      }</b></div>
+   <div><span>FGTS</span><b>${
+        fgts===null
+          ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre FGTS no imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:#c6a052">Confirmo pra você — me chame</a>`
+          : (fgts==='Sim' ? '<span style="color:#22c55e">✅ Aceita</span>' : 'Somente à vista')
+      }</b></div>
    </div>
 
    ${regrasHTML}
@@ -357,13 +375,13 @@ const ld = {
    <button class="btn share" id="sh">&#128279; Compartilhar</button>
    </div>
    ${notaHTML}
-   <p class="back"><a href="../imoveis.html">&larr; Ver todos os imoveis</a></p>
+   <p class="back"><a href="../imoveis.html">&larr; Ver todos os imóveis</a></p>
    </div>
    </main>
 
-   <footer>
+   <footer style="max-width:960px;margin:0 auto;padding:1.5rem 1rem;white-space:normal;word-break:normal;text-align:center">
    <b>Reginaldo Rosso</b> - Corretor de Imoveis &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
-   Valores e situacao sujeitos a alteracao - confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; nao e um site oficial da CAIXA.
+   Valores e situação sujeitos a alteração - confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
    </footer>
 
    <a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
