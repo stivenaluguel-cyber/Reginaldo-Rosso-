@@ -41,6 +41,25 @@ const PLACEHOLDER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="800" hei
 // URL do placeholder como data URI
 const PLACEHOLDER_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PLACEHOLDER_SVG);
 
+// ============================================================
+// Sanitizacao de descricao: remove lixo de navegacao da Caixa
+// ============================================================
+const LIXO_MARCADORES = [
+  "baixar edital e anexos", "baixar edital", "de seu lance",
+  "outros produtos", "voltar galeria", "cartoes caixa",
+  "contas caixa", "saiba mais", "acesse aqui", "clique aqui",
+];
+function sanitizarDescricao(texto) {
+  if (!texto) return "";
+  let t = String(texto).trim();
+  const tl = t.toLowerCase();
+  for (const m of LIXO_MARCADORES) {
+    const idx = tl.indexOf(m);
+    if (idx > 0) { t = t.slice(0, idx).trim().replace(/[.,;:-]+$/, ""); break; }
+  }
+  return t.slice(0, 1500);
+}
+
 function num(s){ if(s==null)return 0; let t=String(s).replace(/[^\d.,-]/g,""); if(!t)return 0;
                 const lc=Math.max(t.lastIndexOf(","),t.lastIndexOf(".")); if(lc>=0){const dec=t.slice(lc+1); if(dec.length<=2){t=t.slice(0,lc).replace(/[.,]/g,"")+"."+dec;}else{t=t.replace(/[.,]/g,"");}} else t=t.replace(/[.,]/g,"");
                 const n=parseFloat(t); return isNaN(n)?0:n; }
@@ -466,14 +485,19 @@ async function carregarImoveisDoBanco(){
     return {
          id: im.id, uf: im.uf, cidade: im.cidade, bairro: im.bairro,
          endereco: im.endereco, preco: im.preco, avaliacao: im.avaliacao,
-         desconto: im.desconto, descricao: im.descricao,
-         modalidade: im.modalidade, tipo: im.tipo, link: im.link,
+         desconto: im.desconto, descricao: sanitizarDescricao(im.descricao),
+         modalidade: im.modalidade, tipo: (im._det && im._det.tipo_real) || im.tipo, link: im.link,
          // financiamento: usa a mesma hierarquia de resolucao para o JSON
          // null = sem dados (frontend deve tratar como desconhecido, nao "nao aceita")
          financiamento: im.financiamento != null ? im.financiamento : null,
          debito_tributos: im.debito_tributos || (im._det ? (im._det.debito_tributos || null) : null),
          debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null),
-         excluir_foto: EXCLUIR_FOTOS.has(String(im.id))
+         excluir_foto: EXCLUIR_FOTOS.has(String(im.id)),
+         fgts: im._det ? (im._det.aceita_fgts != null ? im._det.aceita_fgts : null) : null,
+         area: im._det ? (im._det.area_privativa != null ? im._det.area_privativa : (im._det.area_total != null ? im._det.area_total : null)) : null,
+         quartos: im._det ? (im._det.quartos != null ? im._det.quartos : null) : null,
+         data_fim: im._det ? (im._det.data_fim != null ? im._det.data_fim : null) : null,
+         tipo_real: im._det ? (im._det.tipo_real != null ? im._det.tipo_real : null) : null
     };
  }
    const imoveisRS = imoveis.filter(im=>im.uf==="RS").map(imovelParaJson);
