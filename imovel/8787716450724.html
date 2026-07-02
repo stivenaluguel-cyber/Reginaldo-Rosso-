@@ -65,20 +65,33 @@
    <h1>Cachoeirinha &middot; Aguas Mortas</h1>
    <div class="addr">ESTRADA DOS CAPISTRANOS, N. 525, Apto 330, BL H LT A</div>
    <div class="specs"><span>1 vaga</span></div>
-   <div class="price-row">
-   <div class="price">R$ 192.428</div>
-   <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=extrajudicial&valorLance=192428&valorAvaliacao=185000&comissaoLeiloeiro=5" title="Calcular ROI deste imovel">&#128202; Calcular ROI</a>
-   </div>
-
-   
-
-   <div class="kv">
-   <div><span>Preço de venda</span><b>R$ 192.428</b></div>
-   <div><span>Avaliação Caixa</span><b>R$ 185.000</b></div>
-   <div><span>Desconto</span><b>-</b></div>
-   <div><span>Modalidade</span><b>LeilÃ£o SFI - Edital Ãnico</b></div>
-   <div><span>Financiamento</span><b>Somente à vista</b></div>
-   <div><span>FGTS</span><b><a href="https://wa.me/5551991104976?text=Ol%C3%A1%20Reginaldo!%20Quero%20saber%20sobre%20FGTS%20no%20im%C3%B3vel%20cod.%208787716450724%20-%20Apartamento%20em%20Cachoeirinha%20-%20Aguas%20Mortas%2FRS%20(R%24%20192.428).%20Link%3A%20https%3A%2F%2Freginaldorosso.com.br%2Fimovel%2F8787716450724.html" target="_blank" rel="noopener" style="color:#c6a052">Confirmo pra você — me chame</a></b></div>
+   <div class="price-block" id="price-block">
+     <div class="price-block__row price-block__aval">
+       <span class="price-block__label">Avaliação Caixa</span>
+       <span class="price old">R$ 185.000</span>
+     </div>
+     <div class="price-block__row price-block__lance">
+       <span class="price-block__label">Lance mínimo</span>
+       <span class="price">R$ 192.428</span>
+     </div>
+     
+     <div class="price-block__row price-block__mod">
+       <span class="price-block__label">Modalidade</span>
+       <span class="price-block__chip">LeilÃ£o SFI - Edital Ãnico</span>
+     </div>
+     <div class="price-block__row price-block__fin">
+       <span class="price-block__label">Financiamento</span>
+       <b>Somente à vista</b>
+     </div>
+     <div class="price-block__row price-block__fgts">
+       <span class="price-block__label">FGTS</span>
+       <b><a href="https://wa.me/5551991104976?text=Ol%C3%A1%20Reginaldo!%20Quero%20saber%20sobre%20FGTS%20no%20im%C3%B3vel%20cod.%208787716450724%20-%20Apartamento%20em%20Cachoeirinha%20-%20Aguas%20Mortas%2FRS%20(R%24%20192.428).%20Link%3A%20https%3A%2F%2Freginaldorosso.com.br%2Fimovel%2F8787716450724.html" target="_blank" rel="noopener" style="color:var(--gold)">Confirmo pra você — me chame</a></b>
+     </div>
+     <div class="price-block__costs">
+       Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
+       <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=extrajudicial&valorLance=192428&valorAvaliacao=185000&comissaoLeiloeiro=5" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
+     </div>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado.</p>
    </div>
 
    
@@ -104,7 +117,26 @@
    Valores e situação sujeitos a alteração - confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
    </footer>
 
-   <a class="wafloat" href="https://wa.me/5551991104976?text=Ola%20Reginaldo!%20Tenho%20interesse%20no%20imovel%20cod.%208787716450724%20-%20Apartamento%20em%20Cachoeirinha%20-%20Aguas%20Mortas%2FRS%20(R%24%20192.428).%20Link%3A%20https%3A%2F%2Freginaldorosso.com.br%2Fimovel%2F8787716450724.html" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
+   <div class="sticky-cta" id="sticky-cta" aria-hidden="true">
+     <span class="sticky-cta__savings">R$ 192.428</span>
+     <a class="btn wa sticky-cta__btn" href="https://wa.me/5551991104976?text=Quero%20a%20an%C3%A1lise%20do%20im%C3%B3vel%208787716450724%20em%20CACHOEIRINHA" target="_blank" rel="noopener">&#128242; Analisar este imóvel</a>
+   </div>
+      <script>
+   (function(){
+     var pb=document.getElementById('price-block');
+     var sc=document.getElementById('sticky-cta');
+     var wf=document.querySelector('.wafloat');
+     if(!pb||!sc)return;
+     var io=new IntersectionObserver(function(entries){
+       var hidden=!entries[0].isIntersecting;
+       sc.classList.toggle('sticky-cta--visible',hidden);
+       sc.setAttribute('aria-hidden',hidden?'false':'true');
+       if(wf)wf.style.display=hidden?'none':'';
+     },{threshold:0});
+     io.observe(pb);
+   })();
+   </script>
+      <a class="wafloat" href="https://wa.me/5551991104976?text=Ola%20Reginaldo!%20Tenho%20interesse%20no%20imovel%20cod.%208787716450724%20-%20Apartamento%20em%20Cachoeirinha%20-%20Aguas%20Mortas%2FRS%20(R%24%20192.428).%20Link%3A%20https%3A%2F%2Freginaldorosso.com.br%2Fimovel%2F8787716450724.html" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
 
    <script>
    document.getElementById('sh').addEventListener('click',async function(){
