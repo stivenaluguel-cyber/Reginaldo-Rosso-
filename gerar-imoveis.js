@@ -14,6 +14,20 @@ const WHATS = { RS: "5551991104976", SC: "5548991642332" };
 const OUT_DIR = path.join(__dirname, "imovel");
 
 // ============================================================
+// Hubs de cidade: paginas programaticas /leilao-caixa/UF/slug.html
+// key: slug usado na URL; cidade: nome canonico para comparar com o CSV
+// ============================================================
+const HUB_CIDADES = [
+  { slug: "porto-alegre",  cidade: "PORTO ALEGRE",  uf: "RS", nome: "Porto Alegre"  },
+  { slug: "gravatai",      cidade: "GRAVATAI",       uf: "RS", nome: "Gravataí"      },
+  { slug: "tramandai",     cidade: "TRAMANDAI",      uf: "RS", nome: "Tramandaí"     },
+  { slug: "criciuma",      cidade: "CRICIUMA",       uf: "SC", nome: "Criciúma"      },
+];
+// Mapa rapido: cidade uppercase -> hub (para BreadcrumbList nas paginas de imovel)
+const HUB_MAPA = {};
+for (const h of HUB_CIDADES) HUB_MAPA[h.cidade] = h;
+
+// ============================================================
 // LGPD: IDs de imoveis cujas fotos sao prints de documentos
 // (matriculas, fichas com dados pessoais de ex-mutuarios).
 // Esses imoveis usarao o placeholder em vez da foto da Caixa.
@@ -294,6 +308,196 @@ Valores e situação sujeitos a alteração — confirme sempre no edital e na f
 </html>`;
 }
 
+// ============================================================
+// Hub de cidade: pagina programatica SEO para cada cidade
+// ============================================================
+function gerarHubCidade(hub, imoveis) {
+  const { slug, cidade, uf, nome } = hub;
+  const wa = "https://wa.me/" + (WHATS[uf] || WHATS.RS) + "?text=" + encodeURIComponent("Olá Reginaldo! Quero ver imóveis da Caixa em " + nome + ".");
+  const disponiveis = imoveis.filter(im =>
+    (im.status || "Disponivel") === "Disponivel" &&
+    (im.cidade || "").toUpperCase() === cidade
+  );
+  const n = disponiveis.length;
+  const maxDesconto = n > 0
+    ? Math.max(...disponiveis.map(im => im.desconto || 0))
+    : 0;
+  const titleStr = n > 0
+    ? ("Leilão Caixa " + nome + ": " + n + " imóve" + (n === 1 ? "l" : "is") + (maxDesconto > 0 ? " até " + Math.round(maxDesconto) + "% abaixo da avaliação" : "") + " | Reginaldo Rosso")
+    : ("Leilão Caixa " + nome + ": imóveis da Caixa com assessoria credenciada | Reginaldo Rosso");
+  const descStr = "Imóveis da Caixa Econômica Federal em leilão e venda direta em " + nome + "/" + uf + ". Reginaldo Rosso, corretor credenciado CRECI.";
+  const hubUrl = BASE + "/leilao-caixa/" + uf.toLowerCase() + "/" + slug + ".html";
+
+  const cardsHTML = disponiveis.slice(0, 20).map(im => {
+    const c = cap(im.cidade), b = cap(im.bairro || "");
+    const foto = EXCLUIR_FOTOS.has(String(im.id))
+      ? PLACEHOLDER_URL
+      : "https://venda-imoveis.caixa.gov.br/fotos/F" + im.id + "21.jpg";
+    return `<a class="card" href="${BASE}/imovel/${im.id}.html">
+<div class="card-img"><img src="${esc(foto)}" alt="${esc(im.tipo)} em ${esc(c)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display='none'">
+${im.desconto > 0 ? `<span class="off">${Math.round(im.desconto)}% OFF</span>` : ""}
+</div>
+<div class="card-body">
+<div class="card-city">${esc(c)}${b ? " · " + esc(b) : ""} <span class="uf-tag">${esc(uf)}</span></div>
+<div class="card-tipo">${esc(im.tipo)}</div>
+<div class="card-price">${brl(im.preco)}</div>
+${im.avaliacao > 0 && im.desconto > 0 ? `<div class="card-aval">(avaliação: ${brl(im.avaliacao)})</div>` : ""}
+</div>
+</a>`;
+  }).join("\n");
+
+  const faqItems = [
+    { q: "Preciso de corretor para comprar imóvel da Caixa em " + nome + "?",
+      a: "Não é obrigatório, mas um corretor credenciado CRECI agiliza a análise do edital, confere a matrícula e orienta sobre a desocupação — evitando surpresas após o lance." },
+    { q: "O FGTS pode ser usado em imóveis da Caixa em " + nome + "?",
+      a: "Depende de cada edital. Muitos imóveis de venda direta aceitam FGTS; leilões extrajudiciais normalmente exigem recursos próprios. Consulte o edital do imóvel específico." },
+    { q: "Quais são os custos além do lance em " + nome + "?",
+      a: "ITBI (varia por município), emolumentos de cartório, eventual comissão de leiloeiro (5% nos leilões) e, se o imóvel estiver ocupado, custos de desocupação. Use nossa Calculadora ROI para estimar." },
+    { q: "Como funciona a vistoria do imóvel antes do lance em " + nome + "?",
+      a: "A Caixa não garante vistoria interna. Avalie a localização, consulte a matrícula e, quando possível, veja o exterior. Imóveis ocupados têm risco adicional de danos." }
+  ];
+  const faqHTML = faqItems.map((f, i2) => `<details class="faq-item"${i2 === 0 ? " open" : ""}>
+<summary class="faq-q">${esc(f.q)}</summary>
+<p class="faq-a">${esc(f.a)}</p>
+</details>`).join("\n");
+
+  const ldItemList = { "@context":"https://schema.org","@type":"ItemList","name":"Imóveis da Caixa em "+nome,"url":hubUrl,"numberOfItems":n,"itemListElement":disponiveis.slice(0,10).map((im,i2)=>({"@type":"ListItem","position":i2+1,"url":BASE+"/imovel/"+im.id+".html","name":im.tipo+" em "+cap(im.cidade)+" — "+brl(im.preco)})) };
+  const ldBreadcrumb = { "@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Início","item":BASE+"/"},{"@type":"ListItem","position":2,"name":"Imóveis Caixa","item":BASE+"/imoveis.html"},{"@type":"ListItem","position":3,"name":"Leilão Caixa "+nome,"item":hubUrl}] };
+  const ldFaq = { "@context":"https://schema.org","@type":"FAQPage","mainEntity":faqItems.map(f2=>({"@type":"Question","name":f2.q,"acceptedAnswer":{"@type":"Answer","text":f2.a}})) };
+
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=${GA}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f324c">
+<title>${esc(titleStr)}</title>
+<meta name="description" content="${esc(descStr)}">
+<link rel="canonical" href="${hubUrl}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="${esc(titleStr)}">
+<meta property="og:description" content="${esc(descStr)}">
+<meta property="og:url" content="${hubUrl}">
+<meta property="og:image" content="${BASE}/og-image.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../imovel.css">
+<script type="application/ld+json">${JSON.stringify(ldItemList)}</script>
+<script type="application/ld+json">${JSON.stringify(ldBreadcrumb)}</script>
+<script type="application/ld+json">${JSON.stringify(ldFaq)}</script>
+<style>
+.hub-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:2.5rem 1rem 2rem;text-align:center}
+.hub-hero h1{font-size:clamp(1.4rem,4vw,2rem);font-weight:800;margin:0 0 .5rem;color:#fff}
+.hub-hero p{color:#a8c0d8;margin:0;font-size:1rem}
+.hub-stats{display:flex;gap:1.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap}
+.hub-stat{background:rgba(255,255,255,.08);border-radius:8px;padding:.5rem 1.2rem;font-size:.9rem;color:#c6a052;font-weight:700}
+.hub-section{max-width:960px;margin:0 auto;padding:2rem 1rem 1rem}
+.hub-section h2{color:var(--navy);font-size:1.25rem;font-weight:800;margin:0 0 1rem;border-left:4px solid var(--gold);padding-left:.75rem}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;margin-bottom:2rem}
+.card{display:block;background:#fff;border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .2s,box-shadow .2s;border:1px solid var(--line)}
+.card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.card-img{position:relative;height:170px;background:var(--navy)}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.card-img .off{position:absolute;top:10px;right:10px;background:#ef4444;color:#fff;font-size:.72rem;font-weight:800;padding:3px 8px;border-radius:50px}
+.card-body{padding:1rem}
+.card-city{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:.25rem}
+.uf-tag{background:var(--navy);color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:50px;margin-left:.3rem}
+.card-tipo{font-size:.85rem;color:var(--ink2);margin-bottom:.35rem}
+.card-price{font-size:1.3rem;font-weight:800;color:var(--navy)}
+.card-aval{font-size:.75rem;color:var(--muted);text-decoration:line-through}
+.hub-text{background:#f8f7f4;border-radius:12px;padding:1.5rem;margin-bottom:2rem;font-size:.96rem;line-height:1.7;color:var(--ink2)}
+.hub-cta-box{background:var(--navy);color:#fff;border-radius:12px;padding:1.5rem;text-align:center;margin-bottom:2rem}
+.hub-cta-box p{color:#a8c0d8;margin:0 0 1rem}
+.faq-item{border:1px solid var(--line);border-radius:8px;margin-bottom:.75rem;overflow:hidden}
+.faq-q{padding:.85rem 1rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;background:#fff;color:var(--navy)}
+.faq-q::-webkit-details-marker{display:none}
+.faq-q::before{content:"+ ";color:var(--gold);font-weight:800}
+details[open] .faq-q::before{content:"- "}
+.faq-a{padding:.75rem 1rem 1rem;margin:0;font-size:.9rem;color:var(--ink2);line-height:1.6;border-top:1px solid var(--line)}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty-state p{margin:.5rem 0}
+</style>
+</head>
+<body>
+<header><div class="topbar">
+<a class="brand" href="../../index.html">
+<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<span class="bt"><b>Reginaldo Rosso</b><small>Imóveis Caixa - RS &amp; SC</small></span>
+</a>
+<div class="fones">
+<a href="tel:5551991104976">(51) 99110-4976 - RS</a>
+<a href="tel:5548991642332">(48) 99164-2332 - SC</a>
+</div>
+</div>
+<nav class="main-nav" style="background:#27405f;padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center">
+<a href="../../index.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Início</a>
+<a href="../../imoveis.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Imóveis Caixa</a>
+<a href="../../mapa.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
+<a href="../../como-funciona.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Como Funciona</a>
+<a href="../../calculadora.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
+<a href="../../index.html#contato" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
+</nav>
+</header>
+
+<nav class="crumb" style="max-width:960px;margin:0 auto;padding:.5rem 1rem;font-size:.8rem;color:var(--muted)">
+<a href="../../index.html">Início</a> &rsaquo; <a href="../../imoveis.html">Imóveis Caixa</a> &rsaquo; <span>Leilão Caixa ${esc(nome)}</span>
+</nav>
+
+<section class="hub-hero">
+<h1>Imóveis da Caixa em leilão e venda direta em ${esc(nome)}</h1>
+<p>Oportunidades${maxDesconto > 0 ? " com até " + Math.round(maxDesconto) + "% abaixo da avaliação oficial" : ""} &mdash; com assessoria de corretor credenciado CRECI</p>
+<div class="hub-stats">
+<span class="hub-stat">${n} imóve${n === 1 ? "l" : "is"} disponíve${n === 1 ? "l" : "is"}</span>
+${maxDesconto > 0 ? `<span class="hub-stat">Até ${Math.round(maxDesconto)}% de desconto</span>` : ""}
+<span class="hub-stat">CRECI/${uf}</span>
+</div>
+</section>
+
+<div class="hub-section">
+${n > 0 ? `<h2>Imóveis disponíveis em ${esc(nome)}</h2>
+<div class="cards-grid">
+${cardsHTML}
+</div>
+<p style="text-align:center;margin-bottom:2rem"><a class="btn ghost" href="../../imoveis.html" style="display:inline-flex">Ver todos os imóveis RS &amp; SC</a></p>`
+: `<div class="empty-state"><p>&#127968; No momento não há imóveis listados em ${esc(nome)}.</p><p>Os dados são atualizados até 7x ao dia &mdash; volte em breve ou veja a lista completa.</p><a class="btn ghost" href="../../imoveis.html" style="display:inline-flex;margin-top:1rem">Ver todos os imóveis</a></div>`}
+
+<h2>Como funciona a arrematação em ${esc(nome)}</h2>
+<div class="hub-text">
+<p>Imóveis da Caixa Econômica Federal em ${esc(nome)} são ofertados em duas modalidades principais: <strong>leilão extrajudicial</strong> (com leiloeiro oficial e comissão de 5%) e <strong>venda direta online</strong> (sem comissão de leiloeiro). Em ambos os casos, o comprador é responsável pelos custos de transferência, incluindo:</p>
+<ul style="margin:.75rem 0 .75rem 1.5rem;line-height:1.8">
+<li><strong>ITBI</strong> (Imposto sobre Transmissão de Bens Imóveis) &mdash; alíquota e base de cálculo definidas pelo município de ${esc(nome)}; consulte a prefeitura ou o edital para o valor exato do seu negócio;</li>
+<li><strong>Emolumentos de cartório</strong> &mdash; variáveis conforme o valor do imóvel e a tabela estadual ${uf === "RS" ? "gaúcha" : "catarinense"};</li>
+<li><strong>Comissão do corretor</strong> &mdash; paga pela Caixa quando há assessoria credenciada; <em>sem custo extra para o comprador</em>.</li>
+</ul>
+<p>Use nossa <a href="../../calculadora.html" style="color:var(--gold);font-weight:600">Calculadora ROI</a> para estimar o lucro líquido real com os valores específicos do imóvel que você está analisando.</p>
+</div>
+
+<h2>Assessoria com CRECI próprio em ${esc(nome)}</h2>
+<div class="hub-cta-box">
+<p>Reginaldo Rosso &mdash; CRECI/RS 28565J &middot; CRECI/SC 8152J &mdash; confere edital, matrícula e situação de ocupação <strong>sem custo para o comprador</strong>. A comissão é paga pela Caixa.</p>
+<a class="btn wa" href="${wa}" target="_blank" rel="noopener" style="display:inline-flex">&#128242; Analisar um imóvel em ${esc(nome)}</a>
+</div>
+
+<h2>Dúvidas frequentes sobre leilões da Caixa em ${esc(nome)}</h2>
+${faqHTML}
+
+<p class="back"><a href="../../imoveis.html">&larr; Ver todos os imóveis RS &amp; SC</a></p>
+</div>
+
+<footer style="max-width:960px;margin:0 auto;padding:1.5rem 1rem;text-align:center;font-size:.85rem;color:var(--muted)">
+<b>Reginaldo Rosso</b> - Corretor de Imóveis &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
+Valores e situação sujeitos a alteração &mdash; confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
+</footer>
+<a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
+</body>
+</html>`;
+}
+
 function pagina(i){
    const det = i._det || {};
 // B2/B3: tipo real do banco (quando houver) e kicker de modalidade
@@ -386,6 +590,18 @@ const ld = {
     "seller": { "@type":"RealEstateAgent","name":"Reginaldo Rosso","url":"https://reginaldorosso.com.br" }
   }
 };
+const hubEntry = HUB_MAPA[(i.cidade||"").toUpperCase()];
+const ldBreadcrumb = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Início", "item": BASE + "/" },
+    hubEntry
+      ? { "@type": "ListItem", "position": 2, "name": "Leilão Caixa " + hubEntry.nome, "item": BASE + "/leilao-caixa/" + hubEntry.uf.toLowerCase() + "/" + hubEntry.slug + ".html" }
+      : { "@type": "ListItem", "position": 2, "name": "Imóveis Caixa", "item": BASE + "/imoveis.html" },
+    { "@type": "ListItem", "position": 3, "name": titulo, "item": url }
+  ]
+};
    return `<!doctype html>
    <html lang="pt-BR">
    <head>
@@ -415,6 +631,7 @@ const ld = {
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="../imovel.css">
    <script type="application/ld+json">${JSON.stringify(ld)}</script>
+<script type="application/ld+json">${JSON.stringify(ldBreadcrumb)}</script>
    </head>
    <body>
    <header><div class="topbar">
@@ -637,8 +854,8 @@ for(const im of imoveis){
 }
 
  const hoje = new Date().toISOString().slice(0,10);
-   const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html"];
-   const artigos = [
+   const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html","/calculadora.html"];
+  const artigos = [
      "/venda-direta-caixa-vale-a-pena.html",
      "/quem-paga-corretor-credenciado-caixa.html",
      "/imovel-ocupado-caixa-e-seguro.html",
@@ -647,17 +864,18 @@ for(const im of imoveis){
      "/corretor-credenciado-caixa-florianopolis.html",
      "/como-dar-lance-imovel-caixa.html",
      "/como-funciona-leilao-imovel-caixa.html"
-   ,
+    ,
      "/como-usar-fgts-imovel-caixa.html"
-   ,
+    ,
      "/documentos-para-comprar-imovel-caixa.html"
-   ];
-   let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-   for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":"0.8")+"</priority></url>\n";
-   for(const u of artigos) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>\n";
-   for(const im of imoveis) { if((im.status||"Disponivel")==="Disponivel") sm += " <url><loc>"+BASE+"/imovel/"+im.id+".html</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n"; }
-   sm += "</urlset>\n";
-   fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
+  ];
+  let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+  for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":(u==="/calculadora.html"?"0.7":"0.8"))+"</priority></url>\n";
+  for(const u of artigos) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>\n";
+  for(const h of HUB_CIDADES) sm += " <url><loc>"+BASE+"/leilao-caixa/"+h.uf.toLowerCase()+"/"+h.slug+".html</loc><lastmod>"+hoje+"</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>\n";
+  for(const im of imoveis) { if((im.status||"Disponivel")==="Disponivel") sm += " <url><loc>"+BASE+"/imovel/"+im.id+".html</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n"; }
+  sm += "</urlset>\n";
+  fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
 
  // === Gera JSONs consumidos por imoveis.html ===
  function imovelParaJson(im){
@@ -692,5 +910,44 @@ for(const im of imoveis){
    fs.writeFileSync(path.join(__dirname,"meta.json"), JSON.stringify(meta));
    console.log("JSONs atualizados: imoveis-rs("+imoveisRS.length+"), imoveis-sc("+imoveisSC.length+"), meta(total="+imoveis.length+").");
 
- console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" encerradas, "+comDetalhe+" com ficha) e sitemap com "+(nDisp+fixas.length)+" URLs.");
+ // === Gera stubs de redirect para orfaos (raiz /{codigo}.html) ===
+  // Os ~792 HTMLs numericos da raiz sao duplicatas legadas; substituimos por redirect noindex
+  const idSet = new Set(imoveis.map(im => im.id));
+  let orfaosGerados = 0;
+  // Lemos a lista de orfaos a partir dos proprios arquivos na raiz
+  const rootFiles = fs.readdirSync(__dirname).filter(f => /^\d+\.html$/.test(f));
+  for (const fname of rootFiles) {
+    const codigo = fname.replace(".html","");
+    const destino = idSet.has(codigo)
+      ? BASE + "/imovel/" + codigo + ".html"
+      : BASE + "/imoveis.html";
+    const stub = `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0;url=${destino}">
+<link rel="canonical" href="${destino}">
+<meta name="robots" content="noindex,nofollow">
+<title>Redirecionando...</title>
+</head>
+<body>
+<p>Redirecionando para <a href="${destino}">${destino}</a>...</p>
+</body>
+</html>`;
+    fs.writeFileSync(path.join(__dirname, fname), stub);
+    orfaosGerados++;
+  }
+  console.log("Orfaos convertidos em stubs de redirect: " + orfaosGerados);
+
+  // === Gera hubs de cidade ===
+  for (const hub of HUB_CIDADES) {
+    const hubDir = path.join(__dirname, "leilao-caixa", hub.uf.toLowerCase());
+    if (!fs.existsSync(hubDir)) fs.mkdirSync(hubDir, { recursive: true });
+    const hubHtml = gerarHubCidade(hub, imoveis);
+    fs.writeFileSync(path.join(hubDir, hub.slug + ".html"), hubHtml);
+    const disp = imoveis.filter(im => (im.status||"Disponivel")==="Disponivel" && (im.cidade||"").toUpperCase()===hub.cidade).length;
+    console.log("Hub gerado: /leilao-caixa/" + hub.uf.toLowerCase() + "/" + hub.slug + ".html (" + disp + " imoveis)");
+  }
+
+  console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" encerradas, "+comDetalhe+" com ficha) e sitemap com "+(nDisp+fixas.length)+" URLs.");
 })();
