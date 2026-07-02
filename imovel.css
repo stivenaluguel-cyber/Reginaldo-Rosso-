@@ -110,3 +110,50 @@ footer b{color:#fff}
 
 /* v2 */
  
+
+
+/* ============================================================
+   Chips de prazo e ocupacao (Etapa B)
+   Reutiliza tokens existentes: --gold, --gold-soft, --green, --navy
+   ============================================================ */
+/* Chip ambar: prazo urgente (<=7 dias) e imovel ocupado */
+.chip-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 50px;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+/* Chip verde: imovel desocupado */
+.chip-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+  border-radius: 50px;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+/* Chips dentro de card de listagem/hub */
+.card-chip {
+  display: inline-flex;
+  margin-top: 4px;
+  margin-right: 4px;
+}
+/* Prazo nao urgente em card: texto simples sem fundo colorido */
+.card-chip-plain {
+  display: inline-flex;
+  font-size: .7rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
