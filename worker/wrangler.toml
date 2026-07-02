@@ -1,0 +1,6 @@
+name = "inscrever-alerta"
+main = "inscrever-alerta.js"
+compatibility_date = "2024-01-01"
+
+# Secrets configurados via: npx wrangler secret put DATABASE_URL
+# (nunca colocar valores reais aqui — usar wrangler secret put)
