@@ -694,18 +694,19 @@ var despVenda = corrVenda + ir + outras + taxaSA;
 var custoMensal = condMensal + (iptuAnual / 12);
 
 function res(meses){
+var custoCarrego = custoMensal * meses;
 var parcelasPagas = prestacaoMensal * meses;
 if(isFinanc){
 var saldoDevedor = lanceFin;
 var custosIniciais = itbi + reg + escritura + comLeil + debitos + condAtras + reforma + desocupacao;
-var capitalInvestido = entrada + custosIniciais + parcelasPagas;
+var capitalInvestido = entrada + custosIniciais + parcelasPagas + custoCarrego;
 var receitaLiquida = recVenda - despVenda - saldoDevedor;
 var lucro = receitaLiquida - capitalInvestido;
 var roi = capitalInvestido > 0 ? (lucro / capitalInvestido) * 100 : 0;
 var taxaMensal = capitalInvestido > 0 && meses > 0 && roi > -100 ? (Math.pow(1 + roi/100, 1/meses) - 1) * 100 : 0;
 return { meses:meses, totalCusto:capitalInvestido, resultado:lucro, roi:roi, taxaMensal:taxaMensal, saldoDevedor:saldoDevedor, capitalInvestido:capitalInvestido };
 } else {
-var capitalInvestido = custosFixos;
+var capitalInvestido = custosFixos + custoCarrego;
 var receitaLiquida = recVenda - despVenda;
 var lucro = receitaLiquida - capitalInvestido;
 var roi = capitalInvestido > 0 ? (lucro / capitalInvestido) * 100 : 0;
