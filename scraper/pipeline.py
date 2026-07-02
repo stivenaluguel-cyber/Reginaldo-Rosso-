@@ -69,6 +69,28 @@ def _set_github_output(key: str, value: str):
         with open(gho, "a", encoding="utf-8") as f:
             f.write(f"{key}={value}\n")
 
+def _contar_publicados():
+    """
+    Le imoveis-rs.json e imoveis-sc.json do checkout local e retorna o
+    total de imoveis publicados no site. Usado para detectar divergencia
+    entre o banco e o que esta efetivamente publicado (ex.: apos falha de push).
+    Retorna None se nao conseguir ler (nao forca republicacao por erro de leitura).
+    """
+    import json
+    raiz = Path(__file__).parent.parent  # scraper/ -> raiz do repo
+    total = 0
+    achou = False
+    for nome in ("imoveis-rs.json", "imoveis-sc.json"):
+        caminho = raiz / nome
+        try:
+            with open(caminho, "r", encoding="utf-8") as f:
+                dados = json.load(f)
+            total += len(dados)
+            achou = True
+        except Exception as e:
+            logger.warning(f"Nao foi possivel ler {nome} para checar divergencia: {e}")
+    return total if achou else None
+
 # -- Etapa 2 incremental com delay e detecao de rate limit ---------
 async def run_etapa2(lote: list):
     """
@@ -173,8 +195,23 @@ async def run_vigia():
             f"{len(ids_removidos)} encerrados/removidos"
         )
 
-        # Se nada mudou: encerra sem fazer nada
+        # Se nada mudou: antes de encerrar, checar divergencia banco vs publicado.
+        # Uma falha de push anterior pode ter deixado o site defasado silenciosamente.
         if not ids_novos and not ids_removidos:
+            total_banco = len(ids_no_banco)
+            total_publicado = _contar_publicados()
+            if total_publicado is not None and total_publicado != total_banco:
+                logger.warning(
+                    f"Divergencia banco ({total_banco}) vs publicado ({total_publicado}) "
+                    "— republicando"
+                )
+                _set_github_output("mudancas", "true")
+                _set_github_output("novos", "0")
+                _set_github_output("encerrados", "0")
+                logger.info(
+                    f"=== Vigia: forcando republicacao por divergencia "
+                    f"(banco={total_banco}, publicado={total_publicado}) ===")
+                return
             logger.info("=== Vigia: NENHUMA MUDANCA detectada. Encerrando. ===")
             _set_github_output("mudancas", "false")
             _set_github_output("novos", "0")
