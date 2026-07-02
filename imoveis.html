@@ -305,9 +305,9 @@ gtag('config','AW-872430371');
       <div class="field"><label for="cidade">Cidade</label><select id="cidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
-      <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option><option value="naoinf">Não informado</option></select></div>
-<div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Débito limitado a 10%</option><option value="nao-info">Não informado</option></select></div>
-<div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Débito limitado a 10%</option><option value="nao-info">Não informado</option></select></div>
+      <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option></select></div>
+<div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option></select></div>
+<div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
         <option value="precoasc">Preço: menor → maior</option>
         <option value="precodesc">Preço: maior → menor</option>
@@ -482,11 +482,39 @@ async function carregar(){
     
 
   function preencherFiltros(){
-    const cidades=[...new Set(ALL.map(i=>i.cidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
-    const tipos=[...new Set(ALL.map(i=>i.tipo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
-    const mods=[...new Set(ALL.map(i=>i.modalidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
-    const fill=(id,arr)=>{const s=document.getElementById(id);arr.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;s.appendChild(o)})};
-    fill("cidade",cidades);fill("tipo",tipos);fill("modalidade",mods);
+    function _norm(v){ return String(v||'').trim().toLowerCase(); }
+    function _labelFin(v){ return v===true||v==='true'?'Aceita':v===false||v==='false'?'Não aceita':'Não informado'; }
+    function _labelTipo(i){ const tr=i.tipo_real; return (tr&&String(tr).trim()&&String(tr).trim()!=='-')?String(tr).trim():String(i.tipo||'Imóvel').trim(); }
+    function _fillSelect(id, allLabel, items){
+      const s=document.getElementById(id); if(!s) return;
+      s.innerHTML='';
+      const total=items.reduce(function(a,x){return a+x.count;},0);
+      const o0=document.createElement('option'); o0.value=''; o0.textContent=allLabel+' ('+total.toLocaleString('pt-BR')+')'; s.appendChild(o0);
+      items.forEach(function(it){const o=document.createElement('option');o.value=it.label;o.textContent=it.label+' ('+it.count.toLocaleString('pt-BR')+')';s.appendChild(o);});
+    }
+    function _contarCampo(arr){
+      const m={};
+      arr.forEach(function(v){const k=(v===null||v===undefined||String(v).trim()===''||String(v).trim()==='-')?'__nil__':String(v).trim();m[k]=(m[k]||0)+1;});
+      const keyMap={};const counts={};
+      Object.keys(m).forEach(function(k){
+        if(k==='__nil__') return;
+        const lo=k.toLowerCase();
+        if(!keyMap[lo]){keyMap[lo]=k;counts[lo]=0;}
+        counts[lo]+=m[k];
+      });
+      const items=Object.keys(keyMap).map(function(lo){return {label:keyMap[lo],count:counts[lo]};});
+      items.sort(function(a,b){return b.count-a.count;});
+      const nil=m['__nil__']||0;
+      if(nil>0) items.push({label:'Não informado',count:nil});
+      return items;
+    }
+    window._labelFin=_labelFin;
+    _fillSelect('cidade','Todas',_contarCampo(ALL.map(function(i){return i.cidade;})));
+    _fillSelect('tipo','Todos',_contarCampo(ALL.map(function(i){return _labelTipo(i);})));
+    _fillSelect('modalidade','Todas',_contarCampo(ALL.map(function(i){return i.modalidade;})));
+    _fillSelect('financiamento','Todos',_contarCampo(ALL.map(function(i){return _labelFin(i.financiamento);})));
+    _fillSelect('dtrib','Todos',_contarCampo(ALL.map(function(i){return i.debito_tributos||null;})));
+    _fillSelect('dcond','Todos',_contarCampo(ALL.map(function(i){return i.debito_condominio||null;})));
   }
   function aplicarHash(){
     if(!location.hash) return;
@@ -517,18 +545,9 @@ function aplicar(){
       if(state.cidade && i.cidade!==state.cidade) return false;
       if(state.tipo && i.tipo!==state.tipo) return false;
       if(state.modalidade && i.modalidade!==state.modalidade) return false;
-      if(state.financiamento==="sim" && i.financiamento!==true) return false;
-        if(state.financiamento==="nao" && i.financiamento!==false) return false;
-        if(state.financiamento==="naoinf" && !(i.financiamento===null||i.financiamento===undefined)) return false;
-
-         if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
-      if(state.dtrib==="caixa" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("caixa")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
-      if(state.dtrib==="caixa10" && !(i.debito_tributos&&(i.debito_tributos.toLowerCase().includes("acima")||i.debito_tributos.toLowerCase().includes("superior")||(i.debito_tributos.toLowerCase().startsWith("caixa")&&i.debito_tributos.includes("10%"))||(i.debito_tributos.toLowerCase().startsWith("arrem")&&i.debito_tributos.includes("10%"))))) return false;
-      if(state.dtrib==="nao-info" && i.debito_tributos) return false;
-         if(state.dcond==="arrem" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("arrem")&&!i.debito_condominio.toLowerCase().includes("10%"))) return false;
-      if(state.dcond==="caixa" && !(i.debito_condominio&&i.debito_condominio.toLowerCase().startsWith("caixa")&&!i.debito_condominio.toLowerCase().includes("10%"))) return false;
-      if(state.dcond==="caixa10" && !(i.debito_condominio&&(i.debito_condominio.toLowerCase().includes("acima")||i.debito_condominio.toLowerCase().includes("superior")||(i.debito_condominio.toLowerCase().startsWith("caixa")&&i.debito_condominio.includes("10%"))||(i.debito_condominio.toLowerCase().startsWith("arrem")&&i.debito_condominio.includes("10%"))))) return false;
-      if(state.dcond==="nao-info" && i.debito_condominio) return false;
+      if(state.financiamento){const _fl=(window._labelFin||function(v){return v===true?'Aceita':v===false?'Não aceita':'Não informado';})(i.financiamento);if(_fl.toLowerCase()!==state.financiamento.toLowerCase()) return false;}
+      if(state.dtrib){const _dt=i.debito_tributos?String(i.debito_tributos).trim():'Não informado';if(_dt.toLowerCase()!==state.dtrib.toLowerCase()) return false;}
+      if(state.dcond){const _dc=i.debito_condominio?String(i.debito_condominio).trim():'Não informado';if(_dc.toLowerCase()!==state.dcond.toLowerCase()) return false;}
       if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
       if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
       if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
