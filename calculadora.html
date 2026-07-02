@@ -115,7 +115,9 @@ nav.menu a:hover,nav.menu a.on{color:#fff;border-color:var(--gold)}
 .lance-head label{color:var(--gold-soft);font-size:.72rem;font-weight:700;white-space:nowrap}
 .lance-head input{width:72px;background:rgba(255,255,255,.1);border:1px solid rgba(198,160,82,.5);border-radius:6px;padding:5px 8px;color:#fff;font-family:inherit;font-size:.88rem;font-weight:700;text-align:center;outline:none}
 .lance-head input:focus{border-color:var(--gold)}
-.lance-scroll{overflow-x:auto}
+.lance-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative}
+    .lance-scroll::after{content:"";position:absolute;top:0;right:0;bottom:0;width:24px;background:linear-gradient(90deg,transparent,rgba(15,25,40,.25));pointer-events:none}
+    .lance-scroll table{min-width:520px}
 table.lance-table{width:100%;border-collapse:collapse;font-size:.82rem}
 table.lance-table th{background:var(--bg);padding:10px 12px;text-align:right;font-weight:700;color:var(--muted);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 table.lance-table th:first-child{text-align:left;min-width:120px}
@@ -422,6 +424,7 @@ Simular Investimento
 </div>
 
 <div id="resultsArea" style="display:none">
+        <div id="cenarioNota" style="display:none;margin:10px 0 4px;padding:10px 14px;background:rgba(198,160,82,.12);border-left:3px solid #c6a052;border-radius:6px;font-size:.86rem;color:#c9b98a;line-height:1.4"></div>
 <div class="kpi-grid">
 <div class="kpi gold-accent" id="kpiResultado">
 <div class="kpi-label">Resultado Líquido</div>
@@ -470,6 +473,7 @@ Simular Investimento
 <tbody id="lanceTbody"></tbody>
 </table>
 </div>
+        <div id="lanceNota" style="display:none;margin-top:8px;font-size:.82rem;color:#9aa8bd;font-style:italic"></div>
 <div class="lance-note" id="lanceNote">
 🟢 ROI ≥ mínimo definido &nbsp;&nbsp; 🟡 ROI positivo, abaixo do mínimo &nbsp;&nbsp; 🔴 Prejuízo
 </div>
@@ -664,6 +668,18 @@ var comLeil = lance * comLeilPct;
 var custosFixos = isFinanc ? (entrada + itbi + reg + escritura + comLeil + reforma + desocupacao) : (lance + itbi + reg + escritura + comLeil + debitos + condAtras + reforma + desocupacao);
 
 var recVenda = precoVenda > 0 ? precoVenda : (avaliacao > 0 ? avaliacao : lance * 1.3);
+      // D1: nota de cenario quando o preco de venda nao foi informado (usa avaliacao)
+      try{
+        var _notaEl = document.getElementById('cenarioNota');
+        if(_notaEl){
+          if(precoVenda <= 0 && avaliacao > 0){
+            _notaEl.style.display = 'block';
+            _notaEl.innerHTML = 'Cenário: revenda pelo valor de avaliação da Caixa (<strong>'+fBRL(avaliacao)+'</strong>). Edite o preço de venda para simular outros cenários.';
+          } else {
+            _notaEl.style.display = 'none';
+          }
+        }
+      }catch(_){}
 
 var corrVenda = recVenda * corrVendaPct;
 var ganho = Math.max(0, recVenda - (lance + itbi + escritura + reg + comLeil));
@@ -710,27 +726,52 @@ return '<span class="cell-bad">'+val+'</span>';
 
 // Gerar tabela de lances
 function gerarTabela(roiMin){
-var lancePrincipal = num('valorLance');
-if(lancePrincipal <= 0) return;
-var passo = lancePrincipal * 0.05;
-var meses = [3, 6, 9, 12, 18, 24];
-var tbody = document.getElementById('lanceTbody');
-tbody.innerHTML = '';
-var inicio = Math.round(lancePrincipal * 0.60 / passo) * passo;
-var fim = Math.round(lancePrincipal * 1.30 / passo) * passo;
-for(var v = inicio; v <= fim + 1; v += passo){
-var c = calcular(v);
-var tr = document.createElement('tr');
-if(Math.abs(v - lancePrincipal) < passo * 0.1) tr.classList.add('highlight');
-var html = '<td>'+(Math.abs(v-lancePrincipal)<passo*0.1?'<strong>':'')+fBRL(v)+(Math.abs(v-lancePrincipal)<passo*0.1?' ★</strong>':'')+'</td>';
-meses.forEach(function(m){
-var r = c.res(m);
-html += '<td>'+roiCell(r.roi, roiMin)+'</td>';
-});
-tr.innerHTML = html;
-tbody.appendChild(tr);
-}
-}
+      var lancePrincipal = num('valorLance');
+      if(lancePrincipal<=0) return;
+      var passo = lancePrincipal*0.05;
+      var meses = [3,6,9,12,18,24];
+      var tbody = document.getElementById('lanceTbody');
+      tbody.innerHTML='';
+      // D4: detecta se as colunas de prazo sao identicas (sem variacao mensal)
+      var cRef = calcular(lancePrincipal);
+      var roisRef = meses.map(function(m){ return Math.round(cRef.res(m).roi*100)/100; });
+      var colunasIguais = roisRef.every(function(r){ return Math.abs(r-roisRef[0])<0.01; });
+      // Reconstroi o cabecalho conforme o caso
+      var thead = document.querySelector('#lanceTable thead tr');
+      if(thead){
+        if(colunasIguais){
+          thead.innerHTML = '<th>Lance</th><th>ROI</th>';
+        } else {
+          thead.innerHTML = '<th>Lance</th>'+meses.map(function(m){return '<th>'+m+' m</th>';}).join('');
+        }
+      }
+      // Nota explicativa
+      var notaEl = document.getElementById('lanceNota');
+      if(notaEl){
+        if(colunasIguais){
+          notaEl.style.display='block';
+          notaEl.textContent = 'Informe condomínio mensal e/ou IPTU anual para ver a variação do ROI por prazo.';
+        } else {
+          notaEl.style.display='none';
+        }
+      }
+      var inicio = Math.round(lancePrincipal*0.60/passo)*passo;
+      var fim = Math.round(lancePrincipal*1.30/passo)*passo;
+      for(var v=inicio; v<=fim+1; v+=passo){
+        var c = calcular(v);
+        var tr = document.createElement('tr');
+        if(Math.abs(v-lancePrincipal)<passo*0.1) tr.classList.add('highlight');
+        var destaque = Math.abs(v-lancePrincipal)<passo*0.1;
+        var html = '<td>'+(destaque?'<strong>':'')+fBRL(v)+(destaque?'</strong>':'')+'</td>';
+        if(colunasIguais){
+          html += '<td>'+roiCell(c.res(12).roi, roiMin)+'</td>';
+        } else {
+          meses.forEach(function(m){ var r=c.res(m); html += '<td>'+roiCell(r.roi, roiMin)+'</td>'; });
+        }
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+      }
+    }
 
 // Botão simular
 document.getElementById('btnCalc').addEventListener('click',function(){
@@ -785,6 +826,23 @@ el('resultsArea').scrollIntoView({behavior:'smooth',block:'start'});
 }
 if(window.gtag) gtag('event','use_calculator',{currency:'BRL',value:lance});
 });
+    // D2: recalculo automatico com debounce de 300ms ao alterar qualquer campo
+    (function(){
+      var _t=null;
+      function _recalcAuto(){
+        if(_t) clearTimeout(_t);
+        _t=setTimeout(function(){
+          var lance = num('valorLance');
+          if(lance>0){ var b=document.getElementById('btnCalc'); if(b) b.click(); }
+        }, 300);
+      }
+      var _campos = document.querySelectorAll('#calcForm input, #calcForm select, .calc-form input, .calc-form select, input[type=number], select');
+      _campos.forEach(function(el){
+        el.addEventListener('input', _recalcAuto);
+        el.addEventListener('change', _recalcAuto);
+      });
+    })();
+    
 
 document.getElementById('roiMin').addEventListener('change',function(){
 if(document.getElementById('resultsArea').style.display !== 'none'){
@@ -830,7 +888,7 @@ if(el3 && p.has(id)) el3.value = p.get(id);
 });
 if(p.get('saAtivo') === '1'){ saAtivo = false; window.toggleSA(); }
 window.atualizarCamposLeilao();
-setTimeout(function(){ document.getElementById('btnCalc').click(); }, 300);
+var _pv=document.getElementById('precoVenda'); var _av=document.getElementById('valorAvaliacao'); if(_pv && (!_pv.value || parseFloat(_pv.value)<=0) && _av && parseFloat(_av.value)>0){ _pv.value=_av.value; window.__cenarioAvaliacao=true; } setTimeout(function(){ document.getElementById('btnCalc').click(); }, 300);
 })();
 // Init cartorio fields on load
 if(typeof atualizarCartorio === 'function') setTimeout(atualizarCartorio, 100);
