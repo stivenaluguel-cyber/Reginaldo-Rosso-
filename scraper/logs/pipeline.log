@@ -1,0 +1,24 @@
+2026-07-02 13:22:40 [INFO] __main__: === Vigia Manha iniciado em 2026-07-02 13:22:40 ===
+2026-07-02 13:22:40 [INFO] __main__: --- Vigia: baixando CSV da Caixa ---
+2026-07-02 13:22:43 [INFO] db: Banco de dados inicializado e migrado.
+2026-07-02 13:22:43 [INFO] etapa1_csv: etapa1: Fase 0 - httpx HTTP/2...
+2026-07-02 13:22:46 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SC.csv "HTTP/2 200 OK"
+2026-07-02 13:22:46 [INFO] etapa1_csv: etapa1: SC OK via httpx (51566 bytes)
+2026-07-02 13:22:46 [INFO] etapa1_csv: etapa1: parse SC: colunas brutas=['N° do imóvel', 'UF', 'Cidade', 'Bairro', 'Endereço']
+2026-07-02 13:22:46 [INFO] etapa1_csv: etapa1: CSV SC: 145 imoveis parseados de 145 linhas
+2026-07-02 13:22:46 [INFO] etapa1_csv: etapa1: httpx ok=1, pendentes=1
+2026-07-02 13:22:46 [INFO] etapa1_csv: etapa1: Fase 3 - curl subprocess (amostra SP)...
+2026-07-02 13:22:47 [INFO] etapa1_csv: etapa1: curl RS conteudo invalido (18427B): '<head>   <title>Radware Bot Manager CAPTCHA</title><script type="text/javascript"> \twindow.SSJSInternal = 48397;  \tvar __uzdbm_1 = "82623a09-0f3f-41ea'
+2026-07-02 13:22:47 [INFO] etapa1_csv: etapa1: curl ok=1, pendentes=1
+2026-07-02 13:22:47 [INFO] etapa1_csv: etapa1: Fase 1+2 - Playwright stealth para 1 estados...
+2026-07-02 13:23:11 [INFO] etapa1_csv: etapa1: RS OK via fetch-browser (240861 bytes)
+2026-07-02 13:23:12 [INFO] etapa1_csv: etapa1: parse RS: colunas brutas=['N° do imóvel', 'UF', 'Cidade', 'Bairro', 'Endereço']
+2026-07-02 13:23:12 [INFO] etapa1_csv: etapa1: CSV RS: 698 imoveis parseados de 698 linhas
+2026-07-02 13:23:17 [INFO] db: update_csv_parsed_bulk: 5 linhas atualizadas
+2026-07-02 13:23:17 [INFO] etapa1_csv: etapa1: FINAL total_csv=843 | banco=843 | removidos=0 | novos=0 | ok=2 | falha=0
+2026-07-02 13:23:17 [INFO] __main__: CSV: 843 imoveis | 0 novos detectados
+2026-07-02 13:23:19 [INFO] __main__: Banco: 843 imoveis ativos em ['RS', 'SC']
+2026-07-02 13:23:19 [INFO] __main__: Vigia resultado: 0 novos | 0 encerrados/removidos
+2026-07-02 13:23:19 [WARNING] __main__: Divergencia banco (843) vs publicado (801) — republicando
+2026-07-02 13:23:19 [INFO] __main__: === Vigia: forcando republicacao por divergencia (banco=843, publicado=801) ===
+2026-07-02 13:23:19 [INFO] __main__: === Vigia finalizado em 39s ===
