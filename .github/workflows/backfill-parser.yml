@@ -20,6 +20,10 @@ concurrency:
   group: backfill-parser
   cancel-in-progress: false
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   backfill:
     name: Backfill Parser
@@ -76,7 +80,15 @@ jobs:
 
   regenerar:
     name: Regenerar JSONs e Paginas
+    runs-on: ubuntu-22.04
     needs: backfill
     if: ${{ github.event.inputs.dry_run != 'true' }}
-    uses: ./.github/workflows/gerar-imoveis.yml
-    secrets: inherit
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Trigger gerar-imoveis
+        run: |
+          gh workflow run gerar-imoveis.yml --repo ${{ github.repository }} --ref main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
