@@ -88,7 +88,7 @@ function tipoDe(desc){ const d=(desc||"").toLowerCase();
 function specs(desc){ const d=desc||""; const out=[];
                      let m=d.match(/([\d.,]+)\s*de [aa]rea privativa/i)||d.match(/([\d.,]+)\s*de [aa]rea total/i);
                      if(m){const a=Math.round(num(m[1])); if(a>0)out.push(a+" m2");}
-                     m=d.match(/(\d+)\s*(?:qto|quarto|dorm)/i); if(m)out.push(m[1]+(m[1]=="1"?" dormitorio":" dormitorios"));
+                     m=d.match(/(\d+)\s*(?:qto|quarto|dorm)/i); if(m)out.push(m[1]+(m[1]=="1"?" dormitório":" dormitórios"));
                      m=d.match(/(\d+)\s*vaga/i); if(m)out.push(m[1]+(m[1]=="1"?" vaga":" vagas")); return out; }
 
 // Detecta se a descricao/texto indica EXCLUSIVAMENTE venda a vista
@@ -707,6 +707,17 @@ const ldBreadcrumb = {
    <link rel="manifest" href="/site.webmanifest">
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="../imovel.css">
+   <style>
+/* bloco financeiro: hierarquia tipografica */
+.price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
+.price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
+.price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
+@media(max-width:480px){
+  .price--hero{font-size:1.625rem}
+  .price--aval{font-size:1rem}
+  .price-savings--compact{font-size:1.0625rem}
+}
+   </style>
    <script type="application/ld+json">${JSON.stringify(ld)}</script>
 <script type="application/ld+json">${JSON.stringify(ldBreadcrumb)}</script>
    </head>
@@ -748,17 +759,17 @@ const ldBreadcrumb = {
    <div class="addr">${esc(i.endereco||"")}</div>
    ${specsHTML}
    <div class="price-block" id="price-block">
-     <div class="price-block__row price-block__aval">
-       <span class="price-block__label">Avaliação Caixa</span>
-       <span class="price old">${brl(i.avaliacao)}</span>
-     </div>
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
-       <span class="price">${brl(i.preco)}</span>
+       <span class="price price--hero">${brl(i.preco)}</span>
+     </div>
+     <div class="price-block__row price-block__aval">
+       <span class="price-block__label">Avaliação Caixa</span>
+       <span class="price price--aval old">${brl(i.avaliacao)}</span>
      </div>
      ${i.desconto>0?`<div class="price-block__row price-block__savings">
-       <span class="price-block__label">Economia vs. avaliação</span>
-       <span class="price-savings">${brl(i.avaliacao-i.preco)} (${Math.round(i.desconto)}%)</span>
+       <span class="price-block__label">Economia</span>
+       <span class="price-savings price-savings--compact">${brl(i.avaliacao-i.preco)} (${Math.round(i.desconto)}%)</span>
      </div>`:""}
      <div class="price-block__row price-block__mod">
        <span class="price-block__label">Modalidade</span>
