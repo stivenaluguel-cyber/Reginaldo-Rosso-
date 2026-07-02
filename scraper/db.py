@@ -73,6 +73,50 @@ END IF;
 END$$;
 """
 
+# ── Tabela de alertas por e-mail ─────────────────────────────────
+CREATE_ALERTAS_SQL = """
+CREATE TABLE IF NOT EXISTS alertas_leilao (
+  id SERIAL PRIMARY KEY,
+  imovel_id TEXT NOT NULL,
+  nome TEXT NOT NULL,
+  email TEXT NOT NULL,
+  criado_em TIMESTAMP DEFAULT now(),
+  enviado_24h BOOLEAN DEFAULT false,
+  enviado_4h BOOLEAN DEFAULT false,
+  enviado_1h BOOLEAN DEFAULT false,
+  ativo BOOLEAN DEFAULT true,
+  unsubscribe_token TEXT UNIQUE NOT NULL,
+  UNIQUE(imovel_id, email)
+);
+CREATE INDEX IF NOT EXISTS idx_alertas_imovel ON alertas_leilao(imovel_id);
+CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativo = true;
+"""
+
+MIGRATE_ALERTAS_SQL = """
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables
+                 WHERE table_name='alertas_leilao') THEN
+    CREATE TABLE alertas_leilao (
+      id SERIAL PRIMARY KEY,
+      imovel_id TEXT NOT NULL,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL,
+      criado_em TIMESTAMP DEFAULT now(),
+      enviado_24h BOOLEAN DEFAULT false,
+      enviado_4h BOOLEAN DEFAULT false,
+      enviado_1h BOOLEAN DEFAULT false,
+      ativo BOOLEAN DEFAULT true,
+      unsubscribe_token TEXT UNIQUE NOT NULL,
+      UNIQUE(imovel_id, email)
+    );
+    CREATE INDEX IF NOT EXISTS idx_alertas_imovel ON alertas_leilao(imovel_id);
+    CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativo = true;
+  END IF;
+END$$;
+"""
+
+
 @contextmanager
 def get_connection():
     conn = psycopg2.connect(DATABASE_URL)
@@ -95,6 +139,12 @@ def init_db():
                 logger.info("Banco de dados inicializado e migrado.")
             except Exception as e:
                 logger.warning(f"Migracao parcial (normal em primeiro run): {e}")
+            # Tabela de alertas por e-mail (idempotente)
+            try:
+                cur.execute(MIGRATE_ALERTAS_SQL)
+                logger.info("Tabela alertas_leilao verificada/criada.")
+            except Exception as e:
+                logger.warning(f"Migracao alertas parcial: {e}")
 
 def get_ids_by_uf(ufs) -> set:
     """Retorna numero_imovel ativos apenas dos estados informados."""
