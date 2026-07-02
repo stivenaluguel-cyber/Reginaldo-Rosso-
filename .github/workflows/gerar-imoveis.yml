@@ -11,6 +11,7 @@ on:
     workflows: ["Atualizar imóveis Caixa", "Scraper Caixa Economica Federal"]
     types: [completed]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write
