@@ -11,6 +11,7 @@ const path = require("path");
 const BASE = "https://reginaldorosso.com.br";
 const GA = "G-S00J9QCC99";
 const WHATS = { RS: "5551991104976", SC: "5548991642332" };
+const WORKER_URL = "https://inscrever-alerta.reginaldo-rosso.workers.dev";
 const OUT_DIR = path.join(__dirname, "imovel");
 
 // ============================================================
@@ -709,6 +710,21 @@ const ldBreadcrumb = {
    <link rel="stylesheet" href="../imovel.css">
    <style>
 /* bloco financeiro: hierarquia tipografica */
+/* widget de alertas por e-mail */
+.alerta-card{background:#fff;border:1px solid #d4c08a;border-radius:12px;padding:1.25rem;margin:1.25rem 0;box-shadow:0 2px 8px rgba(30,43,63,.07)}
+.alerta-card__title{font-size:1rem;font-weight:700;color:#1e2b3f;margin:0 0 .4rem}
+.alerta-card__sub{font-size:.85rem;color:#6b7280;margin:0 0 1rem;line-height:1.5}
+.alerta-card__sub--sem-data{color:#92400e;background:#fef3c7;border-radius:6px;padding:.4rem .6rem;font-size:.82rem;margin:0 0 1rem;display:block}
+.alerta-form{display:flex;flex-direction:column;gap:.6rem}
+.alerta-form input[type=text],.alerta-form input[type=email]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#1e2b3f;outline:none;transition:border-color .2s}
+.alerta-form input:focus{border-color:#c6a052}
+.alerta-form label.check{display:flex;align-items:flex-start;gap:.4rem;font-size:.8rem;color:#4b5563;cursor:pointer;line-height:1.4}
+.alerta-form label.check input{margin-top:3px;flex-shrink:0;accent-color:#c6a052}
+.alerta-btn{background:#1e2b3f;color:#c6a052;border:none;border-radius:7px;padding:.65rem 1rem;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;font-family:inherit}
+.alerta-btn:hover{background:#27405f}
+.alerta-btn:disabled{opacity:.6;cursor:default}
+.alerta-ok{color:#166534;background:#dcfce7;border-radius:7px;padding:.75rem 1rem;font-size:.9rem;font-weight:600;text-align:center}
+.alerta-err{color:#991b1b;background:#fee2e2;border-radius:7px;padding:.6rem .75rem;font-size:.82rem;margin-top:.25rem}
 .price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
 .price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
 .price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
@@ -758,6 +774,48 @@ const ldBreadcrumb = {
    <h1>${esc(cidade)}${bairro?` &middot; ${esc(bairro)}`:""}</h1>
    <div class="addr">${esc(i.endereco||"")}</div>
    ${specsHTML}
+${(() => {
+  const _temDataFim = !!(det && det.data_fim);
+  const _subHtml = _temDataFim
+    ? '<p class="alerta-card__sub">Receba lembretes por e-mail conforme o prazo se aproxima (24h, 4h e 1h antes do encerramento).</p>'
+    : '<span class="alerta-card__sub--sem-data">&#9888; Ainda n\u00e3o temos a data de encerramento deste leil\u00e3o. Deixe seu e-mail e avisamos assim que sair.</span>';
+  return '<div class="alerta-card" id="alerta-widget">'
+    + '<p class="alerta-card__title">&#128276; Quer ser avisado sobre este leil\u00e3o?</p>'
+    + _subHtml
+    + '<form class="alerta-form" id="alerta-form" novalidate>'
+    + '<input type="text" id="alerta-nome" placeholder="Seu nome" required maxlength="100">'
+    + '<input type="email" id="alerta-email" placeholder="Seu e-mail" required>'
+    + '<label class="check"><input type="checkbox" id="alerta-consent" required> Aceito receber e-mails sobre este leil\u00e3o. Posso cancelar quando quiser.</label>'
+    + '<div id="alerta-err-box" class="alerta-err" style="display:none"></div>'
+    + '<button type="submit" class="alerta-btn" id="alerta-btn">Ativar alertas</button>'
+    + '</form></div>'
+    + '<scr'+'ipt>(function(){'
+    + 'var form=document.getElementById("alerta-form");if(!form)return;'
+    + 'var btn=document.getElementById("alerta-btn");'
+    + 'var errBox=document.getElementById("alerta-err-box");'
+    + 'var widget=document.getElementById("alerta-widget");'
+    + 'function showErr(m){errBox.textContent=m;errBox.style.display="block";}'
+    + 'function hideErr(){errBox.style.display="none";}'
+    + 'form.addEventListener("submit",async function(e){'
+    + 'e.preventDefault();hideErr();'
+    + 'var nome=document.getElementById("alerta-nome").value.trim();'
+    + 'var email=document.getElementById("alerta-email").value.trim();'
+    + 'var consent=document.getElementById("alerta-consent").checked;'
+    + 'if(!nome){showErr("Por favor informe seu nome.");return;}'
+    + 'if(!email||!/^[^@]+@[^@]+\\\\.[^@]+$/.test(email)){showErr("E-mail inv\u00e1lido.");return;}'
+    + 'if(!consent){showErr("Marque o aceite para continuar.");return;}'
+    + 'btn.disabled=true;btn.textContent="Enviando...";'
+    + 'try{'
+    + 'var res=await fetch("${WORKER_URL}/api/inscrever-alerta",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imovel_id:"${i.id}",nome:nome,email:email})});'
+    + 'var data=await res.json();'
+    + 'if(data.ok){'
+    + 'if(data.duplicate){widget.innerHTML="<p class=\\\"alerta-ok\\\">Voc\u00ea j\u00e1 est\u00e1 inscrito neste im\u00f3vel.</p>";}'
+    + 'else{widget.innerHTML="<p class=\\\"alerta-ok\\\">&#x2705; Prontinho! Voc\u00ea vai receber alertas em "+email+".</p>";}'
+    + '}else{showErr(data.error||"Erro ao enviar.");btn.disabled=false;btn.textContent="Ativar alertas";}'
+    + '}catch(ex){showErr("Erro de rede.");btn.disabled=false;btn.textContent="Ativar alertas";}'
+    + '});'
+    + '})();<'+'/scr'+'ipt>';
+})()}
    <div class="price-block" id="price-block">
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
