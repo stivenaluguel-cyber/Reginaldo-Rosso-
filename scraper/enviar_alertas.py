@@ -47,6 +47,30 @@ def get_connection():
     finally:
         conn.close()
 
+def ensure_table():
+    """Cria a tabela alertas_leilao se nao existir (idempotente)."""
+    sql = """
+        CREATE TABLE IF NOT EXISTS alertas_leilao (
+          id SERIAL PRIMARY KEY,
+          imovel_id TEXT NOT NULL,
+          nome TEXT NOT NULL,
+          email TEXT NOT NULL,
+          criado_em TIMESTAMP DEFAULT now(),
+          enviado_24h BOOLEAN DEFAULT false,
+          enviado_4h BOOLEAN DEFAULT false,
+          enviado_1h BOOLEAN DEFAULT false,
+          ativo BOOLEAN DEFAULT true,
+          unsubscribe_token TEXT UNIQUE NOT NULL,
+          UNIQUE(imovel_id, email)
+        );
+        CREATE INDEX IF NOT EXISTS idx_alertas_imovel ON alertas_leilao(imovel_id);
+        CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativo = true;
+    """
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+    logger.info("Tabela alertas_leilao verificada/criada.")
+
 def buscar_alertas_ativos():
     """
     Retorna lista de dicts com todos os alertas ativos para imóveis disponíveis
@@ -305,6 +329,8 @@ def main():
         logger.error("RESEND_API_KEY não configurada.")
         sys.exit(1)
 
+    # Garantir que a tabela existe (idempotente)
+    ensure_table()
     logger.info("Buscando alertas ativos...")
     alertas = buscar_alertas_ativos()
     logger.info(f"{len(alertas)} alertas encontrados.")
