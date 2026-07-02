@@ -26,6 +26,17 @@
    <link rel="manifest" href="/site.webmanifest">
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="../imovel.css">
+   <style>
+/* bloco financeiro: hierarquia tipografica */
+.price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
+.price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
+.price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
+@media(max-width:480px){
+  .price--hero{font-size:1.625rem}
+  .price--aval{font-size:1rem}
+  .price-savings--compact{font-size:1.0625rem}
+}
+   </style>
    <script type="application/ld+json">{"@context":"https://schema.org","@type":"RealEstateListing","name":"Apartamento em Carlos Barbosa - Triangulo/RS","description":"Apartamento em Carlos Barbosa - Triangulo/RS. R$ 518.000. Imóvel da Caixa com Reginaldo Rosso, corretor credenciado em RS e SC.","url":"https://reginaldorosso.com.br/imovel/1787700766575.html","image":"https://venda-imoveis.caixa.gov.br/fotos/F178770076657521.jpg","identifier":"1787700766575","datePosted":"2026-07-02","address":{"@type":"PostalAddress","addressLocality":"CARLOS BARBOSA","addressRegion":"RS","addressCountry":"BR","streetAddress":"RUA EXPEDICIONARIO ALBERTO NAZARENO CERATTI, N. 947, Apto 212, BOX 39"},"offers":{"@type":"Offer","price":518000,"priceCurrency":"BRL","availability":"https://schema.org/InStock","url":"https://reginaldorosso.com.br/imovel/1787700766575.html","seller":{"@type":"RealEstateAgent","name":"Reginaldo Rosso","url":"https://reginaldorosso.com.br"}}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Início","item":"https://reginaldorosso.com.br/"},{"@type":"ListItem","position":2,"name":"Imóveis Caixa","item":"https://reginaldorosso.com.br/imoveis.html"},{"@type":"ListItem","position":3,"name":"Apartamento em Carlos Barbosa - Triangulo/RS","item":"https://reginaldorosso.com.br/imovel/1787700766575.html"}]}</script>
    </head>
@@ -65,15 +76,15 @@
    <div class="ctype">LEILÃO SFI - EDITAL ÚNICO</div>
    <h1>Carlos Barbosa &middot; Triangulo</h1>
    <div class="addr">RUA EXPEDICIONARIO ALBERTO NAZARENO CERATTI, N. 947, Apto 212, BOX 39</div>
-   <div class="specs"><span>2 dormitorios</span><span>1 vaga</span></div>
+   <div class="specs"><span>2 dormitórios</span><span>1 vaga</span></div>
    <div class="price-block" id="price-block">
-     <div class="price-block__row price-block__aval">
-       <span class="price-block__label">Avaliação Caixa</span>
-       <span class="price old">R$ 518.000</span>
-     </div>
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
-       <span class="price">R$ 518.000</span>
+       <span class="price price--hero">R$ 518.000</span>
+     </div>
+     <div class="price-block__row price-block__aval">
+       <span class="price-block__label">Avaliação Caixa</span>
+       <span class="price price--aval old">R$ 518.000</span>
      </div>
      
      <div class="price-block__row price-block__mod">
@@ -94,7 +105,7 @@
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=extrajudicial&valorLance=518000&valorAvaliacao=518000&comissaoLeiloeiro=5" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 17:50.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 20:52.</p>
    </div>
 
    

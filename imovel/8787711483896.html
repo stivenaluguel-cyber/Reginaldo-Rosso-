@@ -26,6 +26,17 @@
    <link rel="manifest" href="/site.webmanifest">
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="../imovel.css">
+   <style>
+/* bloco financeiro: hierarquia tipografica */
+.price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
+.price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
+.price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
+@media(max-width:480px){
+  .price--hero{font-size:1.625rem}
+  .price--aval{font-size:1rem}
+  .price-savings--compact{font-size:1.0625rem}
+}
+   </style>
    <script type="application/ld+json">{"@context":"https://schema.org","@type":"RealEstateListing","name":"Apartamento em Canoas - Rio Branco/RS","description":"Apartamento em Canoas - Rio Branco/RS. 50% de desconto: de R$ 160.000 por R$ 80.593. Imóvel da Caixa com Reginaldo Rosso, corretor credenciado em RS e SC.","url":"https://reginaldorosso.com.br/imovel/8787711483896.html","image":"https://venda-imoveis.caixa.gov.br/fotos/F878771148389621.jpg","identifier":"8787711483896","datePosted":"2026-07-02","address":{"@type":"PostalAddress","addressLocality":"CANOAS","addressRegion":"RS","addressCountry":"BR","streetAddress":"RUA MACHADINHO, N. 1704, Apto 101, BL 3"},"offers":{"@type":"Offer","price":80593,"priceCurrency":"BRL","availability":"https://schema.org/InStock","url":"https://reginaldorosso.com.br/imovel/8787711483896.html","seller":{"@type":"RealEstateAgent","name":"Reginaldo Rosso","url":"https://reginaldorosso.com.br"}}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Início","item":"https://reginaldorosso.com.br/"},{"@type":"ListItem","position":2,"name":"Imóveis Caixa","item":"https://reginaldorosso.com.br/imoveis.html"},{"@type":"ListItem","position":3,"name":"Apartamento em Canoas - Rio Branco/RS","item":"https://reginaldorosso.com.br/imovel/8787711483896.html"}]}</script>
    </head>
@@ -65,19 +76,19 @@
    <div class="ctype">VENDA DIRETA ONLINE</div>
    <h1>Canoas &middot; Rio Branco</h1>
    <div class="addr">RUA MACHADINHO, N. 1704, Apto 101, BL 3</div>
-   <div class="specs"><span>2 dormitorios</span></div>
+   <div class="specs"><span>2 dormitórios</span></div>
    <div class="price-block" id="price-block">
-     <div class="price-block__row price-block__aval">
-       <span class="price-block__label">Avaliação Caixa</span>
-       <span class="price old">R$ 160.000</span>
-     </div>
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
-       <span class="price">R$ 80.593</span>
+       <span class="price price--hero">R$ 80.593</span>
+     </div>
+     <div class="price-block__row price-block__aval">
+       <span class="price-block__label">Avaliação Caixa</span>
+       <span class="price price--aval old">R$ 160.000</span>
      </div>
      <div class="price-block__row price-block__savings">
-       <span class="price-block__label">Economia vs. avaliação</span>
-       <span class="price-savings">R$ 79.407 (50%)</span>
+       <span class="price-block__label">Economia</span>
+       <span class="price-savings price-savings--compact">R$ 79.407 (50%)</span>
      </div>
      <div class="price-block__row price-block__mod">
        <span class="price-block__label">Modalidade</span>
@@ -97,7 +108,7 @@
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=venda_direta&valorLance=80593&valorAvaliacao=160000&comissaoLeiloeiro=0" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 17:50.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 20:52.</p>
    </div>
 
    

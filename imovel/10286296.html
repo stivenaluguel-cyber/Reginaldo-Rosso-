@@ -26,6 +26,17 @@
    <link rel="manifest" href="/site.webmanifest">
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="../imovel.css">
+   <style>
+/* bloco financeiro: hierarquia tipografica */
+.price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
+.price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
+.price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
+@media(max-width:480px){
+  .price--hero{font-size:1.625rem}
+  .price--aval{font-size:1rem}
+  .price-savings--compact{font-size:1.0625rem}
+}
+   </style>
    <script type="application/ld+json">{"@context":"https://schema.org","@type":"RealEstateListing","name":"Apartamento em Porto Alegre - Humaita/RS","description":"Apartamento em Porto Alegre - Humaita/RS. 36% de desconto: de R$ 285.000 por R$ 181.635. Imóvel da Caixa com Reginaldo Rosso, corretor credenciado em RS e SC.","url":"https://reginaldorosso.com.br/imovel/10286296.html","image":"https://venda-imoveis.caixa.gov.br/fotos/F1028629621.jpg","identifier":"10286296","datePosted":"2026-07-02","address":{"@type":"PostalAddress","addressLocality":"PORTO ALEGRE","addressRegion":"RS","addressCountry":"BR","streetAddress":"RUA IRMÃO FELIZ ROBERTO, N. 100, Apto 1210, TORRE B"},"offers":{"@type":"Offer","price":181635,"priceCurrency":"BRL","availability":"https://schema.org/InStock","url":"https://reginaldorosso.com.br/imovel/10286296.html","seller":{"@type":"RealEstateAgent","name":"Reginaldo Rosso","url":"https://reginaldorosso.com.br"}}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Início","item":"https://reginaldorosso.com.br/"},{"@type":"ListItem","position":2,"name":"Leilão Caixa Porto Alegre","item":"https://reginaldorosso.com.br/leilao-caixa/rs/porto-alegre.html"},{"@type":"ListItem","position":3,"name":"Apartamento em Porto Alegre - Humaita/RS","item":"https://reginaldorosso.com.br/imovel/10286296.html"}]}</script>
    </head>
@@ -67,17 +78,17 @@
    <div class="addr">RUA IRMÃO FELIZ ROBERTO, N. 100, Apto 1210, TORRE B</div>
    
    <div class="price-block" id="price-block">
-     <div class="price-block__row price-block__aval">
-       <span class="price-block__label">Avaliação Caixa</span>
-       <span class="price old">R$ 285.000</span>
-     </div>
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
-       <span class="price">R$ 181.635</span>
+       <span class="price price--hero">R$ 181.635</span>
+     </div>
+     <div class="price-block__row price-block__aval">
+       <span class="price-block__label">Avaliação Caixa</span>
+       <span class="price price--aval old">R$ 285.000</span>
      </div>
      <div class="price-block__row price-block__savings">
-       <span class="price-block__label">Economia vs. avaliação</span>
-       <span class="price-savings">R$ 103.365 (36%)</span>
+       <span class="price-block__label">Economia</span>
+       <span class="price-savings price-savings--compact">R$ 103.365 (36%)</span>
      </div>
      <div class="price-block__row price-block__mod">
        <span class="price-block__label">Modalidade</span>
@@ -97,7 +108,7 @@
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=extrajudicial&valorLance=181635&valorAvaliacao=285000&comissaoLeiloeiro=5" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 17:50.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 20:52.</p>
    </div>
 
    

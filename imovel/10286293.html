@@ -26,6 +26,17 @@
    <link rel="manifest" href="/site.webmanifest">
    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
    <link rel="stylesheet" href="../imovel.css">
+   <style>
+/* bloco financeiro: hierarquia tipografica */
+.price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
+.price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
+.price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
+@media(max-width:480px){
+  .price--hero{font-size:1.625rem}
+  .price--aval{font-size:1rem}
+  .price-savings--compact{font-size:1.0625rem}
+}
+   </style>
    <script type="application/ld+json">{"@context":"https://schema.org","@type":"RealEstateListing","name":"Casa em General Camara - Suburbios/RS","description":"Casa em General Camara - Suburbios/RS. 36% de desconto: de R$ 466.000 por R$ 296.988. Imóvel da Caixa com Reginaldo Rosso, corretor credenciado em RS e SC.","url":"https://reginaldorosso.com.br/imovel/10286293.html","image":"https://venda-imoveis.caixa.gov.br/fotos/F1028629321.jpg","identifier":"10286293","datePosted":"2026-07-02","address":{"@type":"PostalAddress","addressLocality":"GENERAL CAMARA","addressRegion":"RS","addressCountry":"BR","streetAddress":"RUA SENADOR FLORÊNCIO, N. 00, QD 60"},"offers":{"@type":"Offer","price":296988,"priceCurrency":"BRL","availability":"https://schema.org/InStock","url":"https://reginaldorosso.com.br/imovel/10286293.html","seller":{"@type":"RealEstateAgent","name":"Reginaldo Rosso","url":"https://reginaldorosso.com.br"}}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Início","item":"https://reginaldorosso.com.br/"},{"@type":"ListItem","position":2,"name":"Imóveis Caixa","item":"https://reginaldorosso.com.br/imoveis.html"},{"@type":"ListItem","position":3,"name":"Casa em General Camara - Suburbios/RS","item":"https://reginaldorosso.com.br/imovel/10286293.html"}]}</script>
    </head>
@@ -67,17 +78,17 @@
    <div class="addr">RUA SENADOR FLORÊNCIO, N. 00, QD 60</div>
    
    <div class="price-block" id="price-block">
-     <div class="price-block__row price-block__aval">
-       <span class="price-block__label">Avaliação Caixa</span>
-       <span class="price old">R$ 466.000</span>
-     </div>
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
-       <span class="price">R$ 296.988</span>
+       <span class="price price--hero">R$ 296.988</span>
+     </div>
+     <div class="price-block__row price-block__aval">
+       <span class="price-block__label">Avaliação Caixa</span>
+       <span class="price price--aval old">R$ 466.000</span>
      </div>
      <div class="price-block__row price-block__savings">
-       <span class="price-block__label">Economia vs. avaliação</span>
-       <span class="price-savings">R$ 169.012 (36%)</span>
+       <span class="price-block__label">Economia</span>
+       <span class="price-savings price-savings--compact">R$ 169.012 (36%)</span>
      </div>
      <div class="price-block__row price-block__mod">
        <span class="price-block__label">Modalidade</span>
@@ -97,7 +108,7 @@
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=venda_direta&valorLance=296988&valorAvaliacao=466000&comissaoLeiloeiro=0" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 17:50.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 02/07/2026, 20:52.</p>
    </div>
 
    
