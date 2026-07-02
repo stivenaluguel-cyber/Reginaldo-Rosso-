@@ -285,6 +285,10 @@ ${similHTML}
 Valores e situação sujeitos a alteração — confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
 </footer>
 
+<div class="sticky-cta sticky-cta--visible" id="sticky-cta-enc" aria-hidden="false">
+  <span class="sticky-cta__savings">Imóvel encerrado — avise-me de similares</span>
+  <a class="btn wa sticky-cta__btn" href="${wa}" target="_blank" rel="noopener">&#128242; Quero ser avisado</a>
+</div>
 <a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
 </body>
 </html>`;
@@ -449,28 +453,44 @@ const ld = {
    <h1>${esc(cidade)}${bairro?` &middot; ${esc(bairro)}`:""}</h1>
    <div class="addr">${esc(i.endereco||"")}</div>
    ${specsHTML}
-   <div class="price-row">
-   <div class="price">${brl(i.preco)}${i.avaliacao>i.preco?`<span class="old">avaliação ${brl(i.avaliacao)}</span>`:""}</div>
-   <a class="btn roi-btn" href="${roiUrl}" title="Calcular ROI deste imovel">&#128202; Calcular ROI</a>
-   </div>
-
-   ${condHTML}
-
-   <div class="kv">
-   <div><span>Preço de venda</span><b>${brl(i.preco)}</b></div>
-   <div><span>Avaliação Caixa</span><b>${brl(i.avaliacao)}</b></div>
-   <div><span>Desconto</span><b>${i.desconto>0?Math.round(i.desconto)+"%":"-"}</b></div>
-   <div><span>Modalidade</span><b>${esc(i.modalidade||"-")}</b></div>
-   <div><span>Financiamento</span><b>${
-        fin===null
-          ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre financiamento do imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:#c6a052">Confirmo pra você — me chame</a>`
-          : (fin==='Sim' ? '<span style="color:#22c55e">✅ Aceita</span>' : 'Somente à vista')
-      }</b></div>
-   <div><span>FGTS</span><b>${
-        fgts===null
-          ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre FGTS no imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:#c6a052">Confirmo pra você — me chame</a>`
-          : (fgts==='Sim' ? '<span style="color:#22c55e">✅ Aceita</span>' : 'Somente à vista')
-      }</b></div>
+   <div class="price-block" id="price-block">
+     <div class="price-block__row price-block__aval">
+       <span class="price-block__label">Avaliação Caixa</span>
+       <span class="price old">${brl(i.avaliacao)}</span>
+     </div>
+     <div class="price-block__row price-block__lance">
+       <span class="price-block__label">Lance mínimo</span>
+       <span class="price">${brl(i.preco)}</span>
+     </div>
+     ${i.desconto>0?`<div class="price-block__row price-block__savings">
+       <span class="price-block__label">Economia vs. avaliação</span>
+       <span class="price-savings">${brl(i.avaliacao-i.preco)} (${Math.round(i.desconto)}%)</span>
+     </div>`:""}
+     <div class="price-block__row price-block__mod">
+       <span class="price-block__label">Modalidade</span>
+       <span class="price-block__chip">${esc(i.modalidade||"-")}</span>
+     </div>
+     <div class="price-block__row price-block__fin">
+       <span class="price-block__label">Financiamento</span>
+       <b>${
+fin===null
+  ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre financiamento do imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:var(--gold)">Confirmo pra você — me chame</a>`
+  : (fin==='Sim' ? '<span style="color:var(--green)">✅ Aceita</span>' : 'Somente à vista')
+}</b>
+     </div>
+     <div class="price-block__row price-block__fgts">
+       <span class="price-block__label">FGTS</span>
+       <b>${
+fgts===null
+  ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre FGTS no imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:var(--gold)">Confirmo pra você — me chame</a>`
+  : (fgts==='Sim' ? '<span style="color:var(--green)">✅ Aceita</span>' : 'Somente à vista')
+}</b>
+     </div>
+     <div class="price-block__costs">
+       Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
+       <a class="btn roi-btn" href="${roiUrl}" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
+     </div>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado.</p>
    </div>
 
    ${regrasHTML}
@@ -496,7 +516,26 @@ const ld = {
    Valores e situação sujeitos a alteração - confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
    </footer>
 
-   <a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
+   <div class="sticky-cta" id="sticky-cta" aria-hidden="true">
+     <span class="sticky-cta__savings">${i.desconto>0?'Economia de '+brl(i.avaliacao-i.preco)+' ('+Math.round(i.desconto)+'%)':brl(i.preco)}</span>
+     <a class="btn wa sticky-cta__btn" href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Quero a análise do imóvel '+i.id+' em '+i.cidade)}" target="_blank" rel="noopener">&#128242; Analisar este imóvel</a>
+   </div>
+      <script>
+   (function(){
+     var pb=document.getElementById('price-block');
+     var sc=document.getElementById('sticky-cta');
+     var wf=document.querySelector('.wafloat');
+     if(!pb||!sc)return;
+     var io=new IntersectionObserver(function(entries){
+       var hidden=!entries[0].isIntersecting;
+       sc.classList.toggle('sticky-cta--visible',hidden);
+       sc.setAttribute('aria-hidden',hidden?'false':'true');
+       if(wf)wf.style.display=hidden?'none':'';
+     },{threshold:0});
+     io.observe(pb);
+   })();
+   </script>
+      <a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
 
    <script>
    document.getElementById('sh').addEventListener('click',async function(){
