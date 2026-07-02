@@ -120,6 +120,12 @@ gtag('config','AW-872430371');
   .btn-refresh.spin svg{animation:spin .9s linear infinite}
 
   .filters{position:sticky;top:69px;z-index:30;background:var(--bg);padding:18px 0 14px;border-bottom:1px solid var(--line)}
+    .filters.recolhida{display:none}
+    .filtros-compact{display:none;position:sticky;top:69px;z-index:31;align-items:center;gap:12px;background:var(--navy2);border-bottom:1px solid var(--line);padding:10px 16px;cursor:pointer;font-size:.9rem;color:#e8eef6}
+    .filtros-compact.visivel{display:flex}
+    .filtros-compact .fc-count{font-weight:700;color:#fff}
+    .filtros-compact .fc-active{color:#c6a052;font-weight:600}
+    .filtros-compact .fc-edit{margin-left:auto;color:#c6a052;font-weight:600;white-space:nowrap}
   .fbar{display:grid;grid-template-columns:1.5fr repeat(4,1fr) 1.5fr 1.5fr 1.5fr auto;gap:10px}
   .field label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:0 0 5px 2px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .field input,.field select{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-weight:500;font-size:.92rem;padding:11px 12px;outline:none}
@@ -137,7 +143,9 @@ gtag('config','AW-872430371');
   .card:hover{transform:translateY(-4px);box-shadow:0 20px 40px -18px rgba(31,50,76,.55)}
   .card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .card .pholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,#1a2d44,#27405f);color:#4a6a8a}
-  .card .grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,25,40,.5) 0%,rgba(15,25,40,0) 26%,rgba(15,25,40,0) 40%,rgba(15,25,40,.92) 100%)}
+  .card .grad{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(15,25,40,.7) 0%,rgba(15,25,40,0) 40%,rgba(15,25,40,0) 50%,rgba(15,25,40,.85) 100%)}
+    .urg{display:inline-block;background:#c6a052;color:#1a2537;font-weight:700;font-size:.7rem;padding:3px 8px;border-radius:6px;margin-bottom:4px}
+    .cdims{font-size:.78rem;color:#7a9bc0;margin:2px 0 4px;font-weight:500}
   .card .badges{position:absolute;top:12px;left:12px;display:flex;gap:6px;z-index:2}
   .card .uf{background:rgba(23,38,56,.9);color:#fff;border-radius:7px;padding:4px 9px;font-size:.72rem;font-weight:700;letter-spacing:.05em}
   .card .desc{background:var(--gold);color:var(--navy);border-radius:7px;padding:4px 9px;font-size:.74rem;font-weight:800}
@@ -297,7 +305,7 @@ gtag('config','AW-872430371');
       <div class="field"><label for="cidade">Cidade</label><select id="cidade"><option value="">Todas</option></select></div>
       <div class="field"><label for="tipo">Tipo</label><select id="tipo"><option value="">Todos</option></select></div>
       <div class="field"><label for="modalidade">Modalidade</label><select id="modalidade"><option value="">Todas</option></select></div>
-      <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option></select></div>
+      <div class="field"><label for="financiamento">Financiamento</label><select id="financiamento"><option value="">Todos</option><option value="sim">Aceita financiamento</option><option value="nao">Não aceita</option><option value="naoinf">Não informado</option></select></div>
 <div class="field"><label for="dtrib">Déb. Tributos</label><select id="dtrib"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Débito limitado a 10%</option><option value="nao-info">Não informado</option></select></div>
 <div class="field"><label for="dcond">Déb. Condomínio</label><select id="dcond"><option value="">Todos</option><option value="arrem">Arrematante paga</option><option value="caixa">Caixa paga</option><option value="caixa10">Débito limitado a 10%</option><option value="nao-info">Não informado</option></select></div>
       <div class="field"><label for="ordem">Ordenar por</label><select id="ordem">
@@ -334,6 +342,11 @@ gtag('config','AW-872430371');
     </div>
   </div>
 </section>
+<div id="filtrosCompact" class="filtros-compact" role="button" tabindex="0" aria-expanded="false">
+  <span class="fc-count" id="fcCount">imóveis</span>
+  <span class="fc-active" id="fcActive"></span>
+  <span class="fc-edit">✏️ Editar filtros</span>
+</div>
 
 <div class="wrap">
   <div id="grid" class="grid"></div>
@@ -429,76 +442,44 @@ const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComp
     for(let i=hi+1;i<L.length;i++){const ln=L[i];if(!ln||!ln.includes(";"))continue;const p=ln.split(";"),g=j=>(j>=0&&j<p.length?p[j].trim():"");const id=g(M.id).replace(/\D/g,"");if(!id)continue;const desc=g(M.descricao);out.push({id,uf:g(M.uf),cidade:g(M.cidade),bairro:g(M.bairro),endereco:g(M.endereco),preco:_num(g(M.preco)),avaliacao:_num(g(M.avaliacao)),desconto:_num(g(M.desconto)),financiamento:_simNao(g(M.financiamento)),descricao:desc,modalidade:g(M.modalidade),tipo:_tipo(desc),link:g(M.link)});}
     return out;
   }
-  async function carregarCSV(uf){
-    // aceita tanto o nome original da Caixa quanto "raw-UF.csv"
-    const nomes=["Lista_imoveis_"+uf+".csv","raw-"+uf+".csv","lista_imoveis_"+uf+".csv"];
-    for(const nome of nomes){
-      try{
-        const res=await fetch(nome+"?t="+Date.now(),{cache:"no-store"});
-        if(!res.ok) continue;
-        const buf=await res.arrayBuffer();
-        const txt=new TextDecoder("utf-8").decode(buf); // CSVs da Caixa são UTF-8
-        if(/cidade/i.test(txt)&&txt.length>200){
-          const mg=txt.match(/gera[çc][aã]o[^0-9]*(\d{2}\/\d{2}\/\d{4})/i);
-          return {lista:parseCaixaCSV(txt),mod:res.headers.get("last-modified"),geracao:mg?mg[1]:null};
-        }
-      }catch(_){}
-    }
-    throw new Error("sem csv");
-  }
-  async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
+  // C2: carregarCSV removida (fallback CSV eliminado)
+    async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
 
   function _parseTrib(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('tributo');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if((sec.includes('inferior a 10')||sec.includes('quando o debito for inferior'))&&(sec.includes('superior a 10')||sec.includes('caixa paga integralmente quando')))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
 function _parseCond(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('condomin');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if(sec.includes('ate o limite de 10%')||sec.includes('valor que exceder')||sec.includes('10% em relacao'))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
 
 async function carregar(){
-    try{
-      let dataTxt="", quando=null, geracao=null;
-      // 1) PREFERIDO: CSV baixado pelo navegador (Lista_imoveis_RS.csv / _SC.csv)
       try{
-        const [rs,sc]=await Promise.all([carregarCSV("RS"),carregarCSV("SC")]);
-        ALL=[...rs.lista,...sc.lista];
-        quando=rs.mod||sc.mod;
-        geracao=rs.geracao||sc.geracao;
-        // Patcha financiamento com dados do scraper JSON (mais preciso que CSV da Caixa)
-        try{
-          const [jrs,jsc]=await Promise.all([carregarJSON("imoveis-rs.json"),carregarJSON("imoveis-sc.json")]);
-          const jmap={};
-          [...jrs,...jsc].forEach(j=>{if(j&&j.id)jmap[j.id]=j;});
-          ALL.forEach(item=>{
-            const jd=jmap[item.id];
-            if(!jd) return;
-            if(jd.financiamento===false) item.financiamento=false;
-            if(jd.financiamento===true) item.financiamento=true;
-            if(jd.debito_tributos) item.debito_tributos=jd.debito_tributos;
-            if(jd.debito_condominio) item.debito_condominio=jd.debito_condominio;
-            if(jd.descricao && jd.descricao.length > (item.descricao||'').length) item.descricao=jd.descricao;
-          });
-ALL.forEach(item=>{if(!item.debito_tributos)item.debito_tributos=_parseTrib(item.descricao);if(!item.debito_condominio)item.debito_condominio=_parseCond(item.descricao);});
-        }catch(_){}
-      }catch(_){ ALL=[]; }
-      // 2) RESERVA: JSON (se algum dia houver coleta completa)
-      if(!ALL.length){
-        const [rs,sc,meta]=await Promise.all([carregarJSON("imoveis-rs.json"),carregarJSON("imoveis-sc.json"),fetch("meta.json").then(r=>r.ok?r.json():null).catch(()=>null)]);
-        ALL=[...rs,...sc];
-        if(meta&&meta.atualizado) quando=meta.atualizado;
+        // C2: carrega SOMENTE os JSONs canonicos (imoveis-rs.json + imoveis-sc.json).
+        const [rs,sc,meta]=await Promise.all([
+          carregarJSON("imoveis-rs.json"),
+          carregarJSON("imoveis-sc.json"),
+          fetch("meta.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null)
+        ]);
+        ALL=[...(rs||[]),...(sc||[])];
+        ALL.forEach(item=>{
+          if(!item.debito_tributos)  item.debito_tributos  = _parseTrib(item.descricao);
+          if(!item.debito_condominio)item.debito_condominio = _parseCond(item.descricao);
+        });
+        const quando = meta && meta.atualizado ? meta.atualizado : null;
+        const elU=document.getElementById("updatedTxt");
+        function diasAtras(s){ if(!s)return null; const d=new Date(s); if(isNaN(d.getTime()))return null;
+          const diff=Math.floor((new Date()-d)/864e5);
+          if(diff<=0)return "hoje"; if(diff===1)return "ontem"; if(diff<7)return "ha "+diff+" dias";
+          if(diff<30){const w=Math.floor(diff/7);return "ha "+w+" semana"+(w>1?"s":"");}
+          return "ha "+Math.floor(diff/30)+" mes(es)"; }
+        if(elU){
+          if(quando){ const rel=diasAtras(quando);
+            elU.textContent="Atualizado "+(rel||new Date(quando).toLocaleDateString("pt-BR"))+" \u00b7 "+ALL.length+" imoveis";
+          } else { elU.textContent=ALL.length+" imoveis disponiveis"; }
+        }
+        preencherFiltros(); aplicarHash(); aplicar(); updateFavUI();
+        try{ const _did=_idDaURL(); if(_did) abrirPorId(_did); }catch(_){}
+      }catch(e){
+        loadingEl.innerHTML="<h2>Nao consegui carregar a lista agora.</h2><p>Atualize a pagina em instantes.</p>";
       }
-      // 3) ÚLTIMO RECURSO: amostra embutida (abrindo o arquivo localmente)
-      if(!ALL.length && window.__AMOSTRA_RS__){ ALL=[...window.__AMOSTRA_RS__,...window.__AMOSTRA_SC__]; quando=(window.__AMOSTRA_META__||{}).atualizado; }
-
-      const elU=document.getElementById("updatedTxt");
-      function diasAtras(s){if(!s)return null;const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);const d=m?new Date(m[3]+'-'+m[2]+'-'+m[1]):new Date(s);if(isNaN(d.getTime()))return null;const diff=Math.floor((new Date()-d)/864e5);if(diff===0)return"hoje";if(diff===1)return"ontem";if(diff<7)return"há "+diff+" dias";if(diff<30)return"há "+Math.floor(diff/7)+" semana"+(Math.floor(diff/7)>1?"s":"");return"há "+Math.floor(diff/30)+" mês"+(Math.floor(diff/30)>1?"es":"");}
-      if(geracao){ const rel=diasAtras(geracao); elU.textContent="Lista Caixa: "+ALL.length+" imóveis"; }
-      else if(quando){ const rel=diasAtras(quando); elU.textContent="Atualizado "+(rel||new Date(quando).toLocaleDateString("pt-BR"))+" · "+ALL.length+" imóveis"; }
-      else{ elU.textContent=ALL.length+" imóveis disponíveis"; }
-preencherFiltros();
-      aplicarHash();
-      aplicar();
-      updateFavUI();
-    }catch(e){
-      loadingEl.innerHTML="<h2>Não consegui carregar a lista agora.</h2><p>Atualize a página em instantes.</p>";
     }
-  }
+    
 
   function preencherFiltros(){
     const cidades=[...new Set(ALL.map(i=>i.cidade).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt"));
@@ -537,7 +518,8 @@ function aplicar(){
       if(state.tipo && i.tipo!==state.tipo) return false;
       if(state.modalidade && i.modalidade!==state.modalidade) return false;
       if(state.financiamento==="sim" && i.financiamento!==true) return false;
-      if(state.financiamento==="nao" && i.financiamento!==false) return false;
+        if(state.financiamento==="nao" && i.financiamento!==false) return false;
+        if(state.financiamento==="naoinf" && !(i.financiamento===null||i.financiamento===undefined)) return false;
 
          if(state.dtrib==="arrem" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("arrem")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
       if(state.dtrib==="caixa" && !(i.debito_tributos&&i.debito_tributos.toLowerCase().startsWith("caixa")&&!i.debito_tributos.toLowerCase().includes("10%"))) return false;
@@ -574,7 +556,8 @@ function aplicar(){
       grid.innerHTML="<div class='empty' style='grid-column:1/-1'><h2>Nenhum imóvel com esses filtros.</h2><p>Tente ampliar a busca ou limpar os filtros.</p></div>";
       loadmore.style.display="none"; return;
     }
-    render();
+    try{ if(window.atualizarCompact) window.atualizarCompact(view.length); }catch(_){}
+      render();
   }
 
   function fotoDe(i){
@@ -592,7 +575,35 @@ function aplicar(){
     return out;
   }
   const SPEC_IC={area:'<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zm2 2v12h12V6zM8 8h2v2H8zm0 6h2v2H8z"/></svg>',dorm:'<svg viewBox="0 0 24 24"><path d="M2 11V7h13a4 4 0 014 4v6h-2v-2H4v2H2zm2-2h9V9H4z"/></svg>',vaga:'<svg viewBox="0 0 24 24"><path d="M5 11l1.4-4.2A2 2 0 017.3 5.4h9.4a2 2 0 011.9 1.4L21 11a2 2 0 012 2v4h-2v-1H3v1H1v-4a2 2 0 012-2zm2.5 4a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm11 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>'};
-  function specsHTML(i){const a=specsDe(i);if(!a.length)return "";return a.map(([k,t])=>`<span>${SPEC_IC[k]||""}${t}</span>`).join("");}
+  // C8a: badge de urgencia quando data_fim nos proximos 7 dias
+    function urgenciaHTML(i){
+      if(!i || !i.data_fim) return "";
+      const raw=String(i.data_fim).trim(); if(!raw) return "";
+      let d=null;
+      let m=raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+      if(m){ d=new Date(m[3]+"-"+m[2]+"-"+m[1]); }
+      else { const dd=new Date(raw); if(!isNaN(dd.getTime())) d=dd; }
+      if(!d || isNaN(d.getTime())) return "";
+      const dias=Math.ceil((d-new Date())/864e5);
+      if(dias<0 || dias>7) return "";
+      const txt = dias===0 ? "Encerra hoje" : ("Encerra em "+dias+(dias===1?" dia":" dias"));
+      return '<span class="urg">\u23f0 '+txt+'</span>';
+    }
+    function dimsHTML(i){
+      if(!i) return "";
+      const parts=[];
+      if(i.quartos){ const q=parseInt(i.quartos,10); if(q>0) parts.push(q+(q===1?" dorm":" dorms")); }
+      if(i.area){ const a=Math.round(parseFloat(i.area)); if(a>0) parts.push(a+"m\u00b2"); }
+      if(!parts.length) return "";
+      return '<div class="cdims">'+parts.join(" \u00b7 ")+'</div>';
+    }
+    function labelTipo(i){
+      if(i && i.tipo_real && String(i.tipo_real).trim()) return String(i.tipo_real).trim().toUpperCase();
+      if(i && i.tipo && String(i.tipo).trim() && !/^im[oó]vel$/i.test(String(i.tipo).trim())) return String(i.tipo).trim().toUpperCase();
+      if(i && i.modalidade && String(i.modalidade).trim()) return String(i.modalidade).trim().toUpperCase();
+      return "IMÓVEL";
+    }
+    function specsHTML(i){const a=specsDe(i);if(!a.length)return "";return a.map(([k,t])=>`<span>${SPEC_IC[k]||""}${t}</span>`).join("");}
 
   function render(){
     const frag=document.createDocumentFragment();
@@ -603,10 +614,10 @@ function aplicar(){
       const foto=fotoDe(i);
       const img = foto ? `<img src="${foto}" loading="lazy" referrerpolicy="no-referrer" alt="" onerror="this.style.display='none'">` : "";
       el.innerHTML=`
-        <div class="pholder"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#c6a052" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4a6a8a">${i.tipo||'Imóvel'}</span></div>
+        <div class="pholder"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#c6a052" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4a6a8a">${labelTipo(i)}</span></div>
         ${img}
         <div class="grad"></div>
-        <div class="badges">
+        <div class="badges">${urgenciaHTML(i)}
           <span class="uf">${i.uf}</span>
           ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
           ${i.financiamento===true?'<span class="fin-badge">🏦 Financia</span>':""}
@@ -619,8 +630,8 @@ function aplicar(){
           ${i.bairro?`<div class="cbairro">${i.bairro}</div>`:""}
         </div>
         <div class="cbot">
-          <div class="ctype">${i.tipo||"Imóvel"}</div>
-          <div class="specs">${specsHTML(i)}</div>
+          <div class="ctype">${labelTipo(i)}</div>
+          <div class="specs">${specsHTML(i)}</div>${dimsHTML(i)}
           <div class="price">${BRL(i.preco)}${i.avaliacao&&i.avaliacao>i.preco?`<span class="old">${BRL(i.avaliacao)}</span>`:""}</div>
         </div>`;
       el.querySelector(".fav").addEventListener("click",function(ev){
@@ -711,14 +722,70 @@ function aplicar(){
         <div class="binfo" style="border-left-color:var(--gold);margin-top:12px"><b>Na ficha oficial da Caixa você confere:</b> matrícula, FGTS, parcelamento, tributos/condomínio (quem paga) e valores de 1ª e 2ª praça.</div>
         <div class="relat">★ Arrematando comigo, o Relatório Confidencial deste imóvel é gratuito.<br>Código Caixa: ${i.id} · Corretagem: <b style="color:var(--green)">${CRECI[i.uf]||"Reginaldo Rosso"}</b> (indique na proposta)</div>
       </div>`;
-    modal.classList.add("open"); document.body.style.overflow="hidden";
+    modal.classList.add("open");
+      try{ history.pushState({imovelId:i.id}, "", "/imovel/"+i.id+".html"); }catch(_){} document.body.style.overflow="hidden";
     document.getElementById("mx").addEventListener("click",fechar);
     var _sh=document.getElementById("mshare"); if(_sh) _sh.addEventListener("click",()=>shareImovel(i));
     if(window.gtag) gtag("event","view_item",{item_id:i.id,item_name:(i.cidade||"")+"/"+i.uf});
   }
-  function fechar(){modal.classList.remove("open");document.body.style.overflow=""}
+  function fechar(){modal.classList.remove("open");document.body.style.overflow="";try{ if(location.pathname.indexOf("/imovel/")===0){ history.pushState({}, "", "/imoveis.html"+location.hash); } }catch(_){}}
   modal.addEventListener("click",e=>{if(e.target===modal)fechar()});
   document.addEventListener("keydown",e=>{if(e.key==="Escape")fechar()});
+
+    // C1c: deep-link — abre o modal se a URL apontar para /imovel/ID.html (ou ?id= / #id=)
+    function _idDaURL(){
+      let m = location.pathname.match(/\/imovel\/(\d+)\.html/);
+      if(m) return m[1];
+      const q = new URLSearchParams(location.search);
+      if(q.get("id")) return q.get("id");
+      const h = new URLSearchParams(location.hash.slice(1));
+      if(h.get("id")) return h.get("id");
+      return null;
+    }
+    function abrirPorId(id){
+      if(!id) return false;
+      const alvo = ALL.find(x => String(x.id) === String(id));
+      if(alvo){ abrir(alvo); return true; }
+      return false;
+    }
+    window.addEventListener("popstate", ()=>{
+      const id = _idDaURL();
+      if(id){ abrirPorId(id); }
+      else if(modal.classList.contains("open")){ modal.classList.remove("open"); document.body.style.overflow=""; }
+    });
+
+    // C6: barra de filtros compacta ao rolar para os resultados
+    (function(){
+      const secFiltros = document.querySelector("section.filters");
+      const compact = document.getElementById("filtrosCompact");
+      if(!secFiltros || !compact) return;
+      const fcCount = document.getElementById("fcCount");
+      const fcActive = document.getElementById("fcActive");
+      function contarAtivos(){
+        let n=0;
+        try{
+          if(state.q) n++; if(state.uf) n++; if(state.cidade) n++; if(state.tipo) n++;
+          if(state.modalidade) n++; if(state.financiamento) n++;
+          if(state.max) n++; if(state.mindesc) n++;
+        }catch(_){}
+        return n;
+      }
+      window.atualizarCompact = function(total){
+        if(fcCount) fcCount.textContent = (total!=null?total:document.querySelectorAll(".card").length)+" imóveis";
+        const n = contarAtivos();
+        if(fcActive) fcActive.textContent = n>0 ? ("· "+n+" filtro"+(n>1?"s":"")+" ativo"+(n>1?"s":"")) : "";
+      };
+      function expandir(){ secFiltros.classList.remove("recolhida"); compact.classList.remove("visivel"); compact.setAttribute("aria-expanded","true"); }
+      function recolher(){ secFiltros.classList.add("recolhida"); compact.classList.add("visivel"); compact.setAttribute("aria-expanded","false"); }
+      compact.addEventListener("click", expandir);
+      compact.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" ") expandir(); });
+      let recolhido=false;
+      window.addEventListener("scroll", ()=>{
+        const limite = secFiltros.offsetTop + secFiltros.offsetHeight + 40;
+        if(window.scrollY > limite && !recolhido){ recolher(); recolhido=true; window.atualizarCompact(); }
+        else if(window.scrollY <= secFiltros.offsetTop && recolhido){ expandir(); recolhido=false; }
+      }, {passive:true});
+    })();
 
   // ---- eventos filtros ----
   const deb=(fn,t=220)=>{let h;return(...a)=>{clearTimeout(h);h=setTimeout(()=>fn(...a),t)}};
