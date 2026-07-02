@@ -594,6 +594,7 @@ async def _executar() -> dict:
 
     return {
         "ids_novos": list(ids_novos),
+        "ids_no_csv": list(ids_csv),   # usado pelo modo vigia para detectar removidos
         "imoveis_novos": novos,
         "total_csv": len(ids_csv),
         "total_removidos": len(ids_removidos),
