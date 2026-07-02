@@ -181,6 +181,113 @@ function resolverFgts(det, descricao) {
      return null;
 }
 
+
+// ============================================================
+// Pagina em modo ENCERRADO (imovel removido da Caixa)
+// Banner destacado, sem preco, similares + WhatsApp de alerta
+// ============================================================
+function paginaEncerrada(im, todos) {
+const url = BASE+"/imovel/"+im.id+".html";
+const cidade = cap(im.cidade), bairro = cap(im.bairro);
+const titulo = im.tipo+" em "+cidade+(bairro?" - "+bairro:"")+"/"+im.uf;
+const wa = "https://wa.me/"+(WHATS[im.uf]||WHATS.RS)+"?text="+encodeURIComponent("Quero ser avisado de oportunidades como essa: "+titulo+" (cod. "+im.id+"). Me avise quando surgir algo similar!");
+const fichaCaixa = im.link || ("https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="+im.id);
+
+// Similares: ate 3 imoveis ativos da mesma cidade, fallback mesma UF
+const similares = todos
+.filter(s => (s.status||"Disponivel")==="Disponivel" && s.id !== im.id && (s.cidade===im.cidade || s.uf===im.uf))
+.sort((a,b) => (a.cidade===im.cidade?-1:0)-(b.cidade===b.cidade?-1:0))
+.slice(0,3);
+
+const similHTML = similares.length ? `
+<div class="similares">
+<h2>Imóveis similares disponíveis</h2>
+<div class="sim-grid">
+${similares.map(s=>{
+const sc=cap(s.cidade),sb=cap(s.bairro);
+const sf="https://venda-imoveis.caixa.gov.br/fotos/F"+s.id+"21.jpg";
+return `<a class="sim-card" href="${BASE}/imovel/${s.id}.html">
+<img src="${sf}" alt="${esc(sc)}" referrerpolicy="no-referrer" onerror="this.src=''">
+<div class="sim-info"><b>${esc(sc)}${sb?" · "+esc(sb):""}</b><span>${brl(s.preco)}</span></div>
+</a>`;
+}).join("")}
+</div>
+</div>` : "";
+
+const ld = {"@context":"https://schema.org","@type":"RealEstateListing","name":titulo,"url":url,"identifier":String(im.id),"availability":"https://schema.org/Discontinued"};
+return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=${GA}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f324c">
+<title>${esc(titulo)} - Encerrado | Reginaldo Rosso</title>
+<meta name="description" content="Esta oportunidade já foi encerrada. Veja imóveis similares disponíveis no RS e SC com Reginaldo Rosso.">
+<link rel="canonical" href="${url}">
+<meta name="robots" content="noindex,follow">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../imovel.css">
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<style>
+.enc-banner{background:#7f1d1d;color:#fff;padding:1rem 1.5rem;border-radius:.5rem;margin-bottom:1.5rem;font-size:1.05rem;font-weight:700;text-align:center}
+.similares{margin-top:2rem}.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin-top:1rem}
+.sim-card{display:block;border-radius:.5rem;overflow:hidden;background:#1e2b3f;color:#fff;text-decoration:none;transition:transform .2s}
+.sim-card:hover{transform:translateY(-3px)}.sim-card img{width:100%;height:130px;object-fit:cover;display:block}
+.sim-info{padding:.75rem}.sim-info b{display:block;font-size:.9rem}.sim-info span{color:#c6a052;font-size:1rem;font-weight:700}
+</style>
+</head>
+<body>
+<header><div class="topbar">
+<a class="brand" href="../index.html">
+<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<span class="bt"><b>Reginaldo Rosso</b><small>Imóveis Caixa - RS &amp; SC</small></span>
+</a>
+<div class="fones">
+<a href="tel:5551991104976">(51) 99110-4976 - RS</a>
+<a href="tel:5548991642332">(48) 99164-2332 - SC</a>
+</div>
+</div>
+<nav class="main-nav" style="background:#27405f;padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center">
+<a href="../index.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Início</a>
+<a href="../imoveis.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Imóveis Caixa</a>
+<a href="../mapa.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
+<a href="../como-funciona.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Como Funciona</a>
+<a href="../calculadora.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
+<a href="../index.html#contato" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
+</nav>
+</header>
+
+<div class="crumb"><a href="../index.html">Início</a> &rsaquo; <a href="../imoveis.html">Imóveis Caixa</a> &rsaquo; <span>cod. ${esc(im.id)}</span></div>
+
+<main class="det">
+<div class="body">
+<div class="enc-banner">⏱ Esta oportunidade já foi encerrada</div>
+<div class="ctype">${esc(im.tipo)}</div>
+<h1>${esc(cidade)}${bairro?" · "+esc(bairro):""}</h1>
+<div class="addr">${esc(im.endereco||"")}</div>
+<p style="color:#6b7280;margin:.5rem 0 1.5rem">Este imóvel não está mais disponível na lista da Caixa Econômica Federal.</p>
+
+<a class="btn wa" href="${wa}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-bottom:1rem">&#128242; Quero ser avisado de oportunidades como essa</a>
+<a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener" style="display:block;text-align:center">&#128196; Ver ficha na Caixa</a>
+
+${similHTML}
+
+<p class="back"><a href="../imoveis.html">&larr; Ver todos os imóveis</a></p>
+</div>
+</main>
+
+<footer style="max-width:960px;margin:0 auto;padding:1.5rem 1rem;white-space:normal;word-break:normal;text-align:center">
+<b>Reginaldo Rosso</b> - Corretor de Imóveis &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
+Valores e situação sujeitos a alteração — confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
+</footer>
+
+<a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
+</body>
+</html>`;
+}
+
 function pagina(i){
    const det = i._det || {};
    // Foto principal: usa placeholder para imoveis com prints de documentos (LGPD)
@@ -415,9 +522,9 @@ async function carregarImoveisDoBanco(){
          "modalidade, descricao, area_total, area_privativa, debito_tributos, debito_condominio, " +
          "aceita_fgts, aceita_financiamento, matricula_s3_url, status, scraped_at " +
          "FROM imoveis_caixa " +
-         "WHERE status='Disponivel' AND uf IN ('RS','SC') " +
-         "AND cidade IS NOT NULL AND preco_minimo IS NOT NULL " +
-         "ORDER BY uf, cidade"
+         "WHERE status IN ('Disponivel','Indisponivel') AND uf IN ('RS','SC') " +
+         "AND cidade IS NOT NULL " +
+         "ORDER BY status DESC, uf, cidade"
          );
       const lista = r.rows.map(row => {
          const id = String(row.numero_imovel).replace(/\D/g,"");
@@ -435,6 +542,8 @@ async function carregarImoveisDoBanco(){
                                     descricao: row.descricao||"", modalidade: row.modalidade||"",
                                     tipo: tipoDe(row.descricao||""),
                                     link: "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="+id
+                               ,
+                               status: row.status||"Disponivel"
                                };
          im._det = row;
          return im;
@@ -473,7 +582,15 @@ async function carregarImoveisDoBanco(){
  if(!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR,{recursive:true});
    for(const f of fs.readdirSync(OUT_DIR)) if(f.endsWith(".html")) fs.unlinkSync(path.join(OUT_DIR,f));
    let n=0;
-   for(const im of imoveis){ fs.writeFileSync(path.join(OUT_DIR,im.id+".html"), pagina(im)); n++; }
+   let nDisp=0, nEnc=0;
+for(const im of imoveis){
+  const html = (im.status||"Disponivel")==="Indisponivel"
+    ? paginaEncerrada(im, imoveis)
+    : pagina(im);
+  fs.writeFileSync(path.join(OUT_DIR,im.id+".html"), html);
+  if((im.status||"Disponivel")==="Indisponivel") nEnc++; else nDisp++;
+  n++;
+}
 
  const hoje = new Date().toISOString().slice(0,10);
    const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html"];
@@ -494,7 +611,7 @@ async function carregarImoveisDoBanco(){
    let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
    for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":"0.8")+"</priority></url>\n";
    for(const u of artigos) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>\n";
-   for(const im of imoveis) sm += " <url><loc>"+BASE+"/imovel/"+im.id+".html</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n";
+   for(const im of imoveis) { if((im.status||"Disponivel")==="Disponivel") sm += " <url><loc>"+BASE+"/imovel/"+im.id+".html</loc><lastmod>"+hoje+"</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n"; }
    sm += "</urlset>\n";
    fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
 
@@ -518,8 +635,8 @@ async function carregarImoveisDoBanco(){
          tipo_real: im._det ? (im._det.tipo_real != null ? im._det.tipo_real : null) : null
     };
  }
-   const imoveisRS = imoveis.filter(im=>im.uf==="RS").map(imovelParaJson);
-   const imoveisSC = imoveis.filter(im=>im.uf==="SC").map(imovelParaJson);
+   const imoveisRS = imoveis.filter(im=>im.uf==="RS"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
+   const imoveisSC = imoveis.filter(im=>im.uf==="SC"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
    fs.writeFileSync(path.join(__dirname,"imoveis-rs.json"), JSON.stringify(imoveisRS));
    fs.writeFileSync(path.join(__dirname,"imoveis-sc.json"), JSON.stringify(imoveisSC));
    const meta = {
@@ -530,5 +647,5 @@ async function carregarImoveisDoBanco(){
    fs.writeFileSync(path.join(__dirname,"meta.json"), JSON.stringify(meta));
    console.log("JSONs atualizados: imoveis-rs("+imoveisRS.length+"), imoveis-sc("+imoveisSC.length+"), meta(total="+imoveis.length+").");
 
- console.log("Geradas "+n+" paginas em /imovel/ ("+comDetalhe+" com ficha completa) e sitemap com "+(n+fixas.length)+" URLs.");
+ console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" encerradas, "+comDetalhe+" com ficha) e sitemap com "+(nDisp+fixas.length)+" URLs.");
 })();
