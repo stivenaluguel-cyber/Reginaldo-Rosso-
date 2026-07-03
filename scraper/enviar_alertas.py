@@ -113,7 +113,7 @@ def buscar_imoveis_neon(imovel_ids):
                    preco_minimo, preco_avaliacao,
                    modalidade, data_fim, status
             FROM imoveis_caixa
-            WHERE id = ANY(%s)
+            WHERE id::text = ANY(%s)
               AND status = 'Disponivel'
               AND data_fim IS NOT NULL
         """, (list(imovel_ids),))
