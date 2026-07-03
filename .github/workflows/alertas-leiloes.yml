@@ -5,7 +5,7 @@ name: Alertas de Leilão (Resend)
 
 on:
   schedule:
-    - cron: '0,30 * * * *'   # a cada 30 minutos, 24h por dia
+    - cron: '0,30 * * * *'  # a cada 30 minutos, 24h por dia
   workflow_dispatch:          # disparo manual para testes
 
 # Grupo exclusivo — não cancela runs anteriores para evitar duplo envio
@@ -37,7 +37,7 @@ jobs:
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
           SUPABASE_DB_URL=${{ secrets.SUPABASE_DB_URL }}
-SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
           ENVEOF
 
       - name: Executar migrate_supabase.py
