@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 """
 scraper/enviar_alertas.py
-Dispara e-mails de alerta de leilão (24h / 4h / 1h antes do encerramento).
-Lógica: JOIN alertas_leilao + imoveis_caixa, calcula horas_restantes, envia
-via Resend API, atualiza flags enviado_*h no banco.
+Dispara e-mails de alerta de leilao (24h / 4h / 1h antes do encerramento).
 
-Variáveis de ambiente necessárias (GitHub Secrets):
-  DATABASE_URL        — connection string Neon/Postgres
-  RESEND_API_KEY      — chave da API Resend
+Arquitetura: duas conexoes Postgres
+  - SUPABASE_DB_URL : alertas_leilao (inscricoes do widget)
+  - DATABASE_URL    : imoveis_caixa  (dados do imovel: data_fim, cidade, preco, etc.)
+  Os dados sao cruzados em Python pelo imovel_id.
+
+Tambem envia notificacao de novos leads (criados nos ultimos 30 min, notificado=false)
+para regirosso27@gmail.com e stiven.aluguel@gmail.com.
+
+Variaveis de ambiente necessarias (GitHub Secrets):
+  DATABASE_URL     -- connection string Neon/Postgres (imoveis_caixa)
+  SUPABASE_DB_URL  -- connection string Postgres do Supabase (alertas_leilao)
+  RESEND_API_KEY   -- chave da API Resend
 
 Executado pelo workflow .github/workflows/alertas-leiloes.yml (cron a cada 30min).
 """
@@ -24,20 +31,23 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_ENDPOINT = "https://api.resend.com/emails"
-REMETENTE = "Reginaldo Rosso <alertas@reginaldorosso.com.br>"
-SITE_BASE = "https://reginaldorosso.com.br"
+DATABASE_URL     = os.getenv("DATABASE_URL", "")
+SUPABASE_DB_URL  = os.getenv("SUPABASE_DB_URL", "")
+RESEND_API_KEY   = os.getenv("RESEND_API_KEY", "")
+RESEND_ENDPOINT  = "https://api.resend.com/emails"
+REMETENTE        = "Reginaldo Rosso <alertas@reginaldorosso.com.br>"
+SITE_BASE        = "https://reginaldorosso.com.br"
+NOTIF_EMAILS     = ["regirosso27@gmail.com", "stiven.aluguel@gmail.com"]
 
-WHATS = {"RS": "5551982017867", "SC": "5548999359022"}
 CRECI = {"RS": "CRECI/RS 28565J", "SC": "CRECI/SC 8152J"}
-
-# ── Banco ──────────────────────────────────────────────────────────────────────
+WHATS = {"RS": "5551982017867", "SC": "5548999359022"}
 
 @contextmanager
-def get_connection():
-    conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+def get_connection(url, label="DB"):
+    if not url:
+        logger.error(f"{label}_URL nao configurada.")
+        sys.exit(1)
+    conn = psycopg2.connect(url)
     try:
         yield conn
         conn.commit()
@@ -47,350 +57,335 @@ def get_connection():
     finally:
         conn.close()
 
-def ensure_table():
-    """Cria a tabela alertas_leilao se nao existir (idempotente)."""
+def ensure_table_supabase():
+    """Cria/atualiza a tabela alertas_leilao no Supabase se nao existir."""
     sql = """
-        CREATE TABLE IF NOT EXISTS alertas_leilao (
-          id SERIAL PRIMARY KEY,
-          imovel_id TEXT NOT NULL,
-          nome TEXT NOT NULL,
-          email TEXT NOT NULL,
-          criado_em TIMESTAMP DEFAULT now(),
-          enviado_24h BOOLEAN DEFAULT false,
-          enviado_4h BOOLEAN DEFAULT false,
-          enviado_1h BOOLEAN DEFAULT false,
-          ativo BOOLEAN DEFAULT true,
-          unsubscribe_token TEXT UNIQUE NOT NULL,
-          UNIQUE(imovel_id, email)
-        );
-        CREATE INDEX IF NOT EXISTS idx_alertas_imovel ON alertas_leilao(imovel_id);
-        CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativo = true;
+    CREATE TABLE IF NOT EXISTS alertas_leilao (
+        id SERIAL PRIMARY KEY,
+        imovel_id TEXT NOT NULL,
+        nome TEXT NOT NULL,
+        email TEXT NOT NULL,
+        telefone TEXT NOT NULL DEFAULT '',
+        criado_em TIMESTAMP DEFAULT now(),
+        enviado_24h BOOLEAN DEFAULT false,
+        enviado_4h  BOOLEAN DEFAULT false,
+        enviado_1h  BOOLEAN DEFAULT false,
+        ativo BOOLEAN DEFAULT true,
+        notificado BOOLEAN DEFAULT false,
+        unsubscribe_token TEXT UNIQUE NOT NULL,
+        UNIQUE(imovel_id, email)
+    );
+    ALTER TABLE alertas_leilao ENABLE ROW LEVEL SECURITY;
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='alertas_leilao' AND policyname='permitir insert publico') THEN
+        CREATE POLICY "permitir insert publico" ON alertas_leilao FOR INSERT TO anon WITH CHECK (true);
+      END IF;
+    END $$;
     """
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql)
-    logger.info("Tabela alertas_leilao verificada/criada.")
+    with get_connection(SUPABASE_DB_URL, "SUPABASE_DB") as conn:
+        conn.autocommit = True
+        cur = conn.cursor()
+        cur.execute(sql)
+        logger.info("Tabela alertas_leilao verificada/criada no Supabase.")
+        cur.close()
 
 def buscar_alertas_ativos():
-    """
-    Retorna lista de dicts com todos os alertas ativos para imóveis disponíveis
-    com data_fim preenchida.
-    """
-    sql = """
-        SELECT
-            a.id          AS alerta_id,
-            a.imovel_id,
-            a.nome,
-            a.email,
-            a.enviado_24h,
-            a.enviado_4h,
-            a.enviado_1h,
-            a.unsubscribe_token,
-            i.cidade,
-            i.bairro,
-            i.uf,
-            i.endereco,
-            i.preco_minimo,
-            i.preco_avaliacao,
-            i.modalidade,
-            i.data_fim
-        FROM alertas_leilao a
-        JOIN imoveis_caixa i ON i.numero_imovel = a.imovel_id
-        WHERE a.ativo = true
-          AND i.status = 'Disponivel'
-          AND i.data_fim IS NOT NULL
-          AND i.data_fim != ''
-    """
-    with get_connection() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(sql)
-            return cur.fetchall()
+    """Busca alertas ativos do Supabase."""
+    with get_connection(SUPABASE_DB_URL, "SUPABASE_DB") as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT id, imovel_id, nome, email, telefone,
+                   enviado_24h, enviado_4h, enviado_1h,
+                   unsubscribe_token
+            FROM alertas_leilao
+            WHERE ativo = true
+        """)
+        rows = cur.fetchall()
+        cur.close()
+        return [dict(r) for r in rows]
 
-def marcar_enviado(alerta_id: int, campo: str):
-    """Atualiza o flag enviado_* para true."""
-    if campo not in ("enviado_24h", "enviado_4h", "enviado_1h"):
-        raise ValueError(f"Campo inválido: {campo}")
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"UPDATE alertas_leilao SET {campo} = true WHERE id = %s",
-                (alerta_id,)
-            )
+def buscar_imoveis_neon(imovel_ids):
+    """Busca dados dos imoveis no banco Neon pelo conjunto de IDs."""
+    if not imovel_ids:
+        return {}
+    with get_connection(DATABASE_URL, "DATABASE") as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT id, cidade, bairro, endereco, uf,
+                   lance_minimo, valor_avaliacao, desconto,
+                   modalidade, data_fim, status
+            FROM imoveis_caixa
+            WHERE id = ANY(%s)
+              AND status = 'Disponivel'
+              AND data_fim IS NOT NULL
+        """, (list(imovel_ids),))
+        rows = cur.fetchall()
+        cur.close()
+        return {str(r["id"]): dict(r) for r in rows}
 
-def marcar_todos_enviados(alerta_id: int):
-    """Marca todos os flags como true (leilão já encerrado)."""
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE alertas_leilao SET enviado_24h=true, enviado_4h=true, enviado_1h=true WHERE id = %s",
-                (alerta_id,)
-            )
+def marcar_enviado(alerta_id, campo):
+    """Marca o campo enviado_*h como true no Supabase."""
+    with get_connection(SUPABASE_DB_URL, "SUPABASE_DB") as conn:
+        cur = conn.cursor()
+        cur.execute(f"UPDATE alertas_leilao SET {campo} = true WHERE id = %s", (alerta_id,))
+        cur.close()
 
-# ── Data ───────────────────────────────────────────────────────────────────────
+def marcar_todos_enviados(alerta_id):
+    with get_connection(SUPABASE_DB_URL, "SUPABASE_DB") as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE alertas_leilao SET enviado_24h=true, enviado_4h=true, enviado_1h=true WHERE id = %s",
+            (alerta_id,)
+        )
+        cur.close()
 
-def parsear_data_fim(s: str):
-    """Aceita formatos DD/MM/YYYY e YYYY-MM-DD."""
-    if not s:
+def parsear_data_fim(data_str):
+    if not data_str:
         return None
-    s = s.strip()
-    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d/%m/%Y %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+    data_str = str(data_str).strip()
+    for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
         try:
-            dt = datetime.strptime(s, fmt)
-            # Assume fim do dia (23:59) para formatos sem hora
-            if "H" not in fmt:
-                dt = dt.replace(hour=23, minute=59, second=0)
+            dt = datetime.strptime(data_str, fmt)
             return dt.replace(tzinfo=timezone.utc)
         except ValueError:
-            continue
-    logger.warning(f"data_fim não reconhecida: {s!r}")
+            pass
     return None
 
-def horas_restantes(data_fim_str: str) -> float | None:
-    dt = parsear_data_fim(data_fim_str)
+def horas_restantes(data_str):
+    dt = parsear_data_fim(data_str)
     if not dt:
         return None
-    agora = datetime.now(timezone.utc)
-    delta = (dt - agora).total_seconds() / 3600
-    return delta
+    now = datetime.now(timezone.utc)
+    diff = (dt - now).total_seconds() / 3600
+    return diff
 
-# ── E-mail ─────────────────────────────────────────────────────────────────────
-
-def formatar_brl(v) -> str:
+def brl(valor):
+    if valor is None:
+        return "N/D"
     try:
-        return "R$ {:,.0f}".format(float(v)).replace(",", "X").replace(".", ",").replace("X", ".")
-    except (TypeError, ValueError):
-        return "-"
+        return f"R$ {float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return str(valor)
 
-def desconto_pct(aval, lance) -> str:
-    try:
-        d = (1 - float(lance) / float(aval)) * 100
-        return f"{d:.0f}%"
-    except (TypeError, ValueError, ZeroDivisionError):
-        return "-"
-
-def html_email(alerta: dict, urgencia: str) -> tuple[str, str]:
-    """Retorna (assunto, html) do e-mail."""
-    cidade = (alerta["cidade"] or "").title()
-    bairro = (alerta["bairro"] or "").title()
-    uf = alerta["uf"] or "RS"
-    nome = alerta["nome"]
-    imovel_id = alerta["imovel_id"]
-    link = f"{SITE_BASE}/imovel/{imovel_id}.html"
-    unsub = f"{SITE_BASE}/cancelar-alerta.html?token={alerta['unsubscribe_token']}"
-    lance = formatar_brl(alerta["preco_minimo"])
-    aval = formatar_brl(alerta["preco_avaliacao"])
-    desc = desconto_pct(alerta["preco_avaliacao"], alerta["preco_minimo"])
-    modalidade = alerta.get("modalidade") or "Leilão"
-    whats_num = WHATS.get(uf, WHATS["RS"])
-    creci_txt = CRECI.get(uf, CRECI["RS"])
-    endereco = alerta.get("endereco") or ""
-
-    local = cidade + (f" / {bairro}" if bairro else "") + f" – {uf}"
+def html_email(alerta, imovel, urgencia):
+    nome    = alerta["nome"]
+    cidade  = imovel.get("cidade", "")
+    bairro  = imovel.get("bairro", "")
+    uf      = imovel.get("uf", "RS")
+    end     = imovel.get("endereco", "")
+    lance   = brl(imovel.get("lance_minimo"))
+    aval    = brl(imovel.get("valor_avaliacao"))
+    desc    = imovel.get("desconto", "")
+    modal   = imovel.get("modalidade", "")
+    iid     = imovel.get("id", alerta["imovel_id"])
+    token   = alerta["unsubscribe_token"]
+    url_imovel   = f"{SITE_BASE}/imovel/{iid}.html"
+    url_cancelar = f"{SITE_BASE}/cancelar-alerta.html?token={token}"
+    creci   = CRECI.get(uf, CRECI["RS"])
+    whats_n = WHATS.get(uf, WHATS["RS"])
+    whats_u = f"https://wa.me/{whats_n}?text=Ol%C3%A1%2C+vi+o+im%C3%B3vel+no+site"
 
     if urgencia == "24h":
-        assunto = f"⏰ Faltam 24h: {cidade} · {bairro or uf}"
-        faixa = "Faltam apenas <strong>24 horas</strong> para o encerramento!"
-        cor_faixa = "#b45309"
+        badge_color = "#F59E0B"
+        badge_text  = "Faltam 24h"
+        headline    = f"\u23F0 Faltam 24 horas: {cidade} · {bairro}"
     elif urgencia == "4h":
-        assunto = f"⏰ Faltam 4h: {cidade} · {bairro or uf}"
-        faixa = "Faltam apenas <strong>4 horas</strong> para o encerramento!"
-        cor_faixa = "#c2410c"
-    else:  # 1h
-        assunto = f"🚨 Última hora! {cidade} · {bairro or uf} encerra em breve"
-        faixa = "🚨 <strong>ÚLTIMA HORA!</strong> Encerra em menos de 1 hora!"
-        cor_faixa = "#991b1b"
+        badge_color = "#EF4444"
+        badge_text  = "Faltam 4h"
+        headline    = f"\u23F0 Faltam 4 horas: {cidade} · {bairro}"
+    else:
+        badge_color = "#DC2626"
+        badge_text  = "\ud83d\udea8 Ultima hora"
+        headline    = f"\ud83d\udea8 Ultima hora! {cidade} · {bairro} encerra em breve"
 
     html = f"""<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{assunto}</title>
-</head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Segoe UI',Arial,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:24px 0">
+<html lang="pt-BR"><head><meta charset="UTF-8"><title>{headline}</title></head>
+<body style="margin:0;padding:0;background:#F3F4F6;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F3F4F6;padding:32px 0;">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08)">
-
-  <!-- Cabeçalho -->
-  <tr><td style="background:#1e2b3f;padding:28px 32px;text-align:center">
-    <p style="margin:0;color:#c6a052;font-size:22px;font-weight:700;letter-spacing:1px">Reginaldo Rosso</p>
-    <p style="margin:4px 0 0;color:#7a9bc0;font-size:13px">Imóveis Caixa – RS &amp; SC</p>
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;max-width:600px;">
+  <tr><td style="background:#1E3A5F;padding:24px 32px;text-align:center;">
+    <span style="display:inline-block;background:{badge_color};color:#fff;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:bold;letter-spacing:0.08em;">{badge_text}</span>
+    <h1 style="color:#fff;font-size:20px;margin:12px 0 0;line-height:1.3;">{headline}</h1>
   </td></tr>
-
-  <!-- Banner urgência -->
-  <tr><td style="background:{cor_faixa};padding:14px 32px;text-align:center">
-    <p style="margin:0;color:#fff;font-size:16px">{faixa}</p>
-  </td></tr>
-
-  <!-- Corpo -->
-  <tr><td style="padding:32px">
-    <p style="color:#1e2b3f;font-size:16px;margin:0 0 20px">Olá, <strong>{nome}</strong>!</p>
-
-    <p style="color:#374151;font-size:15px;margin:0 0 24px">
-      O leilão do imóvel que você está acompanhando está prestes a encerrar:
-    </p>
-
-    <!-- Card do imóvel -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f7f4;border-radius:10px;border:1px solid #e5e0d0;margin:0 0 24px">
-      <tr><td style="padding:20px 24px">
-        <p style="margin:0 0 6px;font-size:14px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;font-weight:600">{modalidade}</p>
-        <p style="margin:0 0 4px;font-size:20px;font-weight:700;color:#1e2b3f">{local}</p>
-        <p style="margin:0 0 16px;font-size:13px;color:#6b7280">{endereco}</p>
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="width:50%;padding:0 8px 0 0">
-              <p style="margin:0 0 2px;font-size:11px;color:#9ca3af;text-transform:uppercase">Lance mínimo</p>
-              <p style="margin:0;font-size:22px;font-weight:800;color:#1e2b3f">{lance}</p>
-            </td>
-            <td style="width:50%;padding:0 0 0 8px">
-              <p style="margin:0 0 2px;font-size:11px;color:#9ca3af;text-transform:uppercase">Avaliação Caixa</p>
-              <p style="margin:0;font-size:15px;color:#6b7280;text-decoration:line-through">{aval}</p>
-              <p style="margin:2px 0 0;font-size:14px;font-weight:700;color:#16a34a">Economia: {desc}</p>
-            </td>
-          </tr>
-        </table>
-      </td></tr>
+  <tr><td style="padding:28px 32px;">
+    <p style="margin:0 0 20px;color:#374151;font-size:15px;">Ol\u00e1, <strong>{nome}</strong>!</p>
+    <p style="margin:0 0 20px;color:#374151;font-size:15px;">O leil\u00e3o que voc\u00ea est\u00e1 acompanhando est\u00e1 se aproximando do encerramento:</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F9FAFB;border-radius:6px;padding:16px;margin-bottom:24px;">
+      <tr><td style="padding:6px 0;"><strong style="color:#6B7280;font-size:12px;text-transform:uppercase;">Localiza\u00e7\u00e3o</strong><br><span style="color:#111827;font-size:15px;">{end or cidade}, {bairro} — {cidade}/{uf}</span></td></tr>
+      <tr><td style="padding:6px 0;"><strong style="color:#6B7280;font-size:12px;text-transform:uppercase;">Lance m\u00ednimo</strong><br><span style="color:#111827;font-size:15px;font-weight:bold;">{lance}</span></td></tr>
+      <tr><td style="padding:6px 0;"><strong style="color:#6B7280;font-size:12px;text-transform:uppercase;">Avalia\u00e7\u00e3o</strong><br><span style="color:#111827;font-size:15px;">{aval}</span></td></tr>
+      {"<tr><td style='padding:6px 0;'><strong style='color:#6B7280;font-size:12px;text-transform:uppercase;'>Desconto</strong><br><span style='color:#059669;font-size:15px;font-weight:bold;'>" + str(desc) + "</span></td></tr>" if desc else ""}
+      {"<tr><td style='padding:6px 0;'><strong style='color:#6B7280;font-size:12px;text-transform:uppercase;'>Modalidade</strong><br><span style='color:#111827;font-size:15px;'>" + str(modal) + "</span></td></tr>" if modal else ""}
     </table>
-
-    <!-- Botão CTA -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
-      <tr><td align="center">
-        <a href="{link}" style="display:inline-block;background:#c6a052;color:#1e2b3f;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:700">
-          Ver imóvel completo →
-        </a>
-      </td></tr>
-    </table>
-
-    <!-- CRECI + WhatsApp -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#1e2b3f;border-radius:10px;margin:0 0 24px">
-      <tr><td style="padding:20px 24px;text-align:center">
-        <p style="margin:0 0 8px;color:#c6a052;font-size:13px;font-weight:600">Ao dar seu lance, indique meu credenciamento:</p>
-        <p style="margin:0 0 16px;color:#fff;font-size:16px;font-weight:700">{creci_txt}</p>
-        <a href="https://wa.me/{whats_num}?text=Ol%C3%A1+Reginaldo%21+Tenho+interesse+no+im%C3%B3vel+{imovel_id}+em+{cidade.replace(' ', '+')}" 
-           style="display:inline-block;background:#25d366;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700">
-          📱 Falar no WhatsApp
-        </a>
-      </td></tr>
-    </table>
-
-  </td></tr>
-
-  <!-- Rodapé -->
-  <tr><td style="background:#f8f7f4;padding:20px 32px;border-top:1px solid #e5e0d0">
-    <p style="margin:0 0 8px;font-size:12px;color:#9ca3af;text-align:center">
-      Você recebeu este e-mail porque se inscreveu para alertas sobre este imóvel em reginaldorosso.com.br
+    <p style="text-align:center;margin:24px 0;">
+      <a href="{url_imovel}" style="display:inline-block;background:#1E3A5F;color:#fff;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">Ver im\u00f3vel completo</a>
     </p>
-    <p style="margin:0;font-size:12px;text-align:center">
-      <a href="{unsub}" style="color:#6b7280">Cancelar alertas para este imóvel</a>
+    <p style="text-align:center;margin:0 0 24px;">
+      <a href="{whats_u}" style="display:inline-block;background:#25D366;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:14px;">Falar pelo WhatsApp</a>
     </p>
+    <p style="color:#6B7280;font-size:12px;margin:0 0 8px;">{creci}</p>
   </td></tr>
-
+  <tr><td style="background:#F9FAFB;padding:16px 32px;text-align:center;border-top:1px solid #E5E7EB;">
+    <p style="color:#9CA3AF;font-size:11px;margin:0 0 6px;">Voc\u00ea recebeu este e-mail porque se inscreveu para alertas sobre este im\u00f3vel em reginaldorosso.com.br</p>
+    <a href="{url_cancelar}" style="color:#9CA3AF;font-size:11px;">Cancelar alertas</a>
+  </td></tr>
 </table>
-</td></tr>
+</td></tr></table>
+</body></html>"""
+    return html
+
+def html_notif_lead(alerta):
+    """Email de notificacao de novo lead para os gestores."""
+    return f"""<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;padding:24px;">
+<h2>\ud83d\udd14 Novo lead inscrito em alerta de leil\u00e3o</h2>
+<table style="border-collapse:collapse;width:100%;">
+<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Nome</strong></td><td style="padding:8px;border:1px solid #ddd;">{alerta["nome"]}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;"><strong>E-mail</strong></td><td style="padding:8px;border:1px solid #ddd;">{alerta["email"]}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Telefone</strong></td><td style="padding:8px;border:1px solid #ddd;">{alerta.get("telefone","")}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Im\u00f3vel ID</strong></td><td style="padding:8px;border:1px solid #ddd;"><a href="https://reginaldorosso.com.br/imovel/{alerta["imovel_id"]}.html">{alerta["imovel_id"]}</a></td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;"><strong>Inscrito em</strong></td><td style="padding:8px;border:1px solid #ddd;">{alerta.get("criado_em","")}</td></tr>
 </table>
-</body>
-</html>"""
+</body></html>"""
 
-    return assunto, html
-
-def enviar_email(destinatario_email: str, assunto: str, html: str) -> bool:
-    """Envia o e-mail via Resend API. Retorna True se 200/201."""
+def enviar_email(destinatario, assunto, html_body):
+    if not RESEND_API_KEY:
+        logger.error("RESEND_API_KEY nao configurada.")
+        return False
     payload = {
         "from": REMETENTE,
-        "to": [destinatario_email],
+        "to": [destinatario],
         "subject": assunto,
-        "html": html,
+        "html": html_body,
     }
     try:
-        r = requests.post(
+        resp = requests.post(
             RESEND_ENDPOINT,
             headers={"Authorization": f"Bearer {RESEND_API_KEY}", "Content-Type": "application/json"},
             json=payload,
-            timeout=30,
+            timeout=15,
         )
-        if r.status_code in (200, 201):
-            logger.info(f"E-mail enviado para {destinatario_email} — {assunto}")
+        if resp.status_code in (200, 201):
             return True
         else:
-            logger.error(f"Resend erro {r.status_code}: {r.text[:300]}")
+            logger.error(f"Resend erro {resp.status_code}: {resp.text[:200]}")
             return False
     except Exception as e:
-        logger.error(f"Falha ao enviar e-mail: {e}")
+        logger.error(f"Excecao ao enviar email: {e}")
         return False
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+def notificar_novos_leads():
+    """Busca leads criados nos ultimos 30 min e envia notificacao para gestores."""
+    logger.info("Verificando novos leads...")
+    with get_connection(SUPABASE_DB_URL, "SUPABASE_DB") as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("""
+            SELECT id, imovel_id, nome, email, telefone, criado_em
+            FROM alertas_leilao
+            WHERE notificado = false
+              AND criado_em >= now() - interval '35 minutes'
+        """)
+        novos = [dict(r) for r in cur.fetchall()]
+        cur.close()
+
+    if not novos:
+        logger.info("Nenhum novo lead.")
+        return
+
+    for alerta in novos:
+        html = html_notif_lead(alerta)
+        assunto = f"\ud83d\udd14 Novo lead: {alerta['nome']} — im\u00f3vel {alerta['imovel_id']}"
+        ok = True
+        for dest in NOTIF_EMAILS:
+            if not enviar_email(dest, assunto, html):
+                ok = False
+        if ok:
+            with get_connection(SUPABASE_DB_URL, "SUPABASE_DB") as conn:
+                cur = conn.cursor()
+                cur.execute("UPDATE alertas_leilao SET notificado = true WHERE id = %s", (alerta["id"],))
+                cur.close()
+            logger.info(f"Lead notificado: {alerta['nome']} ({alerta['email']})")
+        else:
+            logger.warning(f"Falha ao notificar lead {alerta['id']}")
 
 def main():
-    if not DATABASE_URL:
-        logger.error("DATABASE_URL não configurada.")
+    logger.info("Iniciando enviar_alertas.py...")
+
+    if not SUPABASE_DB_URL:
+        logger.error("SUPABASE_DB_URL nao configurada.")
         sys.exit(1)
-    if not RESEND_API_KEY:
-        logger.error("RESEND_API_KEY não configurada.")
+    if not DATABASE_URL:
+        logger.error("DATABASE_URL nao configurada.")
         sys.exit(1)
 
-    # Garantir que a tabela existe (idempotente)
-    ensure_table()
-    logger.info("Buscando alertas ativos...")
+    # Garantir tabela no Supabase
+    ensure_table_supabase()
+
+    # Notificar novos leads
+    notificar_novos_leads()
+
+    # Buscar alertas ativos do Supabase
     alertas = buscar_alertas_ativos()
     logger.info(f"{len(alertas)} alertas encontrados.")
+
+    if not alertas:
+        logger.info("Concluido: 0 e-mails enviados, 0 erros.")
+        return
+
+    # Buscar dados dos imoveis no Neon
+    imovel_ids = set(a["imovel_id"] for a in alertas)
+    imoveis = buscar_imoveis_neon(imovel_ids)
+    logger.info(f"{len(imoveis)} imoveis com data_fim disponivel no Neon.")
 
     enviados = 0
     erros = 0
 
     for alerta in alertas:
-        alerta_id = alerta["alerta_id"]
-        data_fim_str = alerta["data_fim"]
-        hrs = horas_restantes(data_fim_str)
-
-        if hrs is None:
-            logger.warning(f"alerta {alerta_id}: data_fim inválida ({data_fim_str!r})")
+        imovel = imoveis.get(str(alerta["imovel_id"]))
+        if not imovel:
             continue
 
-        # Leilão já encerrado — marcar tudo sem enviar
-        if hrs < 0:
-            if not (alerta["enviado_24h"] and alerta["enviado_4h"] and alerta["enviado_1h"]):
-                marcar_todos_enviados(alerta_id)
-                logger.info(f"alerta {alerta_id}: encerrado ({hrs:.1f}h), flags zerados.")
+        hr = horas_restantes(imovel.get("data_fim"))
+        if hr is None:
             continue
 
-        logger.debug(f"alerta {alerta_id}: {hrs:.2f}h restantes")
+        if hr < 0:
+            # Leilao encerrado: marcar tudo sem enviar
+            marcar_todos_enviados(alerta["id"])
+            continue
 
-        # Verificar quais e-mails enviar (do mais urgente para o menos urgente)
-        if hrs <= 1 and not alerta["enviado_1h"]:
-            assunto, html = html_email(alerta, "1h")
-            if enviar_email(alerta["email"], assunto, html):
-                marcar_enviado(alerta_id, "enviado_1h")
-                # Marcar 24h e 4h também se não enviados (evento foi perdido)
-                if not alerta["enviado_24h"]:
-                    marcar_enviado(alerta_id, "enviado_24h")
-                if not alerta["enviado_4h"]:
-                    marcar_enviado(alerta_id, "enviado_4h")
+        targets = []
+        if hr <= 1 and not alerta["enviado_1h"]:
+            targets.append(("1h", "enviado_1h"))
+        if hr <= 4 and not alerta["enviado_4h"]:
+            targets.append(("4h", "enviado_4h"))
+        if hr <= 24 and not alerta["enviado_24h"]:
+            targets.append(("24h", "enviado_24h"))
+
+        cidade = imovel.get("cidade", "")
+        bairro = imovel.get("bairro", "")
+
+        for urgencia, campo in targets:
+            if urgencia == "24h":
+                assunto = f"\u23f0 Faltam 24h: {cidade} · {bairro}"
+            elif urgencia == "4h":
+                assunto = f"\u23f0 Faltam 4h: {cidade} · {bairro}"
+            else:
+                assunto = f"\ud83d\udea8 Ultima hora! {cidade} · {bairro} encerra em breve"
+
+            html = html_email(alerta, imovel, urgencia)
+            ok = enviar_email(alerta["email"], assunto, html)
+            if ok:
+                marcar_enviado(alerta["id"], campo)
                 enviados += 1
+                logger.info(f"[{urgencia}] Enviado para {alerta['email']} (imovel {alerta['imovel_id']})")
             else:
                 erros += 1
+                logger.error(f"[{urgencia}] Falha ao enviar para {alerta['email']}")
 
-        elif hrs <= 4 and not alerta["enviado_4h"]:
-            assunto, html = html_email(alerta, "4h")
-            if enviar_email(alerta["email"], assunto, html):
-                marcar_enviado(alerta_id, "enviado_4h")
-                if not alerta["enviado_24h"]:
-                    marcar_enviado(alerta_id, "enviado_24h")
-                enviados += 1
-            else:
-                erros += 1
-
-        elif hrs <= 24 and not alerta["enviado_24h"]:
-            assunto, html = html_email(alerta, "24h")
-            if enviar_email(alerta["email"], assunto, html):
-                marcar_enviado(alerta_id, "enviado_24h")
-                enviados += 1
-            else:
-                erros += 1
-
-    logger.info(f"Concluído: {enviados} e-mails enviados, {erros} erros.")
-    if erros > 0:
-        sys.exit(1)
+    logger.info(f"Concluido: {enviados} e-mails enviados, {erros} erros.")
 
 if __name__ == "__main__":
     main()
