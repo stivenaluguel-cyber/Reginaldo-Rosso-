@@ -36,7 +36,13 @@ jobs:
           cat > scraper/.env << 'ENVEOF'
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          SUPABASE_DB_URL=${{ secrets.SUPABASE_DB_URL }}
           ENVEOF
+
+      - name: Executar migrate_supabase.py
+        run: cd scraper && python migrate_supabase.py
+        env:
+          PYTHONUNBUFFERED: "1"
 
       - name: Executar enviar_alertas.py
         run: cd scraper && python enviar_alertas.py
