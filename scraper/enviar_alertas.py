@@ -110,7 +110,7 @@ def buscar_imoveis_neon(imovel_ids):
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("""
             SELECT id, cidade, bairro, endereco, uf,
-                   lance_minimo, valor_avaliacao, desconto,
+                   preco_minimo, preco_avaliacao,
                    modalidade, data_fim, status
             FROM imoveis_caixa
             WHERE id = ANY(%s)
@@ -159,9 +159,9 @@ def html_email(alerta, imovel, urgencia):
     bairro = imovel.get("bairro", "")
     uf = imovel.get("uf", "RS")
     end = imovel.get("endereco", "")
-    lance = brl(imovel.get("lance_minimo"))
-    aval = brl(imovel.get("valor_avaliacao"))
-    desc = imovel.get("desconto", "")
+    lance = brl(imovel.get("preco_minimo"))
+    aval = brl(imovel.get("preco_avaliacao"))
+    desc = (lambda a=imovel.get("preco_avaliacao"), m=imovel.get("preco_minimo"): f"{round((1 - float(m)/float(a)) * 100)}%" if (a and m and float(a) > 0) else "")()
     modal = imovel.get("modalidade", "")
     iid = imovel.get("id", alerta["imovel_id"])
     token = alerta["unsubscribe_token"]
