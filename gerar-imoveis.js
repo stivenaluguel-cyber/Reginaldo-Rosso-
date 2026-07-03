@@ -11,7 +11,8 @@ const path = require("path");
 const BASE = "https://reginaldorosso.com.br";
 const GA = "G-S00J9QCC99";
 const WHATS = { RS: "5551991104976", SC: "5548991642332" };
-const WORKER_URL = "https://inscrever-alerta.reginaldo-rosso.workers.dev";
+const SUPABASE_URL = "https://xpkznaqgctfkoonqpcye.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3puYXFnY3Rma29vbnFwY3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI0NzAsImV4cCI6MjA5Nzg3ODQ3MH0.hQND_aAzZNi2Z_-uW9FjEm_zVKnofgzFyeLIgdrN2lU";
 const OUT_DIR = path.join(__dirname, "imovel");
 
 // ============================================================
@@ -774,49 +775,76 @@ const ldBreadcrumb = {
    <h1>${esc(cidade)}${bairro?` &middot; ${esc(bairro)}`:""}</h1>
    <div class="addr">${esc(i.endereco||"")}</div>
    ${specsHTML}
-${(() => {
-  const _temDataFim = !!(det && det.data_fim);
-  const _subHtml = _temDataFim
-    ? '<p class="alerta-card__sub">Receba lembretes por e-mail conforme o prazo se aproxima (24h, 4h e 1h antes do encerramento).</p>'
-    : '<span class="alerta-card__sub--sem-data">&#9888; Ainda n\u00e3o temos a data de encerramento deste leil\u00e3o. Deixe seu e-mail e avisamos assim que sair.</span>';
-  return '<div class="alerta-card" id="alerta-widget">'
-    + '<p class="alerta-card__title">&#128276; Quer ser avisado sobre este leil\u00e3o?</p>'
-    + _subHtml
-    + '<form class="alerta-form" id="alerta-form" novalidate>'
-    + '<input type="text" id="alerta-nome" placeholder="Seu nome" required maxlength="100">'
-    + '<input type="email" id="alerta-email" placeholder="Seu e-mail" required>'
-    + '<label class="check"><input type="checkbox" id="alerta-consent" required> Aceito receber e-mails sobre este leil\u00e3o. Posso cancelar quando quiser.</label>'
-    + '<div id="alerta-err-box" class="alerta-err" style="display:none"></div>'
-    + '<button type="submit" class="alerta-btn" id="alerta-btn">Ativar alertas</button>'
-    + '</form></div>'
-    + '<scr'+'ipt>(function(){'
-    + 'var form=document.getElementById("alerta-form");if(!form)return;'
-    + 'var btn=document.getElementById("alerta-btn");'
-    + 'var errBox=document.getElementById("alerta-err-box");'
-    + 'var widget=document.getElementById("alerta-widget");'
-    + 'function showErr(m){errBox.textContent=m;errBox.style.display="block";}'
-    + 'function hideErr(){errBox.style.display="none";}'
-    + 'form.addEventListener("submit",async function(e){'
-    + 'e.preventDefault();hideErr();'
-    + 'var nome=document.getElementById("alerta-nome").value.trim();'
-    + 'var email=document.getElementById("alerta-email").value.trim();'
-    + 'var consent=document.getElementById("alerta-consent").checked;'
-    + 'if(!nome){showErr("Por favor informe seu nome.");return;}'
-    + 'if(!email||!/^[^@]+@[^@]+\\\\.[^@]+$/.test(email)){showErr("E-mail inv\u00e1lido.");return;}'
-    + 'if(!consent){showErr("Marque o aceite para continuar.");return;}'
-    + 'btn.disabled=true;btn.textContent="Enviando...";'
-    + 'try{'
-    + 'var res=await fetch("${WORKER_URL}/api/inscrever-alerta",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imovel_id:"${i.id}",nome:nome,email:email})});'
-    + 'var data=await res.json();'
-    + 'if(data.ok){'
-    + 'if(data.duplicate){widget.innerHTML="<p class=\\\"alerta-ok\\\">Voc\u00ea j\u00e1 est\u00e1 inscrito neste im\u00f3vel.</p>";}'
-    + 'else{widget.innerHTML="<p class=\\\"alerta-ok\\\">&#x2705; Prontinho! Voc\u00ea vai receber alertas em "+email+".</p>";}'
-    + '}else{showErr(data.error||"Erro ao enviar.");btn.disabled=false;btn.textContent="Ativar alertas";}'
-    + '}catch(ex){showErr("Erro de rede.");btn.disabled=false;btn.textContent="Ativar alertas";}'
-    + '});'
-    + '})();<'+'/scr'+'ipt>';
-})()}
-   <div class="price-block" id="price-block">
+    ${(function(){
+      const hasFim = !!(det.data_fim && det.data_fim.trim());
+      const tid = 'alerta-' + det.id;
+      return [
+        '<div class="alerta-card" id="' + tid + '">',
+        '<h3 class="alerta-titulo">\uD83D\uDD14 Quer ser avisado sobre este leil\u00E3o?</h3>',
+        hasFim
+          ? '<p class="alerta-sub">Receba lembretes por e-mail 24h, 4h e 1h antes do encerramento.</p>'
+          : '<div class="alerta-sem-data">\u26A0\uFE0F Ainda n\u00E3o temos a data de encerramento deste leil\u00E3o. Deixe seu e-mail e avisamos assim que sair.</div>',
+        '<form class="alerta-form" id="form-' + tid + '" novalidate>',
+          '<input class="alerta-input" type="text" name="nome" placeholder="Seu nome" required autocomplete="given-name">',
+          '<input class="alerta-input" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">',
+          '<input class="alerta-input" type="tel" name="telefone" placeholder="WhatsApp (11) 99999-9999" required autocomplete="tel">',
+          '<label class="alerta-check"><input type="checkbox" required> Aceito receber e-mails sobre este leil\u00E3o. Posso cancelar quando quiser.</label>',
+          '<button class="alerta-btn" type="submit">Ativar alertas</button>',
+        '</form>',
+        '<p class="alerta-ok" id="ok-' + tid + '" style="display:none"></p>',
+        '<p class="alerta-err" id="err-' + tid + '" style="display:none"></p>',
+        '</div>',
+        '<script>',
+        '(function(){',
+          'var f=document.getElementById("form-' + tid + '");',
+          'if(!f)return;',
+          'f.addEventListener("submit",async function(e){',
+            'e.preventDefault();',
+            'var nome=f.nome.value.trim(),email=f.email.value.trim(),tel=f.telefone.value.trim();',
+            'if(!nome||!email){showErr("Nome e e-mail s\u00E3o obrigat\u00F3rios.");return;}',
+            'if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){showErr("E-mail inv\u00E1lido.");return;}',
+            'if(!tel||tel.replace(/\\D/g,"").length<10){showErr("Telefone inv\u00E1lido (m\u00EDn. 10 d\u00EDgitos).");return;}',
+            'var btn=f.querySelector("button");',
+            'btn.disabled=true;btn.textContent="Aguarde...";',
+            'var token=crypto.randomUUID();',
+            'try{',
+              'var res=await fetch("' + 'https://xpkznaqgctfkoonqpcye.supabase.co/rest/v1/alertas_leilao",{',
+                'method:"POST",',
+                'headers:{',
+                  '"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3puYXFnY3Rma29vbnFwY3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI0NzAsImV4cCI6MjA5Nzg3ODQ3MH0.hQND_aAzZNi2Z_-uW9FjEm_zVKnofgzFyeLIgdrN2lU",',
+                  '"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3puYXFnY3Rma29vbnFwY3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI0NzAsImV4cCI6MjA5Nzg3ODQ3MH0.hQND_aAzZNi2Z_-uW9FjEm_zVKnofgzFyeLIgdrN2lU",',
+                  '"Content-Type":"application/json",',
+                  '"Prefer":"return=minimal"',
+                '},',
+                'body:JSON.stringify({imovel_id:"' + det.id + '",nome:nome,email:email,telefone:tel,unsubscribe_token:token})',
+              '});',
+              'if(res.status===201||res.status===200){',
+                'showOk("\u2705 Prontinho! Voc\u00EA vai receber alertas em "+email+".");',
+              '}else if(res.status===409){',
+                'showErr("Voc\u00EA j\u00E1 est\u00E1 inscrito neste im\u00F3vel.");',
+              '}else{',
+                'var d=await res.json().catch(()=>({}));',
+                'var code=(d.code||"");',
+                'if(code==="23505"){showErr("Voc\u00EA j\u00E1 est\u00E1 inscrito neste im\u00F3vel.");}',
+                'else{showErr("Erro ao salvar. Tente novamente.");}',
+              '}',
+            '}catch(ex){showErr("Erro de rede: "+ex.message);}',
+            'btn.disabled=false;btn.textContent="Ativar alertas";',
+          '});',
+          'function showOk(m){',
+            'var ok=document.getElementById("ok-' + tid + '"),er=document.getElementById("err-' + tid + '");',
+            'ok.textContent=m;ok.style.display="block";er.style.display="none";',
+            'f.style.display="none";',
+          '}',
+          'function showErr(m){',
+            'var er=document.getElementById("err-' + tid + '");',
+            'er.textContent=m;er.style.display="block";',
+          '}',
+        '})();',
+        '<\/script>'
+      ].join("\n");
+    })()}
+    <div class="price-block" id="price-block">
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
        <span class="price price--hero">${brl(i.preco)}</span>
