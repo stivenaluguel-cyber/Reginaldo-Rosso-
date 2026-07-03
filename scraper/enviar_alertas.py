@@ -19,7 +19,7 @@ Variaveis de ambiente necessarias (GitHub Secrets):
 Executado pelo workflow .github/workflows/alertas-leiloes.yml (cron a cada 30min).
 """
 
-import os, sys, json, logging, requests
+import os, re, sys, json, logging, requests
 from datetime import datetime, timezone
 from contextlib import contextmanager
 import psycopg2
@@ -32,7 +32,30 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 DATABASE_URL     = os.getenv("DATABASE_URL", "")
-SUPABASE_DB_URL  = os.getenv("SUPABASE_DB_URL", "")
+SUPABASE_DB_URL_RAW = os.getenv("SUPABASE_DB_URL", "")
+
+
+def normalizar_url(url):
+    """
+    Se a URL for do formato session pooler (pooler.supabase.com),
+    converte para conexao direta (db.PROJ.supabase.co:5432).
+    """
+    if not url:
+        return url
+    m = re.match(
+        r"postgresql://postgres\.([^:]+):([^@]+)@[^/]+\.pooler\.supabase\.com:\d+/postgres",
+        url
+    )
+    if m:
+        proj_ref = m.group(1)
+        password = m.group(2)
+        direct = f"postgresql://postgres:{password}@db.{proj_ref}.supabase.co:5432/postgres"
+        logger.info(f"URL pooler detectada, usando conexao direta para projeto {proj_ref}.")
+        return direct
+    return url
+
+
+SUPABASE_DB_URL = normalizar_url(SUPABASE_DB_URL_RAW)
 RESEND_API_KEY   = os.getenv("RESEND_API_KEY", "")
 RESEND_ENDPOINT  = "https://api.resend.com/emails"
 REMETENTE        = "Reginaldo Rosso <alertas@reginaldorosso.com.br>"
