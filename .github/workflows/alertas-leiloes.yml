@@ -37,6 +37,7 @@ jobs:
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
           SUPABASE_DB_URL=${{ secrets.SUPABASE_DB_URL }}
+SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}
           ENVEOF
 
       - name: Executar migrate_supabase.py
