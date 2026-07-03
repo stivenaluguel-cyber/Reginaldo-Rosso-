@@ -92,8 +92,68 @@
    <h1>Caxias do Sul &middot; Santa Fe</h1>
    <div class="addr">RUA MIGUEL MADALOSSO, N. 713, Apto 304, PAV 03 BOX 05</div>
    <div class="specs"><span>2 dormitórios</span><span>1 vaga</span></div>
-<div class="alerta-card" id="alerta-widget"><p class="alerta-card__title">&#128276; Quer ser avisado sobre este leilão?</p><span class="alerta-card__sub--sem-data">&#9888; Ainda não temos a data de encerramento deste leilão. Deixe seu e-mail e avisamos assim que sair.</span><form class="alerta-form" id="alerta-form" novalidate><input type="text" id="alerta-nome" placeholder="Seu nome" required maxlength="100"><input type="email" id="alerta-email" placeholder="Seu e-mail" required><label class="check"><input type="checkbox" id="alerta-consent" required> Aceito receber e-mails sobre este leilão. Posso cancelar quando quiser.</label><div id="alerta-err-box" class="alerta-err" style="display:none"></div><button type="submit" class="alerta-btn" id="alerta-btn">Ativar alertas</button></form></div><script>(function(){var form=document.getElementById("alerta-form");if(!form)return;var btn=document.getElementById("alerta-btn");var errBox=document.getElementById("alerta-err-box");var widget=document.getElementById("alerta-widget");function showErr(m){errBox.textContent=m;errBox.style.display="block";}function hideErr(){errBox.style.display="none";}form.addEventListener("submit",async function(e){e.preventDefault();hideErr();var nome=document.getElementById("alerta-nome").value.trim();var email=document.getElementById("alerta-email").value.trim();var consent=document.getElementById("alerta-consent").checked;if(!nome){showErr("Por favor informe seu nome.");return;}if(!email||!/^[^@]+@[^@]+\\.[^@]+$/.test(email)){showErr("E-mail inválido.");return;}if(!consent){showErr("Marque o aceite para continuar.");return;}btn.disabled=true;btn.textContent="Enviando...";try{var res=await fetch("${WORKER_URL}/api/inscrever-alerta",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({imovel_id:"${i.id}",nome:nome,email:email})});var data=await res.json();if(data.ok){if(data.duplicate){widget.innerHTML="<p class=\"alerta-ok\">Você já está inscrito neste imóvel.</p>";}else{widget.innerHTML="<p class=\"alerta-ok\">&#x2705; Prontinho! Você vai receber alertas em "+email+".</p>";}}else{showErr(data.error||"Erro ao enviar.");btn.disabled=false;btn.textContent="Ativar alertas";}}catch(ex){showErr("Erro de rede.");btn.disabled=false;btn.textContent="Ativar alertas";}});})();</script>
-   <div class="price-block" id="price-block">
+    <div class="alerta-card" id="alerta-undefined">
+<h3 class="alerta-titulo">🔔 Quer ser avisado sobre este leilão?</h3>
+<div class="alerta-sem-data">⚠️ Ainda não temos a data de encerramento deste leilão. Deixe seu e-mail e avisamos assim que sair.</div>
+<form class="alerta-form" id="form-alerta-undefined" novalidate>
+<input class="alerta-input" type="text" name="nome" placeholder="Seu nome" required autocomplete="given-name">
+<input class="alerta-input" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">
+<input class="alerta-input" type="tel" name="telefone" placeholder="WhatsApp (11) 99999-9999" required autocomplete="tel">
+<label class="alerta-check"><input type="checkbox" required> Aceito receber e-mails sobre este leilão. Posso cancelar quando quiser.</label>
+<button class="alerta-btn" type="submit">Ativar alertas</button>
+</form>
+<p class="alerta-ok" id="ok-alerta-undefined" style="display:none"></p>
+<p class="alerta-err" id="err-alerta-undefined" style="display:none"></p>
+</div>
+<script>
+(function(){
+var f=document.getElementById("form-alerta-undefined");
+if(!f)return;
+f.addEventListener("submit",async function(e){
+e.preventDefault();
+var nome=f.nome.value.trim(),email=f.email.value.trim(),tel=f.telefone.value.trim();
+if(!nome||!email){showErr("Nome e e-mail são obrigatórios.");return;}
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr("E-mail inválido.");return;}
+if(!tel||tel.replace(/\D/g,"").length<10){showErr("Telefone inválido (mín. 10 dígitos).");return;}
+var btn=f.querySelector("button");
+btn.disabled=true;btn.textContent="Aguarde...";
+var token=crypto.randomUUID();
+try{
+var res=await fetch("https://xpkznaqgctfkoonqpcye.supabase.co/rest/v1/alertas_leilao",{
+method:"POST",
+headers:{
+"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3puYXFnY3Rma29vbnFwY3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI0NzAsImV4cCI6MjA5Nzg3ODQ3MH0.hQND_aAzZNi2Z_-uW9FjEm_zVKnofgzFyeLIgdrN2lU",
+"Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3puYXFnY3Rma29vbnFwY3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI0NzAsImV4cCI6MjA5Nzg3ODQ3MH0.hQND_aAzZNi2Z_-uW9FjEm_zVKnofgzFyeLIgdrN2lU",
+"Content-Type":"application/json",
+"Prefer":"return=minimal"
+},
+body:JSON.stringify({imovel_id:"undefined",nome:nome,email:email,telefone:tel,unsubscribe_token:token})
+});
+if(res.status===201||res.status===200){
+showOk("✅ Prontinho! Você vai receber alertas em "+email+".");
+}else if(res.status===409){
+showErr("Você já está inscrito neste imóvel.");
+}else{
+var d=await res.json().catch(()=>({}));
+var code=(d.code||"");
+if(code==="23505"){showErr("Você já está inscrito neste imóvel.");}
+else{showErr("Erro ao salvar. Tente novamente.");}
+}
+}catch(ex){showErr("Erro de rede: "+ex.message);}
+btn.disabled=false;btn.textContent="Ativar alertas";
+});
+function showOk(m){
+var ok=document.getElementById("ok-alerta-undefined"),er=document.getElementById("err-alerta-undefined");
+ok.textContent=m;ok.style.display="block";er.style.display="none";
+f.style.display="none";
+}
+function showErr(m){
+var er=document.getElementById("err-alerta-undefined");
+er.textContent=m;er.style.display="block";
+}
+})();
+</script>
+    <div class="price-block" id="price-block">
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
        <span class="price price--hero">R$ 160.000</span>
@@ -121,7 +181,7 @@
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=extrajudicial&valorLance=160000&valorAvaliacao=160000&comissaoLeiloeiro=5" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 03/07/2026, 12:12.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 03/07/2026, 12:21.</p>
    </div>
 
    
