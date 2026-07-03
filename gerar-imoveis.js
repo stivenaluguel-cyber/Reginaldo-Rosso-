@@ -777,7 +777,7 @@ const ldBreadcrumb = {
    ${specsHTML}
     ${(function(){
       const hasFim = !!(det.data_fim && det.data_fim.trim());
-      const tid = 'alerta-' + det.id;
+      const tid = 'alerta-' + i.id;
       return [
         '<div class="alerta-card" id="' + tid + '">',
         '<h3 class="alerta-titulo">\uD83D\uDD14 Quer ser avisado sobre este leil\u00E3o?</h3>',
@@ -816,7 +816,7 @@ const ldBreadcrumb = {
                   '"Content-Type":"application/json",',
                   '"Prefer":"return=minimal"',
                 '},',
-                'body:JSON.stringify({imovel_id:"' + det.id + '",nome:nome,email:email,telefone:tel,unsubscribe_token:token})',
+                'body:JSON.stringify({imovel_id:"' + i.id + '",nome:nome,email:email,telefone:tel,unsubscribe_token:token})',
               '});',
               'if(res.status===201||res.status===200){',
                 'showOk("\u2705 Prontinho! Voc\u00EA vai receber alertas em "+email+".");',
