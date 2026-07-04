@@ -184,7 +184,8 @@ def get_pendentes_enriquecimento(ufs, limit=150) -> list:
                 "SELECT numero_imovel FROM imoveis_caixa "
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
-                " OR aceita_fgts IS NULL) "
+                " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
+                " OR debito_condominio IS NULL OR ocupacao IS NULL) "
                 "ORDER BY (scraped_at IS NOT NULL), updated_at "
                 "LIMIT %s",
                 (ufs, limit),
@@ -206,7 +207,8 @@ def get_pendentes_com_uf(ufs, limit=150) -> list:
                 "SELECT numero_imovel, uf FROM imoveis_caixa "
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
-                " OR aceita_fgts IS NULL) "
+                " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
+                " OR debito_condominio IS NULL OR ocupacao IS NULL) "
                 "ORDER BY (scraped_at IS NOT NULL), updated_at "
                 "LIMIT %s",
                 (ufs, limit),
