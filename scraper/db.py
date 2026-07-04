@@ -32,6 +32,7 @@ tipo_real VARCHAR(50),
 quartos SMALLINT,
 data_fim VARCHAR(20),
 ocupacao TEXT,
+texto_detalhe_bruto TEXT,
 matricula_s3_url TEXT,
 scraped_at TIMESTAMP WITH TIME ZONE,
 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -70,7 +71,11 @@ IF NOT EXISTS (SELECT 1 FROM information_schema.columns
 WHERE table_name='imoveis_caixa' AND column_name='ocupacao') THEN
 ALTER TABLE imoveis_caixa ADD COLUMN ocupacao TEXT;
 END IF;
-END$$;
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='texto_detalhe_bruto') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN texto_detalhe_bruto TEXT;
+END IF;
+END$;
 """
 
 # ── Tabela de alertas por e-mail ─────────────────────────────────
@@ -281,7 +286,7 @@ def upsert_imovel(data: dict):
     'area_total', 'area_privativa', 'area',
     'debito_tributos', 'debito_condominio',
     'aceita_fgts', 'fgts', 'aceita_financiamento',
-    'tipo_real', 'quartos', 'data_fim', 'ocupacao',
+    'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
     'matricula_s3_url', 'scraped_at',
     ]
     values = [data.get(c) for c in cols]
@@ -318,7 +323,7 @@ def upsert_imoveis_bulk(lista, batch_size=500):
         'area_total', 'area_privativa', 'area',
         'debito_tributos', 'debito_condominio',
         'aceita_fgts', 'fgts', 'aceita_financiamento',
-        'tipo_real', 'quartos', 'data_fim', 'ocupacao',
+        'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
         'matricula_s3_url', 'scraped_at',
         ]
         preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
