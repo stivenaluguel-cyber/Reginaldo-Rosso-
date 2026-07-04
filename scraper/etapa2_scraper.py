@@ -436,6 +436,11 @@ async def _extrair_dados_playwright(page, numero_imovel):
         # Ocupacao
         dados["ocupacao"] = _parse_ocupacao(full_text)
 
+        # Texto bruto COMPLETO da pagina (antes de qualquer sanitizacao).
+        # Permite backfill local do parser sem re-raspar a Caixa.
+        if full_text:
+            dados["texto_detalhe_bruto"] = full_text[:20000]
+
         # === FGTS e Financiamento ===
         nt = _norm(full_text)
         aceita_fgts = (
