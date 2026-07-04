@@ -53,6 +53,7 @@ jobs:
           HEADLESS=true
           TIMEOUT_MS=60000
           ETAPA2_BATCH_LIMIT=130
+          MATRICULA_BATCH_LIMIT=0
           ENVEOF
 
       - name: Pipeline
