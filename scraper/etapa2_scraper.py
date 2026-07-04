@@ -626,7 +626,7 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
             )
         except Exception as e:
             logger.error(f"Erro imovel {numero_imovel} (tentativa {attempt + 1}): {e}")
-        finally:X
+        finally:
             try:
                 if context:
                     await context.close()
