@@ -366,9 +366,9 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         item.get("aceita_financiamento"),
                         item.get("descricao"),
                     ))
-                    if not rows:
-                        continue
-                        sql = """
+                if not rows:
+                    continue
+                sql = """
                         UPDATE imoveis_caixa AS t
                         SET
                         tipo_real = COALESCE(t.tipo_real, v.tipo_real),
@@ -381,9 +381,9 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         AND (t.tipo_real IS NULL OR t.area IS NULL
                         OR t.aceita_financiamento IS NULL
                         OR t.descricao IS NULL OR t.descricao = '')
-                        """
-                        extras.execute_values(cur, sql, rows, template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text)")
-                        total += cur.rowcount
-                        conn.commit()
-                        logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
-                        return total
+                """
+                extras.execute_values(cur, sql, rows, template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text)")
+                total += cur.rowcount
+                conn.commit()
+        logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
+        return total
