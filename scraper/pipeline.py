@@ -14,9 +14,9 @@ MODO VIGIA (--vigia):
    - Emite outputs para o workflow do GitHub Actions
 
 INCREMENTAL v2: a cada run, seleciona APENAS imoveis com campos detalhados
-vazios. Lote de 100-150/run (env ETAPA2_BATCH_LIMIT=130).
+vazios. Lote de 15/run (env ETAPA2_BATCH_LIMIT=15).
 
-RATE LIMIT: delay aleatorio 1-2s entre requests da Etapa 2. Em 403/429,
+RATE LIMIT: delay aleatorio 25-45s entre requests da Etapa 2. Em 403/429,
 aborta o lote imediatamente mas salva todo o progresso do run.
 
 Agendamento carga noturna (BRT / UTC-3): 01h-07h (0 4-10 * * * UTC)
@@ -95,7 +95,7 @@ def _contar_publicados():
 async def run_etapa2(lote: list):
     """
     Enriquecimento sequencial (MAX_WORKERS) com:
-    - Delay aleatorio 1-2s entre cada imovel (rate limit preventivo)
+    - Delay aleatorio 25-45s entre cada imovel (rate limit preventivo)
     - Parada imediata em 403/429 (preserva progresso do run)
     - Falhas individuais sao logadas mas nao param o lote
     """
@@ -128,7 +128,7 @@ async def run_etapa2(lote: list):
             async with semaphore:
                 if abortado or _e2.RATE_LIMIT_ATIVO:
                     return
-                await asyncio.sleep(random.uniform(1.0, 2.0))
+                await asyncio.sleep(random.uniform(25.0, 45.0))
                 try:
                     dados = await scrape_imovel(numero_imovel, uf=uf, browser=browser)
                     if _e2.RATE_LIMIT_ATIVO:
@@ -281,7 +281,7 @@ async def run_pipeline():
         except Exception as e:
             logger.exception(f"Falha na fase rapida de matriculas: {e}")
 
-        batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "130"))
+        batch_limit = int(os.getenv("ETAPA2_BATCH_LIMIT", "15"))
         focos = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
 
         uf_map = {}
