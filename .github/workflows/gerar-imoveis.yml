@@ -47,19 +47,22 @@ jobs:
       - name: Auto-verificacao (meta.json publicado <2h)
         run: |
           echo "Aguardando deploy do GitHub Pages..."
-          sleep 90
-          META_URL="https://reginaldorosso.com.br/meta.json?t=$(date +%s)"
-          echo "Buscando $META_URL"
-          ATUALIZADO=$(curl -fsSL "$META_URL" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).atualizado||'')}catch(e){console.log('')}}")
-          echo "meta.json atualizado=$ATUALIZADO"
-          if [ -z "$ATUALIZADO" ]; then
-            echo "::error::meta.json sem campo 'atualizado' ou inacessivel."
-            exit 1
-          fi
-          IDADE=$(node -e "const a=new Date(process.argv[1]).getTime();const now=Date.now();console.log(Math.round((now-a)/60000))" "$ATUALIZADO")
-          echo "Idade do meta.json: $IDADE minutos"
-          if [ "$IDADE" -gt 120 ]; then
-            echo "::error::meta.json tem $IDADE min (>120). A carga passou verde mas NAO publicou."
-            exit 1
-          fi
-          echo "OK: meta.json publicado ha $IDADE min."
+          META_URL="https://reginaldorosso.com.br/meta.json"
+          ATUALIZADO=""
+          IDADE=""
+          for i in 1 2 3 4 5 6 7 8; do
+            sleep 30
+            TS=$(date +%s)
+            BODY=$(curl -fsSL "${META_URL}?t=${TS}" || echo "")
+            if [ -z "$BODY" ]; then echo "tentativa $i: sem resposta"; continue; fi
+            ATUALIZADO=$(printf '%s' "$BODY" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{console.log(JSON.parse(d).atualizado||"")}catch(e){console.log("")}})')
+            if [ -z "$ATUALIZADO" ]; then echo "tentativa $i: meta sem campo atualizado"; continue; fi
+            IDADE=$(node -e 'const a=new Date(process.argv[1]).getTime();const now=Date.now();console.log(Math.round((now-a)/60000))' "$ATUALIZADO")
+            echo "tentativa $i: meta.json atualizado=$ATUALIZADO idade=${IDADE}min"
+            if [ -n "$IDADE" ] && [ "$IDADE" -le 120 ]; then
+              echo "OK: meta.json publicado ha ${IDADE} min (<=120)."
+              exit 0
+            fi
+          done
+          echo "::error::meta.json nao ficou fresco apos varias tentativas. Ultimo: atualizado=$ATUALIZADO idade=${IDADE}min"
+          exit 1
