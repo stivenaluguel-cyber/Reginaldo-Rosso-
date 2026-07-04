@@ -186,7 +186,7 @@ def get_pendentes_enriquecimento(ufs, limit=150) -> list:
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
                 " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
                 " OR debito_condominio IS NULL OR ocupacao IS NULL) "
-                "ORDER BY (scraped_at IS NOT NULL), updated_at "
+                "ORDER BY (created_at::date = CURRENT_DATE) DESC, (scraped_at IS NOT NULL), created_at "
                 "LIMIT %s",
                 (ufs, limit),
             )
@@ -196,6 +196,7 @@ def get_pendentes_com_uf(ufs, limit=150) -> list:
     """
     Retorna (numero_imovel, uf) de imoveis pendentes de enriquecimento textual.
     Criterio v2: falta descricao OU tipo_real OU aceita_fgts (nao apenas matricula).
+    Prioridade: novos de hoje primeiro, depois nao-raspados, depois mais antigos.
     Limite 150/run para evitar timeout do GitHub Actions (50 min).
     """
     if not ufs:
@@ -209,7 +210,7 @@ def get_pendentes_com_uf(ufs, limit=150) -> list:
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
                 " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
                 " OR debito_condominio IS NULL OR ocupacao IS NULL) "
-                "ORDER BY (scraped_at IS NOT NULL), updated_at "
+                "ORDER BY (created_at::date = CURRENT_DATE) DESC, (scraped_at IS NOT NULL), created_at "
                 "LIMIT %s",
                 (ufs, limit),
             )
