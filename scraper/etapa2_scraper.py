@@ -146,6 +146,59 @@ def _parse_debito_condominio(texto):
         return "Caixa Paga"
     return "Arrematante Paga"
 
+def _extrair_secao_regras(full_text):
+    """Retorna a secao normalizada de "regras para pagamento das despesas"."""
+    nt = _norm(full_text)
+    idx = nt.find("regras para pagamento")
+    if idx < 0:
+        return ""
+    return nt[idx:idx + 800]
+
+def _classificar_despesa(trecho):
+    """Classifica um trecho de despesa (condominio/tributos) em rotulo padronizado."""
+    t = _norm(trecho)
+    if not t:
+        return None
+    comprador = "responsabilidade do comprador" in t or "arrematante paga" in t or "responsabilidade do arrematante" in t
+    caixa = "responsabilidade da caixa" in t or "caixa paga integralmente" in t or "sob responsabilidade da caixa" in t
+    if comprador and "10%" in t:
+        return "Arrematante paga ate 10%"
+    if comprador:
+        return "Arrematante paga"
+    if caixa:
+        return "Caixa paga"
+    if ("nao ha" in t or "nao existe" in t or "quitado" in t or "sem debito" in t):
+        return "Sem debito"
+    return None
+
+def _parse_debito_secao(full_text, *labels):
+    """Extrai o rotulo do campo (condominio/tributos) da secao de regras da Caixa."""
+    secao = _extrair_secao_regras(full_text)
+    base = secao if secao else _norm(full_text)
+    if not base:
+        return None
+    for label in labels:
+        nl = _norm(label)
+        idx = base.find(nl)
+        if idx < 0:
+            continue
+        trecho = base[idx + len(nl): idx + len(nl) + 260]
+        rot = _classificar_despesa(trecho)
+        if rot:
+            return rot
+    return None
+
+def _parse_ocupacao(full_text):
+    """Detecta se o imovel esta ocupado ou desocupado."""
+    t = _norm(full_text)
+    if not t:
+        return None
+    if "desocupado" in t or "imovel desocupado" in t:
+        return "Desocupado"
+    if "ocupado" in t or "imovel ocupado" in t:
+        return "Ocupado"
+    return None
+
 def _parse_tipo(full_text, descricao_csv=""):
     """Detecta tipo real do imovel a partir do texto da pagina ou descricao CSV."""
     textos = [full_text or "", descricao_csv or ""]
@@ -352,6 +405,13 @@ async def _extrair_dados_playwright(page, numero_imovel):
             f"[diag {numero_imovel}] texto={len(full_text)} chars | "
             f"trecho={repr(_strip_accents(full_text)[:200].replace(chr(10), ' '))}"
         )
+        # Deteccao de bloqueio anti-bot (WAF) da Caixa: pagina de ~499 chars com aviso.
+        _nt_block = _norm(full_text)
+        if ("comportamento malicioso" in _nt_block) or ("nao podemos processar" in _nt_block) or ("incident id" in _nt_block):
+            global RATE_LIMIT_ATIVO
+            RATE_LIMIT_ATIVO = True
+            logger.warning(f"[diag {numero_imovel}] BLOQUEIO anti-bot detectado (WAF). Abortando lote para retry posterior.")
+            return None
 
         if len(full_text) < 300:
             logger.warning(f"[diag {numero_imovel}] pagina muito curta, AJAX nao carregou")
@@ -370,12 +430,11 @@ async def _extrair_dados_playwright(page, numero_imovel):
         # Campo consolidado 'area' para o frontend (privativa se existir, senao total)
         dados["area"] = dados.get("area_privativa") or dados.get("area_total")
 
-        # === Debitos ===
-        deb_t = _find_value(full_text, "Tributos", "IPTU", "tributos", "iptu") or ""
-        dados["debito_tributos"] = _parse_debito_tributos(deb_t)
-
-        deb_c = _find_value(full_text, "Condominio", "Condomínio", "condominio") or ""
-        dados["debito_condominio"] = _parse_debito_condominio(deb_c)
+        # Debitos: parseia a secao "regras para pagamento das despesas" no texto completo.
+        dados["debito_tributos"] = _parse_debito_secao(full_text, "tributos", "iptu")
+        dados["debito_condominio"] = _parse_debito_secao(full_text, "condominio")
+        # Ocupacao
+        dados["ocupacao"] = _parse_ocupacao(full_text)
 
         # === FGTS e Financiamento ===
         nt = _norm(full_text)
