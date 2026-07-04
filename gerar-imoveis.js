@@ -1056,6 +1056,34 @@ for(const im of imoveis){
   fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
 
  // === Gera JSONs consumidos por imoveis.html ===
+// Fallback: extrai tipo_real e area da descricao CSV quando o banco (_det) nao tem
+const _TIPOS_DESC = [
+  ['apartamento','Apartamento'],['kitinete','Kitinete'],['cobertura','Cobertura'],
+  ['sobrado','Sobrado'],['casa','Casa'],['terreno','Terreno'],['lote','Terreno'],
+  ['gleba','Gleba'],['galpao','Galpao'],['predio','Predio'],['loja','Loja'],
+  ['sala','Sala'],['imovel comercial','Imovel Comercial'],['comercial','Imovel Comercial'],
+  ['rural','Imovel Rural'],['chacara','Chacara'],['sitio','Sitio'],['fazenda','Fazenda'],
+];
+function _normDesc(t) {
+  return String(t || '').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+}
+function parseTipoAreaFromDesc(desc) {
+  const out = { tipo_real: null, area: null };
+  if (!desc || !String(desc).trim()) return out;
+  const t = String(desc).trim();
+  const primeira = (t.includes(',') ? t.split(',')[0] : t);
+  const pn = _normDesc(primeira);
+  for (const [kw, label] of _TIPOS_DESC) { if (pn.includes(kw)) { out.tipo_real = label; break; } }
+  if (!out.tipo_real) { const tn0 = _normDesc(t); for (const [kw, label] of _TIPOS_DESC) { if (tn0.includes(kw)) { out.tipo_real = label; break; } } }
+  const tn = _normDesc(t);
+  for (const lab of ['privativa', 'total', 'terreno']) {
+    const re = new RegExp('([0-9]+[.,]?[0-9]*)\\s+de\\s+area\\s+(?:do\\s+|da\\s+)?' + lab);
+    const m = tn.match(re);
+    if (m) { const v = parseFloat(m[1].replace(',', '.')); if (v > 0) { out.area = v; break; } }
+  }
+  return out;
+}
+
  function imovelParaJson(im){
     return {
          id: im.id, uf: im.uf, cidade: im.cidade, bairro: im.bairro,
@@ -1069,10 +1097,10 @@ for(const im of imoveis){
          debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null),
          excluir_foto: EXCLUIR_FOTOS.has(String(im.id)),
          fgts: im._det ? (im._det.aceita_fgts != null ? im._det.aceita_fgts : null) : null,
-         area: im._det ? (im._det.area != null ? im._det.area : (im._det.area_privativa != null ? im._det.area_privativa : (im._det.area_total != null ? im._det.area_total : null))) : null,
+         area: (im._det && (im._det.area || im._det.area_privativa || im._det.area_total)) || parseTipoAreaFromDesc(im.descricao).area || null,
          quartos: im._det ? (im._det.quartos != null ? im._det.quartos : null) : null,
          data_fim: im._det ? (im._det.data_fim != null ? im._det.data_fim : null) : null,
-         tipo_real: im._det ? (im._det.tipo_real != null ? im._det.tipo_real : null) : null,
+         tipo_real: (im._det && im._det.tipo_real) || parseTipoAreaFromDesc(im.descricao).tipo_real || null,
          ocupacao: im._det ? (im._det.ocupacao != null ? im._det.ocupacao : null) : null
     };
  }
