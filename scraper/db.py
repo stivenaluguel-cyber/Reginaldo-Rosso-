@@ -185,7 +185,7 @@ def get_pendentes_enriquecimento(ufs, limit=150) -> list:
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
                 " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
-                " OR debito_condominio IS NULL OR ocupacao IS NULL) "
+                " OR debito_condominio IS NULL) "
                 "ORDER BY (created_at::date = CURRENT_DATE) DESC, (scraped_at IS NOT NULL), created_at "
                 "LIMIT %s",
                 (ufs, limit),
@@ -209,7 +209,7 @@ def get_pendentes_com_uf(ufs, limit=150) -> list:
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
                 " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
-                " OR debito_condominio IS NULL OR ocupacao IS NULL) "
+                " OR debito_condominio IS NULL) "
                 "ORDER BY (created_at::date = CURRENT_DATE) DESC, (scraped_at IS NOT NULL), created_at "
                 "LIMIT %s",
                 (ufs, limit),
