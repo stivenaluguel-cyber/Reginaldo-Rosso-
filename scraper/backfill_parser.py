@@ -53,7 +53,8 @@ def _fetch_all_rows(uf_filter=None) -> list[dict]:
                     """
                     SELECT numero_imovel, uf, descricao,
                            tipo_real, area, fgts, aceita_financiamento,
-                           debito_tributos, debito_condominio, quartos
+                           debito_tributos, debito_condominio, quartos,
+                           data_fim, texto_detalhe_bruto
                     FROM imoveis_caixa
                     WHERE status = 'Disponivel' AND uf = ANY(%s)
                     ORDER BY numero_imovel
@@ -65,7 +66,8 @@ def _fetch_all_rows(uf_filter=None) -> list[dict]:
                     """
                     SELECT numero_imovel, uf, descricao,
                            tipo_real, area, fgts, aceita_financiamento,
-                           debito_tributos, debito_condominio, quartos
+                           debito_tributos, debito_condominio, quartos,
+                           data_fim, texto_detalhe_bruto
                     FROM imoveis_caixa
                     WHERE status = 'Disponivel'
                     ORDER BY numero_imovel
@@ -159,8 +161,11 @@ def _processar_linha(row: dict) -> dict | None:
 
     # --- parse_detalhe: fgts, financiamento, debito_tributos, debito_condominio, quartos ---
     # Roda sempre que descricao contem texto de detalhe (>200 chars = provavelmente detalhe)
-    if desc and len(desc) > 200:
-        det = parse_detalhe(desc)
+    # Fonte preferida: texto bruto COMPLETO (contem a secao de regras de
+    # debito). Fallback: descricao (que pode estar truncada em raspagens antigas).
+    fonte_detalhe = row.get("texto_detalhe_bruto") or desc
+    if fonte_detalhe and len(fonte_detalhe) > 200:
+        det = parse_detalhe(fonte_detalhe)
         if det.get("fgts") is not None and row.get("fgts") is None:
             update["fgts"] = det["fgts"]
             update["aceita_fgts"] = det["fgts"]
@@ -176,6 +181,9 @@ def _processar_linha(row: dict) -> dict | None:
             mudou = True
         if det.get("quartos") is not None and not row.get("quartos"):
             update["quartos"] = det["quartos"]
+            mudou = True
+        if det.get("data_fim") and not row.get("data_fim"):
+            update["data_fim"] = det["data_fim"]
             mudou = True
 
     return update if mudou else None
