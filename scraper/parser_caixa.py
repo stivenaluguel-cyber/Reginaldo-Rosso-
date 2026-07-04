@@ -222,6 +222,11 @@ def parse_detalhe(texto: str) -> dict:
     elif "desocupado" in t_norm or "imovel desocupado" in t_norm or "livre" in t_norm:
         result["ocupacao"] = "Desocupado"
 
+    # ---- DATA FIM (data-limite do leilao/venda) ----
+    data_fim = _parse_data_fim(str(texto))
+    if data_fim:
+        result["data_fim"] = data_fim
+
     return result
 
 
@@ -263,6 +268,33 @@ def _parse_debito(secao: str) -> str | None:
             return "Arrematante paga ate 10%"
         return "Arrematante Paga"
 
+    return None
+
+
+def _parse_data_fim(texto: str) -> str | None:
+    """Extrai a data-limite (dd/mm/yyyy) do leilao/venda a partir do texto bruto.
+    Prioriza rotulos conhecidos; fallback: primeira data futura encontrada."""
+    if not texto:
+        return None
+    import re as _re
+    from datetime import datetime as _dt, date as _date
+    date_pat = r"(\d{2}/\d{2}/\d{4})"
+    rotulos = [
+        r"(?:data\s+(?:de\s+)?(?:encerramento|fim|vencimento|limite)|encerra\s+em|valido\s+ate)[:\s]+",
+        r"(?:1[o\u00ba]?\s*leil[a\u00e3]o|2[o\u00ba]?\s*leil[a\u00e3]o|venda\s+online)[^\n]*?-\s*",
+    ]
+    for rot in rotulos:
+        m = _re.search(rot + date_pat, texto, _re.IGNORECASE)
+        if m:
+            return m.group(m.lastindex)
+    datas = _re.findall(date_pat, texto)
+    hoje = _date.today()
+    for d in datas:
+        try:
+            if _dt.strptime(d, "%d/%m/%Y").date() >= hoje:
+                return d
+        except Exception:
+            pass
     return None
 
 
