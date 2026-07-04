@@ -181,74 +181,30 @@ def _parse_quartos(full_text):
     return None
 
 def _parse_data_fim(full_text):
-    """
-    Extrai data-limite do leilao/venda.
-
-    Formato real da pagina da Caixa (verificado em 2026):
-    - Leilao: "Data do 1o Leilao - DD/MM/YYYY - HHhMM"
-                    "Data do 2o Leilao - DD/MM/YYYY - HHhMM"
-                    "Data do Leilao Unico - DD/MM/YYYY - HHhMM"
-    - Venda Online: exibe apenas countdown (DIAS/HORAS/MINUTOS),
-        a data nao aparece como texto; nao e possivel extrair.
-
-        Estrategia: busca "Data do" seguido de qualquer texto e depois DD/MM/YYYY.
-        Retorna a data do 2o Leilao se existir (data final), senao a do 1o.
-        Fallback: qualquer data futura presente no texto.
-        """
-    if not full_text:
-        return None
-
-t = full_text
-
-# Padrao 1: "Data do Xo Leilao - DD/MM/YYYY" (formato real da Caixa)
-# Captura todas as ocorrencias de "Data do ... - DD/MM/YYYY"
-date_pattern = r"(\d{2}/\d{2}/\d{4})"
-leilao_pattern = re.compile(
-    r"Data\s+do\s+[^\n\-]{0,30}-\s*" + date_pattern,
-    re.IGNORECASE
-)
-matches = leilao_pattern.findall(t)
-if matches:
-    # Retorna a ultima data (2o leilao ou leilao unico)
-    return matches[-1]
-
-# Padrao 2: rotulos genericos (encerramento, fim, vencimento)
-rotulos_pattern = re.compile(
-    r"(?:data\s+de\s+(?:encerramento|fim|vencimento|limite)"
-    r"|encerra\s+em|valido\s+ate"
-    r"|encerramento)[:\s]+" + date_pattern,
-    re.IGNORECASE
-)
-m = rotulos_pattern.search(t)
-if m:
-    return m.group(1)
-
-# Padrao 3: fallback - qualquer data futura no texto
-from datetime import date
-hoje = date.today()
-datas = re.findall(date_pattern, t)
-futuras = []
-for d in datas:
-    try:
-        dt = datetime.strptime(d, "%d/%m/%Y").date()
-        if dt >= hoje:
-            futuras.append((dt, d))
-    except Exception:
-        pass
-        if futuras:
-            # Retorna a data futura mais distante (data de encerramento)
-            return max(futuras, key=lambda x: x[0])[1]
-
-return None
-
-def _parse_ocupacao(full_text):
-    """Extrai status de ocupacao do imovel."""
-    t = _norm(full_text)
-    if "imovel ocupado" in t or " ocupado" in t:
-        return "Ocupado"
-        if "desocupado" in t or "imovel desocupado" in t or "livre" in t:
-            return "Desocupado"
-            return None
+    """Extrai data-limite do leilao/venda (formato dd/mm/yyyy ou similar)."""
+    t = full_text or ""
+    # Busca por rotulos comuns da Caixa
+    rotulos = [
+        r"(?:data\s+de\s+(?:encerramento|fim|vencimento|limite)|encerra\s+em|valido\s+ate)[:\s]+",
+        r"(?:primeiro\s+leil[aã]o|segundo\s+leil[aã]o|venda\s+online)[^\n]*?-\s*",
+    ]
+    date_pattern = r"(\d{2}/\d{2}/\d{4})"
+    for rot in rotulos:
+        m = re.search(rot + date_pattern, t, re.IGNORECASE)
+        if m:
+            return m.group(m.lastindex)
+    # Fallback: qualquer data no texto (prioriza datas futuras)
+    datas = re.findall(r"(\d{2}/\d{2}/\d{4})", t)
+    from datetime import date
+    hoje = date.today()
+    for d in datas:
+        try:
+            dt = datetime.strptime(d, "%d/%m/%Y").date()
+            if dt >= hoje:
+                return d
+        except Exception:
+            pass
+    return None
 
 # ---------------------------------------------------------------------------
 # 1. URL DETERMINISTICA - baixa PDF direto sem Playwright
@@ -468,10 +424,6 @@ async def _extrair_dados_playwright(page, numero_imovel):
         data_fim = _parse_data_fim(full_text)
         if data_fim:
             dados["data_fim"] = data_fim
-        ocupacao = _parse_ocupacao(full_text)
-        if ocupacao:
-            dados["ocupacao"] = ocupacao
-            logger.info(f"[diag {numero_imovel}] ocupacao extraida: {ocupacao}")
 
     except Exception as e:
         logger.warning(f"[diag {numero_imovel}] erro extracao playwright: {e}")
