@@ -508,6 +508,7 @@ async function carregar(){
       return items;
     }
     window._labelFin=_labelFin;
+    window._labelTipo=_labelTipo;
     _fillSelect('cidade','Todas',_contarCampo(ALL.map(function(i){return i.cidade;})));
     _fillSelect('tipo','Todos',_contarCampo(ALL.map(function(i){return _labelTipo(i);})));
     _fillSelect('modalidade','Todas',_contarCampo(ALL.map(function(i){return i.modalidade;})));
@@ -542,7 +543,7 @@ function aplicar(){
     view=ALL.filter(i=>{
       if(state.uf && i.uf!==state.uf) return false;
       if(state.cidade && i.cidade!==state.cidade) return false;
-      if(state.tipo && _labelTipo(i)!==state.tipo) return false;
+      if(state.tipo && (window._labelTipo||_labelTipo)(i)!==state.tipo) return false;
       if(state.modalidade && i.modalidade!==state.modalidade) return false;
       if(state.financiamento){const _fl=(window._labelFin||function(v){return v===true?'Aceita':v===false?'Não aceita':'Não informado';})(i.financiamento);if(_fl.toLowerCase()!==state.financiamento.toLowerCase()) return false;}
       if(state.dtrib){const _dt=i.debito_tributos?String(i.debito_tributos).trim():'Não informado';if(_dt.toLowerCase()!==state.dtrib.toLowerCase()) return false;}
