@@ -229,3 +229,143 @@
 2026-07-04 13:06:54 [INFO] __main__: Etapa 2 concluido: 58 OK | 0 falhas | 58 no lote | progresso salvo
 2026-07-04 13:06:54 [INFO] __main__: === Vigia concluido: 58 novos processados, 0 encerrados ===
 2026-07-04 13:06:54 [INFO] __main__: === Vigia finalizado em 1059s ===
+2026-07-04 13:18:50 [INFO] __main__: === Vigia Manha iniciado em 2026-07-04 13:18:50 ===
+2026-07-04 13:18:50 [INFO] __main__: --- Vigia: baixando CSV da Caixa ---
+2026-07-04 13:18:52 [INFO] db: Banco de dados inicializado e migrado.
+2026-07-04 13:18:52 [INFO] db: Tabela alertas_leilao verificada/criada.
+2026-07-04 13:18:52 [INFO] etapa1_csv: etapa1: Fase 0 - httpx HTTP/2...
+2026-07-04 13:18:54 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_RS.csv "HTTP/2 200 OK"
+2026-07-04 13:18:54 [INFO] etapa1_csv: etapa1: RS OK via httpx (248674 bytes)
+2026-07-04 13:18:54 [INFO] etapa1_csv: etapa1: parse RS: colunas brutas=['N° do imóvel', 'UF', 'Cidade', 'Bairro', 'Endereço']
+2026-07-04 13:18:54 [INFO] etapa1_csv: etapa1: CSV RS: 717 imoveis parseados de 717 linhas
+2026-07-04 13:18:54 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SC.csv "HTTP/2 200 OK"
+2026-07-04 13:18:54 [INFO] etapa1_csv: etapa1: SC OK via httpx (56269 bytes)
+2026-07-04 13:18:54 [INFO] etapa1_csv: etapa1: parse SC: colunas brutas=['N° do imóvel', 'UF', 'Cidade', 'Bairro', 'Endereço']
+2026-07-04 13:18:54 [INFO] etapa1_csv: etapa1: CSV SC: 158 imoveis parseados de 158 linhas
+2026-07-04 13:18:54 [INFO] etapa1_csv: etapa1: httpx ok=2, pendentes=0
+2026-07-04 13:18:57 [INFO] db: upsert_imoveis_bulk: 1 imoveis processados em lote
+2026-07-04 13:19:00 [INFO] db: update_csv_parsed_bulk: 0 linhas atualizadas
+2026-07-04 13:19:00 [INFO] etapa1_csv: etapa1: FINAL total_csv=875 | banco=819 | removidos=0 | novos=56 | ok=2 | falha=0
+2026-07-04 13:19:00 [INFO] __main__: CSV: 875 imoveis | 56 novos detectados
+2026-07-04 13:19:01 [INFO] __main__: Banco: 820 imoveis ativos em ['RS', 'SC']
+2026-07-04 13:19:01 [INFO] __main__: Vigia resultado: 56 novos | 0 encerrados/removidos
+2026-07-04 13:19:01 [INFO] __main__: Raspando 56 imoveis novos...
+2026-07-04 13:19:37 [INFO] etapa2_scraper: [diag 8555531217542] texto=2243 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:19:37 [INFO] etapa2_scraper: [diag 8444425233511] texto=2275 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:19:41 [INFO] __main__: [OK] 8555531217542 UF=None
+2026-07-04 13:19:42 [INFO] __main__: [OK] 8444425233511 UF=None
+2026-07-04 13:20:12 [INFO] etapa2_scraper: [diag 8555538083924] texto=2437 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:20:13 [INFO] etapa2_scraper: [diag 8787713299499] texto=2145 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:20:15 [INFO] __main__: [OK] 8555538083924 UF=None
+2026-07-04 13:20:17 [INFO] __main__: [OK] 8787713299499 UF=None
+2026-07-04 13:20:49 [INFO] etapa2_scraper: [diag 8444403034931] texto=2519 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:20:50 [INFO] etapa2_scraper: [diag 8787718488214] texto=2442 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:20:52 [INFO] __main__: [OK] 8444403034931 UF=None
+2026-07-04 13:20:53 [INFO] __main__: [OK] 8787718488214 UF=None
+2026-07-04 13:21:23 [INFO] etapa2_scraper: [diag 8555521701336] texto=2266 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:21:24 [INFO] etapa2_scraper: [diag 8444404276432] texto=2297 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:21:27 [INFO] __main__: [OK] 8555521701336 UF=None
+2026-07-04 13:21:28 [INFO] __main__: [OK] 8444404276432 UF=None
+2026-07-04 13:22:00 [INFO] etapa2_scraper: [diag 8787718157641] texto=2432 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:22:00 [INFO] etapa2_scraper: [diag 8444431337412] texto=2100 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:22:03 [INFO] __main__: [OK] 8787718157641 UF=None
+2026-07-04 13:22:04 [INFO] __main__: [OK] 8444431337412 UF=None
+2026-07-04 13:22:36 [INFO] etapa2_scraper: [diag 1444419602871] texto=2088 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:22:37 [INFO] etapa2_scraper: [diag 8043000502119] texto=2211 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:22:40 [INFO] __main__: [OK] 1444419602871 UF=None
+2026-07-04 13:22:41 [INFO] __main__: [OK] 8043000502119 UF=None
+2026-07-04 13:23:12 [INFO] etapa2_scraper: [diag 8555537689080] texto=2238 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:23:12 [INFO] etapa2_scraper: [diag 8555531289136] texto=2549 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:23:15 [INFO] __main__: [OK] 8555537689080 UF=None
+2026-07-04 13:23:16 [INFO] __main__: [OK] 8555531289136 UF=None
+2026-07-04 13:23:46 [INFO] etapa2_scraper: [diag 8444410680916] texto=2448 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:23:48 [INFO] etapa2_scraper: [diag 8444431149772] texto=2458 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:23:50 [INFO] __main__: [OK] 8444410680916 UF=None
+2026-07-04 13:23:51 [INFO] __main__: [OK] 8444431149772 UF=None
+2026-07-04 13:24:21 [INFO] etapa2_scraper: [diag 8787717150520] texto=2465 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:24:22 [INFO] etapa2_scraper: [diag 8787718452112] texto=2174 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:24:24 [INFO] __main__: [OK] 8787717150520 UF=None
+2026-07-04 13:24:26 [INFO] __main__: [OK] 8787718452112 UF=None
+2026-07-04 13:24:56 [INFO] etapa2_scraper: [diag 8787701943908] texto=2415 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:24:58 [INFO] etapa2_scraper: [diag 8787709632022] texto=2124 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:25:00 [INFO] __main__: [OK] 8787701943908 UF=None
+2026-07-04 13:25:01 [INFO] __main__: [OK] 8787709632022 UF=None
+2026-07-04 13:25:32 [INFO] etapa2_scraper: [diag 1444419122519] texto=2229 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:25:33 [INFO] etapa2_scraper: [diag 8444435618939] texto=2168 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:25:35 [INFO] __main__: [OK] 1444419122519 UF=None
+2026-07-04 13:25:36 [INFO] __main__: [OK] 8444435618939 UF=None
+2026-07-04 13:26:07 [INFO] etapa2_scraper: [diag 8444427802009] texto=2186 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:26:08 [INFO] etapa2_scraper: [diag 8444413003052] texto=2200 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:26:10 [INFO] __main__: [OK] 8444427802009 UF=None
+2026-07-04 13:26:12 [INFO] __main__: [OK] 8444413003052 UF=None
+2026-07-04 13:26:43 [INFO] etapa2_scraper: [diag 1555517731937] texto=2341 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:26:44 [INFO] etapa2_scraper: [diag 1787700981050] texto=2358 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:26:46 [INFO] __main__: [OK] 1555517731937 UF=None
+2026-07-04 13:26:47 [INFO] __main__: [OK] 1787700981050 UF=None
+2026-07-04 13:27:18 [INFO] etapa2_scraper: [diag 1444417521785] texto=2142 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:27:19 [INFO] etapa2_scraper: [diag 8444436859751] texto=2232 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:27:21 [INFO] __main__: [OK] 1444417521785 UF=None
+2026-07-04 13:27:22 [INFO] __main__: [OK] 8444436859751 UF=None
+2026-07-04 13:27:53 [INFO] etapa2_scraper: [diag 8444415194700] texto=2260 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:27:54 [INFO] etapa2_scraper: [diag 1444422821775] texto=2241 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:27:57 [INFO] __main__: [OK] 8444415194700 UF=None
+2026-07-04 13:27:58 [INFO] __main__: [OK] 1444422821775 UF=None
+2026-07-04 13:28:29 [INFO] etapa2_scraper: [diag 8444400108853] texto=2246 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:28:29 [INFO] etapa2_scraper: [diag 8787709043531] texto=2232 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:28:32 [INFO] __main__: [OK] 8444400108853 UF=None
+2026-07-04 13:28:33 [INFO] __main__: [OK] 8787709043531 UF=None
+2026-07-04 13:29:04 [INFO] etapa2_scraper: [diag 10286390] texto=2558 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:29:05 [INFO] etapa2_scraper: [diag 10286388] texto=2506 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:29:08 [INFO] __main__: [OK] 10286390 UF=None
+2026-07-04 13:29:09 [INFO] __main__: [OK] 10286388 UF=None
+2026-07-04 13:29:40 [INFO] etapa2_scraper: [diag 1555523428930] texto=2264 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:29:40 [INFO] etapa2_scraper: [diag 8444418217905] texto=2446 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:29:43 [INFO] __main__: [OK] 1555523428930 UF=None
+2026-07-04 13:29:44 [INFO] __main__: [OK] 8444418217905 UF=None
+2026-07-04 13:30:15 [INFO] etapa2_scraper: [diag 8787702424955] texto=2504 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:30:16 [INFO] etapa2_scraper: [diag 10305193] texto=2240 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:30:18 [INFO] __main__: [OK] 8787702424955 UF=None
+2026-07-04 13:30:19 [INFO] __main__: [OK] 10305193 UF=None
+2026-07-04 13:30:51 [INFO] etapa2_scraper: [diag 8555531387626] texto=2336 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:30:51 [INFO] etapa2_scraper: [diag 8444418568929] texto=2175 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:30:54 [INFO] __main__: [OK] 8555531387626 UF=None
+2026-07-04 13:30:56 [INFO] __main__: [OK] 8444418568929 UF=None
+2026-07-04 13:30:57 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8444423858123.pdf "HTTP/1.1 200 OK"
+2026-07-04 13:30:57 [INFO] etapa2_scraper: [det-pdf 8444423858123] matricula OK (2881991B)
+2026-07-04 13:30:58 [INFO] s3_uploader: Upload (bytes) concluido: s3://reginaldo-rosso-docs/matriculas/8444423858123/60c1613a024ff38df7f6477878c1dea3.pdf
+2026-07-04 13:30:58 [INFO] etapa2_scraper: [det 8444423858123] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444423858123/60c1613a024ff38df7f6477878c1dea3.pdf
+2026-07-04 13:31:28 [INFO] etapa2_scraper: [diag 8787712032979] texto=2471 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:31:28 [INFO] etapa2_scraper: [diag 8444423858123] texto=2143 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:31:30 [INFO] __main__: [OK] 8444423858123 UF=RS
+2026-07-04 13:31:31 [INFO] __main__: [OK] 8787712032979 UF=None
+2026-07-04 13:32:02 [INFO] etapa2_scraper: [diag 8444420191128] texto=2213 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:32:02 [INFO] etapa2_scraper: [diag 8787718466814] texto=2389 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:32:05 [INFO] __main__: [OK] 8444420191128 UF=None
+2026-07-04 13:32:06 [INFO] __main__: [OK] 8787718466814 UF=None
+2026-07-04 13:32:37 [INFO] etapa2_scraper: [diag 8444412277582] texto=2183 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:32:38 [INFO] etapa2_scraper: [diag 10291010] texto=2235 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:32:39 [INFO] __main__: [OK] 10291010 UF=None
+2026-07-04 13:32:40 [INFO] __main__: [OK] 8444412277582 UF=None
+2026-07-04 13:33:10 [INFO] etapa2_scraper: [diag 8555526614091] texto=2468 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:33:12 [INFO] etapa2_scraper: [diag 8444413695086] texto=2456 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:33:14 [INFO] __main__: [OK] 8555526614091 UF=None
+2026-07-04 13:33:15 [INFO] __main__: [OK] 8444413695086 UF=None
+2026-07-04 13:33:45 [INFO] etapa2_scraper: [diag 8787706708680] texto=2206 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:33:46 [INFO] etapa2_scraper: [diag 1444414757168] texto=2146 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:33:49 [INFO] __main__: [OK] 8787706708680 UF=None
+2026-07-04 13:33:50 [INFO] __main__: [OK] 1444414757168 UF=None
+2026-07-04 13:34:20 [INFO] etapa2_scraper: [diag 8444413872093] texto=2488 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:34:24 [INFO] __main__: [OK] 8444413872093 UF=None
+2026-07-04 13:34:24 [INFO] etapa2_scraper: [diag 8444425799264] texto=2440 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-04 13:34:27 [INFO] __main__: [OK] 8444425799264 UF=None
+2026-07-04 13:34:56 [INFO] etapa2_scraper: [diag 1444409908838] texto=502 chars | trecho='Caixa Economica Federal Estamos detectando comportamento malicioso no acesso. Para protecao do site, nao podemos processar sua requisicao neste momento. Incident ID: baa999ca-c4o3-404e-befe-7560e37bde'
+2026-07-04 13:34:57 [INFO] __main__: [OK] 1444409908838 UF=None
+2026-07-04 13:34:58 [INFO] etapa2_scraper: [diag 8555517692433] texto=502 chars | trecho='Caixa Economica Federal Estamos detectando comportamento malicioso no acesso. Para protecao do site, nao podemos processar sua requisicao neste momento. Incident ID: ae2d7dc4-c4o3-4230-9285-5729f7862c'
+2026-07-04 13:35:00 [INFO] __main__: [OK] 8555517692433 UF=None
+2026-07-04 13:35:29 [INFO] etapa2_scraper: [diag 8787711854924] texto=502 chars | trecho='Caixa Economica Federal Estamos detectando comportamento malicioso no acesso. Para protecao do site, nao podemos processar sua requisicao neste momento. Incident ID: 54c531d3-c4o3-4277-ad22-c1b1f1d2a7'
+2026-07-04 13:35:30 [INFO] __main__: [OK] 8787711854924 UF=None
+2026-07-04 13:35:31 [INFO] etapa2_scraper: [diag 8444413791964] texto=502 chars | trecho='Caixa Economica Federal Estamos detectando comportamento malicioso no acesso. Para protecao do site, nao podemos processar sua requisicao neste momento. Incident ID: a5623019-c4o3-44d8-895d-9c2aba42d0'
+2026-07-04 13:35:32 [INFO] __main__: [OK] 8444413791964 UF=None
+2026-07-04 13:35:32 [INFO] __main__: Etapa 2 concluido: 56 OK | 0 falhas | 56 no lote | progresso salvo
+2026-07-04 13:35:32 [INFO] __main__: === Vigia concluido: 56 novos processados, 0 encerrados ===
+2026-07-04 13:35:32 [INFO] __main__: === Vigia finalizado em 1002s ===
