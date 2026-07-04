@@ -177,19 +177,19 @@ def get_pendentes_enriquecimento(ufs, limit=150) -> list:
     """
     if not ufs:
         return []
-        ufs = [u.upper() for u in ufs]
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT numero_imovel FROM imoveis_caixa "
-                    "WHERE status = 'Disponivel' AND uf = ANY(%s) "
-                    "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
-                    " OR aceita_fgts IS NULL) "
-                    "ORDER BY (scraped_at IS NOT NULL), updated_at "
-                    "LIMIT %s",
-                    (ufs, limit),
-                )
-                return [row[0] for row in cur.fetchall()]
+    ufs = [u.upper() for u in ufs]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel FROM imoveis_caixa "
+                "WHERE status = 'Disponivel' AND uf = ANY(%s) "
+                "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
+                " OR aceita_fgts IS NULL) "
+                "ORDER BY (scraped_at IS NOT NULL), updated_at "
+                "LIMIT %s",
+                (ufs, limit),
+            )
+            return [row[0] for row in cur.fetchall()]
 
 def get_pendentes_com_uf(ufs, limit=150) -> list:
     """
@@ -199,48 +199,48 @@ def get_pendentes_com_uf(ufs, limit=150) -> list:
     """
     if not ufs:
         return []
-        ufs = [u.upper() for u in ufs]
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT numero_imovel, uf FROM imoveis_caixa "
-                    "WHERE status = 'Disponivel' AND uf = ANY(%s) "
-                    "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
-                    " OR aceita_fgts IS NULL) "
-                    "ORDER BY (scraped_at IS NOT NULL), updated_at "
-                    "LIMIT %s",
-                    (ufs, limit),
-                )
-                return [(row[0], row[1]) for row in cur.fetchall()]
+    ufs = [u.upper() for u in ufs]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel, uf FROM imoveis_caixa "
+                "WHERE status = 'Disponivel' AND uf = ANY(%s) "
+                "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
+                " OR aceita_fgts IS NULL) "
+                "ORDER BY (scraped_at IS NOT NULL), updated_at "
+                "LIMIT %s",
+                (ufs, limit),
+            )
+            return [(row[0], row[1]) for row in cur.fetchall()]
 
 def get_uf_por_ids(ids: list) -> dict:
     """Retorna {numero_imovel: uf} para os IDs informados."""
     if not ids:
         return {}
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT numero_imovel, uf FROM imoveis_caixa WHERE numero_imovel = ANY(%s)",
-                    (ids,),
-                )
-                return {row[0]: row[1] for row in cur.fetchall()}
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel, uf FROM imoveis_caixa WHERE numero_imovel = ANY(%s)",
+                (ids,),
+            )
+            return {row[0]: row[1] for row in cur.fetchall()}
 
 def get_pendentes_matricula_com_uf(ufs, limit=5000) -> list:
     """Retorna (numero_imovel, uf) de imoveis ativos SEM matricula ainda."""
     if not ufs:
         return []
-        ufs = [u.upper() for u in ufs]
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT numero_imovel, uf FROM imoveis_caixa "
-                    "WHERE status = 'Disponivel' AND uf = ANY(%s) "
-                    "AND matricula_s3_url IS NULL "
-                    "ORDER BY updated_at "
-                    "LIMIT %s",
-                    (ufs, limit),
-                )
-                return [(row[0], row[1]) for row in cur.fetchall()]
+    ufs = [u.upper() for u in ufs]
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel, uf FROM imoveis_caixa "
+                "WHERE status = 'Disponivel' AND uf = ANY(%s) "
+                "AND matricula_s3_url IS NULL "
+                "ORDER BY updated_at "
+                "LIMIT %s",
+                (ufs, limit),
+            )
+            return [(row[0], row[1]) for row in cur.fetchall()]
 
 def set_matricula_url(numero_imovel: str, s3_url: str):
     """Atualiza apenas a matricula_s3_url de um imovel."""
@@ -256,19 +256,19 @@ def mark_unavailable(ids: list):
     """Marca IDs que sairam do CSV como Indisponivel."""
     if not ids:
         return
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                batch_size = 500
-                total = 0
-                for i in range(0, len(ids), batch_size):
-                    batch = ids[i:i + batch_size]
-                    cur.execute(
-                    "UPDATE imoveis_caixa SET status='Indisponivel', updated_at=NOW() "
-                    "WHERE numero_imovel = ANY(%s)",
-                    (batch,)
-                    )
-                    total += cur.rowcount
-                    logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            batch_size = 500
+            total = 0
+            for i in range(0, len(ids), batch_size):
+                batch = ids[i:i + batch_size]
+                cur.execute(
+                "UPDATE imoveis_caixa SET status='Indisponivel', updated_at=NOW() "
+                "WHERE numero_imovel = ANY(%s)",
+                (batch,)
+                )
+                total += cur.rowcount
+                logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
 
 def upsert_imovel(data: dict):
     """Insere ou atualiza um imovel. data deve ter as chaves correspondentes as colunas."""
@@ -305,42 +305,42 @@ def upsert_imoveis_bulk(lista, batch_size=500):
     """Insere ou atualiza varios imoveis em lote."""
     if not lista:
         return 0
-        vistos = {}
-        for item in lista:
-            vistos[item.get("numero_imovel")] = item
-            lista = list(vistos.values())
-            cols = [
-            'numero_imovel', 'status', 'uf', 'cidade', 'bairro', 'endereco',
-            'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
-            'area_total', 'area_privativa', 'area',
-            'debito_tributos', 'debito_condominio',
-            'aceita_fgts', 'fgts', 'aceita_financiamento',
-            'tipo_real', 'quartos', 'data_fim', 'ocupacao',
-            'matricula_s3_url', 'scraped_at',
-            ]
-            preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
-            update_set = ', '.join(
-            [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
-            else f"{c}=EXCLUDED.{c}"
-            for c in cols if c != 'numero_imovel']
-            )
-            sql = f"""
-            INSERT INTO imoveis_caixa ({', '.join(cols)})
-            VALUES %s
-            ON CONFLICT (numero_imovel) DO UPDATE SET
-            {update_set},
-            updated_at = NOW()
-            """
-            total = 0
-            with get_connection() as conn:
-                with conn.cursor() as cur:
-                    for i in range(0, len(lista), batch_size):
-                        batch = lista[i:i + batch_size]
-                        valores = [tuple(d.get(c) for c in cols) for d in batch]
-                        psycopg2.extras.execute_values(cur, sql, valores, page_size=batch_size)
-                        total += len(batch)
-                        logger.info(f"upsert_imoveis_bulk: {total} imoveis processados em lote")
-                        return total
+    vistos = {}
+    for item in lista:
+        vistos[item.get("numero_imovel")] = item
+        lista = list(vistos.values())
+        cols = [
+        'numero_imovel', 'status', 'uf', 'cidade', 'bairro', 'endereco',
+        'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
+        'area_total', 'area_privativa', 'area',
+        'debito_tributos', 'debito_condominio',
+        'aceita_fgts', 'fgts', 'aceita_financiamento',
+        'tipo_real', 'quartos', 'data_fim', 'ocupacao',
+        'matricula_s3_url', 'scraped_at',
+        ]
+        preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
+        update_set = ', '.join(
+        [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
+        else f"{c}=EXCLUDED.{c}"
+        for c in cols if c != 'numero_imovel']
+        )
+        sql = f"""
+        INSERT INTO imoveis_caixa ({', '.join(cols)})
+        VALUES %s
+        ON CONFLICT (numero_imovel) DO UPDATE SET
+        {update_set},
+        updated_at = NOW()
+        """
+        total = 0
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                for i in range(0, len(lista), batch_size):
+                    batch = lista[i:i + batch_size]
+                    valores = [tuple(d.get(c) for c in cols) for d in batch]
+                    psycopg2.extras.execute_values(cur, sql, valores, page_size=batch_size)
+                    total += len(batch)
+                    logger.info(f"upsert_imoveis_bulk: {total} imoveis processados em lote")
+                    return total
 
 def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
     """
@@ -351,39 +351,39 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
     """
     if not lista:
         return 0
-        import psycopg2.extras as extras
-        total = 0
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                for i in range(0, len(lista), batch_size):
-                    batch = lista[i:i + batch_size]
-                    rows = []
-                    for item in batch:
-                        rows.append((
-                            item.get("numero_imovel"),
-                            item.get("tipo_real"),
-                            item.get("area"),
-                            item.get("aceita_financiamento"),
-                            item.get("descricao"),
-                        ))
-                        if not rows:
-                            continue
-                            sql = """
-                            UPDATE imoveis_caixa AS t
-                            SET
-                            tipo_real = COALESCE(t.tipo_real, v.tipo_real),
-                            area = COALESCE(t.area, v.area),
-                            aceita_financiamento = COALESCE(t.aceita_financiamento, v.aceita_financiamento),
-                            descricao = COALESCE(NULLIF(t.descricao, ''), v.descricao),
-                            updated_at = NOW()
-                            FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao)
-                            WHERE t.numero_imovel = v.numero_imovel
-                            AND (t.tipo_real IS NULL OR t.area IS NULL
-                            OR t.aceita_financiamento IS NULL
-                            OR t.descricao IS NULL OR t.descricao = '')
-                            """
-                            extras.execute_values(cur, sql, rows, template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text)")
-                            total += cur.rowcount
-                            conn.commit()
-                            logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
-                            return total
+    import psycopg2.extras as extras
+    total = 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            for i in range(0, len(lista), batch_size):
+                batch = lista[i:i + batch_size]
+                rows = []
+                for item in batch:
+                    rows.append((
+                        item.get("numero_imovel"),
+                        item.get("tipo_real"),
+                        item.get("area"),
+                        item.get("aceita_financiamento"),
+                        item.get("descricao"),
+                    ))
+                    if not rows:
+                        continue
+                        sql = """
+                        UPDATE imoveis_caixa AS t
+                        SET
+                        tipo_real = COALESCE(t.tipo_real, v.tipo_real),
+                        area = COALESCE(t.area, v.area),
+                        aceita_financiamento = COALESCE(t.aceita_financiamento, v.aceita_financiamento),
+                        descricao = COALESCE(NULLIF(t.descricao, ''), v.descricao),
+                        updated_at = NOW()
+                        FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao)
+                        WHERE t.numero_imovel = v.numero_imovel
+                        AND (t.tipo_real IS NULL OR t.area IS NULL
+                        OR t.aceita_financiamento IS NULL
+                        OR t.descricao IS NULL OR t.descricao = '')
+                        """
+                        extras.execute_values(cur, sql, rows, template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text)")
+                        total += cur.rowcount
+                        conn.commit()
+                        logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
+                        return total
