@@ -159,6 +159,18 @@ async def run_etapa2(lote: list):
         f"{len(pares)} no lote | progresso salvo"
     )
 
+    # -- Sentinela de persistencia: falha o run se processou mas nao gravou nada
+    # (protege contra falha silenciosa tipo migracao/coluna ausente que raspa mas nao persiste)
+    processados = len(pares)
+    persistidos = ok_count
+    logger.info(f"[SENTINELA] processados={processados} | persistidos={persistidos}")
+    if processados > 0 and persistidos == 0 and not abortado:
+        logger.error(
+            f"[SENTINELA] FALHA: {processados} imoveis processados mas 0 persistidos "
+            "(nenhum rate limit) — possivel falha silenciosa de gravacao. Abortando com exit 1."
+        )
+        sys.exit(1)
+
 # -- Modo VIGIA: deteccao rapida de novos e encerrados -------------
 async def run_vigia():
     """
