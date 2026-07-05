@@ -7,6 +7,15 @@ on:
   schedule:
     - cron: '*/45 * * * *'  # a cada 45 min, 24h - ritmo educado
   workflow_dispatch:
+    inputs:
+      cadeia_num:
+        description: "Numero do elo da corrente (auto-encadeamento). Nao mexer manualmente."
+        required: false
+        default: "1"
+
+permissions:
+  contents: read
+  actions: write
 
 # Evita sobreposicao: se um run ainda esta rodando, o proximo aguarda.
 concurrency:
@@ -57,6 +66,32 @@ jobs:
           ENVEOF
 
       - name: Pipeline
+        id: pipeline
         run: cd scraper && python pipeline.py
         env:
           PYTHONUNBUFFERED: "1"
+
+      - name: Auto-encadeamento (elo seguinte se fila > 0)
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_CADEIA: "25"
+        run: |
+          FILA="${{ steps.pipeline.outputs.fila_restante }}"
+          CADEIA="${{ github.event.inputs.cadeia_num }}"
+          if [ -z "$CADEIA" ]; then CADEIA=1; fi
+          if [ -z "$FILA" ]; then FILA=0; fi
+          echo "[cadeia] elo=$CADEIA | fila_restante=$FILA | max=$MAX_CADEIA"
+          if [ "$FILA" -le 0 ]; then
+            echo "[cadeia] Fila vazia — corrente encerrada. O cron segue como backup."
+            exit 0
+          fi
+          if [ "$CADEIA" -ge "$MAX_CADEIA" ]; then
+            echo "[cadeia] Guarda-corpo: elo $CADEIA >= MAX_CADEIA ($MAX_CADEIA). Nao re-disparando. Cron religa."
+            exit 0
+          fi
+          PROX=$((CADEIA + 1))
+          echo "[cadeia] Aguardando ~150s (ritmo educado) antes de disparar elo $PROX..."
+          sleep 150
+          echo "[cadeia] Disparando elo $PROX (fila ainda em $FILA)."
+          gh workflow run scraper-caixa.yml --repo "${{ github.repository }}" --ref main -f cadeia_num="$PROX"
