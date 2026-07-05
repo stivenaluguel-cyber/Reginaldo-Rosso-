@@ -135,24 +135,24 @@ def get_connection():
         conn.close()
 
 def _run_migrations_isolated(sql_blocks):
-    """Executa cada statement de migracao isoladamente em autocommit.
+    """Executa cada BLOCO de migracao isoladamente em autocommit.
 
-    Um statement que falha (ex.: coluna ja existe) NAO deve abortar a
-    transacao e impedir os demais ALTERs (ex.: texto_detalhe_bruto).
+    IMPORTANTE: cada bloco e executado inteiro (NAO se divide por ';'),
+    porque os blocos usam DO $ ... END$ com varios ';' internos.
+    Em autocommit, uma falha de um bloco nao aborta os demais.
     """
     conn = psycopg2.connect(DATABASE_URL)
     try:
         conn.autocommit = True
         with conn.cursor() as cur:
             for block in sql_blocks:
-                for stmt in block.split(";"):
-                    s = stmt.strip()
-                    if not s:
-                        continue
-                    try:
-                        cur.execute(s)
-                    except Exception as e:
-                        logger.warning(f"Migracao statement ignorado: {e}")
+                s = (block or "").strip()
+                if not s:
+                    continue
+                try:
+                    cur.execute(s)
+                except Exception as e:
+                    logger.warning(f"Migracao bloco ignorado: {e}")
     finally:
         conn.close()
 
@@ -162,9 +162,16 @@ def init_db():
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(CREATE_TABLE_SQL)
-    # 2) Migracoes idempotentes, cada statement isolado em autocommit
-    #    para que uma falha nao aborte os ALTERs seguintes.
-    _run_migrations_isolated([MIGRATE_SQL, MIGRATE_ALERTAS_SQL])
+    # 2) Migracoes idempotentes, cada BLOCO isolado em autocommit
+    #    para que uma falha nao aborte os demais blocos.
+    #    Colunas criticas garantidas com ALTER ... IF NOT EXISTS proprio,
+    #    para nao depender do bloco DO $ maior de MIGRATE_SQL.
+    _run_migrations_isolated([
+        "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS texto_detalhe_bruto TEXT;",
+        "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS data_fim TEXT;",
+        MIGRATE_SQL,
+        MIGRATE_ALERTAS_SQL,
+    ])
     logger.info("Banco de dados inicializado e migrado (migracoes isoladas).")
 
 def get_ids_by_uf(ufs) -> set:
