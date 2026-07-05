@@ -134,22 +134,38 @@ def get_connection():
     finally:
         conn.close()
 
+def _run_migrations_isolated(sql_blocks):
+    """Executa cada statement de migracao isoladamente em autocommit.
+
+    Um statement que falha (ex.: coluna ja existe) NAO deve abortar a
+    transacao e impedir os demais ALTERs (ex.: texto_detalhe_bruto).
+    """
+    conn = psycopg2.connect(DATABASE_URL)
+    try:
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for block in sql_blocks:
+                for stmt in block.split(";"):
+                    s = stmt.strip()
+                    if not s:
+                        continue
+                    try:
+                        cur.execute(s)
+                    except Exception as e:
+                        logger.warning(f"Migracao statement ignorado: {e}")
+    finally:
+        conn.close()
+
 def init_db():
     """Cria as tabelas e executa migracoes se necessario."""
+    # 1) Criacao das tabelas base (transacional)
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(CREATE_TABLE_SQL)
-            try:
-                cur.execute(MIGRATE_SQL)
-                logger.info("Banco de dados inicializado e migrado.")
-            except Exception as e:
-                logger.warning(f"Migracao parcial (normal em primeiro run): {e}")
-            # Tabela de alertas por e-mail (idempotente)
-            try:
-                cur.execute(MIGRATE_ALERTAS_SQL)
-                logger.info("Tabela alertas_leilao verificada/criada.")
-            except Exception as e:
-                logger.warning(f"Migracao alertas parcial: {e}")
+    # 2) Migracoes idempotentes, cada statement isolado em autocommit
+    #    para que uma falha nao aborte os ALTERs seguintes.
+    _run_migrations_isolated([MIGRATE_SQL, MIGRATE_ALERTAS_SQL])
+    logger.info("Banco de dados inicializado e migrado (migracoes isoladas).")
 
 def get_ids_by_uf(ufs) -> set:
     """Retorna numero_imovel ativos apenas dos estados informados."""
