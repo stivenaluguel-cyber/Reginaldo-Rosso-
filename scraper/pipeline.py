@@ -113,6 +113,7 @@ async def run_etapa2(lote: list):
     semaphore = asyncio.Semaphore(MAX_WORKERS)
     ok_count = 0
     fail_count = 0
+    debito_count = 0
     abortado = False
 
     async with async_playwright() as pw:
@@ -122,7 +123,7 @@ async def run_etapa2(lote: list):
         )
 
         async def process_one(numero_imovel: str, uf: str):
-            nonlocal ok_count, fail_count, abortado
+            nonlocal ok_count, fail_count, debito_count, abortado
             if abortado or _e2.RATE_LIMIT_ATIVO:
                 return
             async with semaphore:
@@ -141,6 +142,8 @@ async def run_etapa2(lote: list):
                     if dados:
                         upsert_imovel(dados)
                         ok_count += 1
+                        if dados.get("debito_tributos") is not None:
+                            debito_count += 1
                         logger.info(f"[OK] {numero_imovel} UF={uf}")
                     else:
                         fail_count += 1
@@ -163,7 +166,10 @@ async def run_etapa2(lote: list):
     # (protege contra falha silenciosa tipo migracao/coluna ausente que raspa mas nao persiste)
     processados = len(pares)
     persistidos = ok_count
-    logger.info(f"[SENTINELA] processados={processados} | persistidos={persistidos}")
+    logger.info(
+        f"[SENTINELA] processados={processados} | persistidos={persistidos} | "
+        f"persistidos_com_debito={debito_count}"
+    )
     if processados > 0 and persistidos == 0 and not abortado:
         logger.error(
             f"[SENTINELA] FALHA: {processados} imoveis processados mas 0 persistidos "
@@ -329,6 +335,15 @@ async def run_pipeline():
             await run_etapa2(pares_lote)
         else:
             logger.info("Etapa 2: nenhum imovel pendente. Base completa!")
+
+        # -- Fila restante: quantos imoveis ainda faltam enriquecer (para auto-encadeamento)
+        fila_restante = 0
+        try:
+            fila_restante = len(get_pendentes_com_uf(focos, limit=100000))
+        except Exception as e:
+            logger.warning(f"Nao foi possivel contar fila restante: {e}")
+        logger.info(f"[FILA] fila_restante={fila_restante}")
+        _set_github_output("fila_restante", str(fila_restante))
 
     except Exception as e:
         logger.exception(f"Erro fatal no pipeline: {e}")
