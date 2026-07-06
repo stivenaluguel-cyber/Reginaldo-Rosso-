@@ -92,4 +92,5 @@ jobs:
           git add -A
           git diff --cached --stat
           git commit -m "reconciliar: ativos recuperados ($(date +%F\ %H:%M\ UTC))" || echo "Sem mudancas."
+          git pull --rebase origin main || true
           git push
