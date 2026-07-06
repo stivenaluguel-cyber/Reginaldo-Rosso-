@@ -6,8 +6,9 @@ Roda o parser sobre TODOS os registros que ja estao no banco:
   - descricao (do detalhe, campo descricao do banco): extrai fgts, financiamento,
     debito_tributos, debito_condominio, quartos, ocupacao
 
-Tambem preenche aceita_financiamento a partir da coluna 'financiamento' do CSV
-se o campo aceita_financiamento ainda estiver NULL no banco.
+Financiamento: a pagina de detalhe (texto_detalhe_bruto) e a fonte PRIORITARIA.
+Quando ha detalhe raspado, ela sobrescreve o valor da coluna Sim/Nao do CSV.
+Sem detalhe, o CSV preenche apenas quando aceita_financiamento estiver NULL.
 
 IMPORTANTE: so sobrescreve campos que estao NULL (nao destroca dados ja preenchidos
 pela raspagem de detalhe, que sao mais precisos).
@@ -170,9 +171,17 @@ def _processar_linha(row: dict) -> dict | None:
             update["fgts"] = det["fgts"]
             update["aceita_fgts"] = det["fgts"]
             mudou = True
-        if det.get("financiamento") is not None and row.get("aceita_financiamento") is None:
-            update["aceita_financiamento"] = det["financiamento"]
-            mudou = True
+        # Financiamento: a pagina de detalhe (texto_detalhe_bruto) e a fonte
+        # PRIORITARIA. Quando ha detalhe raspado, ela sobrescreve o valor vindo
+        # da coluna Sim/Nao do CSV (que costuma ser mais conservadora/defasada).
+        # Sem detalhe raspado, mantem o valor atual (CSV) como fallback.
+        tem_detalhe_bruto = bool(row.get("texto_detalhe_bruto"))
+        if det.get("financiamento") is not None and (
+            row.get("aceita_financiamento") is None or tem_detalhe_bruto
+        ):
+            if row.get("aceita_financiamento") != det["financiamento"]:
+                update["aceita_financiamento"] = det["financiamento"]
+                mudou = True
         if det.get("debito_tributos") and not row.get("debito_tributos"):
             update["debito_tributos"] = det["debito_tributos"]
             mudou = True
