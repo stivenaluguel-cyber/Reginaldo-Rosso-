@@ -12,6 +12,8 @@ Estrategia SEGURA (nao ressuscita vendidos):
   - Para cada candidato, raspa a pagina de detalhe (scrape_imovel, mesmo caminho
     de producao) e SO reativa/insere se o texto confirmar venda ATIVA
     ("Venda Online" / "Tempo restante") e uma data_fim futura.
+  - Garante cidade (do SEED ou da linha "Comarca:" do detalhe) para que o
+    gerar-imoveis.js (que exige cidade IS NOT NULL) nao descarte o imovel.
   - Pacing educado entre requests; aborta o lote se detectar rate limit (403/429).
   - NAO tenta burlar WAF/captcha alem do que a etapa2 ja faz em producao.
 
@@ -23,6 +25,7 @@ import argparse
 import asyncio
 import logging
 import random
+import re
 import sys
 from datetime import datetime, date
 
@@ -39,17 +42,19 @@ logging.basicConfig(
 logger = logging.getLogger("reconciliar")
 
 # IDs confirmados ATIVOS ("Venda Online") no site da Caixa em 06/07/2026,
-# porem ausentes dos nossos JSONs. uf conhecido da auditoria externa.
+# porem ausentes dos nossos JSONs. (uf, cidade) da auditoria externa.
+# cidade e necessario porque o gerador exclui linhas com cidade IS NULL e a
+# pagina de detalhe nem sempre expoe a cidade num campo limpo.
 SEED_ATIVOS = {
-    "1555514517640": "RS",
-    "1444400624799": "SC",
-    "8787705999975": "RS",
-    "1555506097930": "RS",
-    "8787700964847": "RS",
-    "8444416971521": "RS",
-    "10214866": "RS",
-    "10214912": "RS",
-    "8444427297835": "RS",
+    "1555514517640": ("RS", "SANTA MARIA"),
+    "1444400624799": ("SC", "BALNEARIO CAMBORIU"),
+    "8787705999975": ("RS", "PELOTAS"),
+    "1555506097930": ("RS", "PORTO ALEGRE"),
+    "8787700964847": ("RS", "NOVO HAMBURGO"),
+    "8444416971521": ("RS", "GRAVATAI"),
+    "10214866": ("RS", "SANTA MARIA"),
+    "10214912": ("RS", "ALEGRETE"),
+    "8444427297835": ("RS", "PELOTAS"),
 }
 
 SINAIS_ATIVO = ("venda online", "tempo restante", "valor minimo de venda")
@@ -66,11 +71,10 @@ def _status_atual(numero):
         with db.get_connection() as conn:
             cur = conn.cursor()
             cur.execute(
-                "SELECT status FROM imoveis_caixa WHERE numero_imovel=%s",
+                "SELECT status, cidade FROM imoveis_caixa WHERE numero_imovel=%s",
                 (str(numero),),
             )
-            row = cur.fetchone()
-            return row[0] if row else None
+            return cur.fetchone()  # (status, cidade) ou None
     except Exception:
         return None
 
@@ -79,12 +83,22 @@ def _listar_indisponiveis(ufs, limite):
     with db.get_connection() as conn:
         cur = conn.cursor()
         cur.execute(
-            "SELECT numero_imovel, uf FROM imoveis_caixa "
+            "SELECT numero_imovel, uf, cidade FROM imoveis_caixa "
             "WHERE status='Indisponivel' AND uf = ANY(%s) "
             "ORDER BY updated_at DESC NULLS LAST LIMIT %s",
             (list(ufs), int(limite)),
         )
-        return [(r[0], r[1]) for r in cur.fetchall()]
+        return [(r[0], r[1], r[2]) for r in cur.fetchall()]
+
+
+def _cidade_de_comarca(texto):
+    """Extrai cidade da linha 'Comarca: PELOTAS-RS' como fallback."""
+    if not texto:
+        return None
+    m = re.search(r"comarca[:\s]+([A-Za-zÀ-ÿ '\.]+?)\s*[-/]\s*[A-Z]{2}", texto, re.IGNORECASE)
+    if m:
+        return m.group(1).strip().upper()
+    return None
 
 
 def _data_fim_futura(dados):
@@ -99,7 +113,6 @@ def _data_fim_futura(dados):
 
 
 def _esta_ativo(dados):
-    """True se a pagina raspada confirma uma venda ATIVA."""
     if not dados:
         return False
     txt = _norm(dados.get("texto_detalhe_bruto"))
@@ -115,13 +128,16 @@ def _esta_ativo(dados):
 
 
 async def _reconciliar(candidatos):
+    # candidatos: lista de (numero, uf, cidade_hint)
     reativados, inseridos, pulados, nao_ativos = [], [], [], []
     total = len(candidatos)
-    for idx, (numero, uf) in enumerate(candidatos, 1):
+    for idx, (numero, uf, cidade_hint) in enumerate(candidatos, 1):
         if e2.RATE_LIMIT_ATIVO:
             logger.warning("Rate limit ativo - abortando lote e salvando progresso.")
             break
-        atual = _status_atual(numero)
+        info = _status_atual(numero)
+        atual = info[0] if info else None
+        cidade_db = info[1] if info else None
         logger.info(f"[{idx}/{total}] {numero} (uf={uf}) status_atual={atual}")
         try:
             dados = await scrape_imovel(numero, uf=uf)
@@ -143,14 +159,18 @@ async def _reconciliar(candidatos):
         dados["status"] = "Disponivel"
         if uf and not dados.get("uf"):
             dados["uf"] = uf
+        # Garante cidade: prioridade SEED/DB, depois Comarca do detalhe.
+        cidade = cidade_hint or cidade_db or _cidade_de_comarca(dados.get("texto_detalhe_bruto"))
+        if cidade:
+            dados["cidade"] = cidade
         try:
             db.upsert_imovel(dados)
             if atual is None:
                 inseridos.append(numero)
-                logger.info(f"  {numero}: INSERIDO Disponivel (data_fim={dados.get('data_fim')})")
+                logger.info(f"  {numero}: INSERIDO Disponivel (cidade={cidade}, data_fim={dados.get('data_fim')})")
             else:
                 reativados.append(numero)
-                logger.info(f"  {numero}: REATIVADO Disponivel (data_fim={dados.get('data_fim')})")
+                logger.info(f"  {numero}: REATIVADO Disponivel (cidade={cidade}, data_fim={dados.get('data_fim')})")
         except Exception as e:
             logger.warning(f"  {numero}: upsert falhou: {e}")
             pulados.append(numero)
@@ -172,14 +192,14 @@ def main():
     args = ap.parse_args()
 
     db.init_db()
-    candidatos = list(SEED_ATIVOS.items())
+    candidatos = [(n, uf, cid) for n, (uf, cid) in SEED_ATIVOS.items()]
 
     if args.indisponiveis:
         try:
             ja = {c[0] for c in candidatos}
-            for numero, uf in _listar_indisponiveis(["RS", "SC"], args.limite):
+            for numero, uf, cidade in _listar_indisponiveis(["RS", "SC"], args.limite):
                 if numero not in ja:
-                    candidatos.append((numero, uf))
+                    candidatos.append((numero, uf, cidade))
         except Exception as e:
             logger.warning(f"Falha ao listar Indisponiveis: {e}")
 
