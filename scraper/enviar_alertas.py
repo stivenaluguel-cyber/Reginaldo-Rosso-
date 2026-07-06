@@ -126,10 +126,22 @@ def parsear_data_fim(data_str):
     if not data_str:
         return None
     data_str = str(data_str).strip()
-    for fmt in ("%d/%m/%Y %H:%M", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+    # Caixa publica o encerramento em horario de Brasilia (BRT, UTC-3).
+    BRT = timezone(timedelta(hours=-3))
+    # Formatos com hora explicita (ja em BRT)
+    for fmt in ("%d/%m/%Y %H:%M", "%Y-%m-%d %H:%M:%S"):
         try:
             dt = datetime.strptime(data_str, fmt)
-            return dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=BRT)
+            return dt.astimezone(timezone.utc)
+        except ValueError:
+            pass
+    # Formatos so data (sem hora) -- assume 18:00 BRT (padrao de encerramento Caixa)
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(data_str, fmt)
+            dt = dt.replace(hour=18, minute=0, tzinfo=BRT)
+            return dt.astimezone(timezone.utc)
         except ValueError:
             pass
     return None
