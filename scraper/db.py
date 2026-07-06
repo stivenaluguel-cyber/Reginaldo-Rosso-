@@ -375,10 +375,17 @@ def upsert_imoveis_bulk(lista, batch_size=500):
 
 def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
     """
-    Atualiza em lote os campos extraidos pelo parser do CSV:
-    tipo_real, area, aceita_financiamento, descricao (se vazio).
-    Chamado pela etapa1 para TODOS os imoveis do CSV (nao so os novos).
-    So sobrescreve se o campo de destino for NULL (preserva dados da etapa2).
+    Atualiza em lote os campos vindos do CSV para TODOS os imoveis do CSV
+    (nao so os novos). Chamado pela etapa1.
+
+    Preenche (sem sobrescrever dados nao-nulos ja existentes):
+      - tipo_real, area, aceita_financiamento, descricao (se vazio);
+      - cidade, bairro, endereco, uf: FONTE DE CORRECAO. Muitos imoveis foram
+        gravados com cidade=NULL por desalinhamento de colunas na ingestao
+        inicial, e o gerar-imoveis.js exclui linhas com cidade IS NULL. Como o
+        upsert so roda para IDs novos, o CSV nunca reparava esses NULLs. Aqui
+        reaplicamos os campos de localizacao do CSV quando o valor no banco
+        estiver NULL/vazio (COALESCE preserva o que ja existe).
     """
     if not lista:
         return 0
@@ -396,6 +403,10 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         item.get("area"),
                         item.get("aceita_financiamento"),
                         item.get("descricao"),
+                        item.get("cidade"),
+                        item.get("bairro"),
+                        item.get("endereco"),
+                        item.get("uf"),
                     ))
                 if not rows:
                     continue
@@ -406,14 +417,25 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         area = COALESCE(t.area, v.area),
                         aceita_financiamento = COALESCE(t.aceita_financiamento, v.aceita_financiamento),
                         descricao = COALESCE(NULLIF(t.descricao, ''), v.descricao),
+                        cidade = COALESCE(NULLIF(t.cidade, ''), v.cidade),
+                        bairro = COALESCE(NULLIF(t.bairro, ''), v.bairro),
+                        endereco = COALESCE(NULLIF(t.endereco, ''), v.endereco),
+                        uf = COALESCE(NULLIF(t.uf, ''), v.uf),
                         updated_at = NOW()
-                        FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao)
+                        FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao, cidade, bairro, endereco, uf)
                         WHERE t.numero_imovel = v.numero_imovel
                         AND (t.tipo_real IS NULL OR t.area IS NULL
                         OR t.aceita_financiamento IS NULL
-                        OR t.descricao IS NULL OR t.descricao = '')
+                        OR t.descricao IS NULL OR t.descricao = ''
+                        OR t.cidade IS NULL OR t.cidade = ''
+                        OR t.bairro IS NULL OR t.bairro = ''
+                        OR t.endereco IS NULL OR t.endereco = ''
+                        OR t.uf IS NULL OR t.uf = '')
                 """
-                extras.execute_values(cur, sql, rows, template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text)")
+                extras.execute_values(
+                    cur, sql, rows,
+                    template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text, %s::varchar, %s::varchar, %s::text, %s::varchar)",
+                )
                 total += cur.rowcount
                 conn.commit()
         logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
