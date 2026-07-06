@@ -85,7 +85,7 @@ function cap(s){ s=String(s||"").toLowerCase(); const _part=new Set(["do","da","
 function tipoDe(desc){ const d=(desc||"").toLowerCase();
                       if(/apartamento/.test(d))return "Apartamento"; if(/sobrado/.test(d))return "Sobrado";
                       if(/casa/.test(d))return "Casa"; if(/terreno|lote|gleba/.test(d))return "Terreno";
-                      if(/loja|sala|comercial|predio|predio|galpao|galpao/.test(d))return "Imóvel comercial";
+                      if(/loja|sala comercial|comercial|predio|galpao/.test(d))return "Imóvel comercial";
                       if(/rural|chacara|chacara|sitio|sitio|fazenda/.test(d))return "Imóvel rural"; return "Imóvel"; }
 function specs(desc){ const d=desc||""; const out=[];
                      let m=d.match(/([\d.,]+)\s*de [aa]rea privativa/i)||d.match(/([\d.,]+)\s*de [aa]rea total/i);
@@ -620,7 +620,7 @@ const fgts = resolverFgts(det, i.descricao);
 const regras = [];
    if(tributos) regras.push(["Tributos (IPTU)", tributos]);
    if(condominio) regras.push(["Condominio", condominio]);
-   const regrasHTML = regras.length? '<div class="regras"><h2>Debitos e responsabilidades</h2>'+regras.map(r=>'<div class="regra"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</div>').join("")+'</div>' : '';
+   const regrasHTML = regras.length? '<div class="regras"><h2>Débitos e responsabilidades</h2>'+regras.map(r=>'<div class="regra"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</div>').join("")+'</div>' : '';
 
 // ---- bloco "Mais sobre o imóvel" (detalhes tecnicos) ----
 const mais = [];
