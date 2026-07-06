@@ -71,6 +71,14 @@ jobs:
         env:
           PYTHONUNBUFFERED: "1"
 
+      - name: Publicar site (gerar-imoveis)
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "[publicar] Disparando gerar-imoveis.yml para publicar o que este elo coletou..."
+          gh workflow run gerar-imoveis.yml --repo "${{ github.repository }}" --ref main || echo "[publicar] Falha ao disparar gerar-imoveis (nao-fatal); workflow_run e cron seguem como backup."
+
       - name: Auto-encadeamento (elo seguinte se fila > 0)
         if: ${{ always() }}
         env:
