@@ -42,11 +42,11 @@ jobs:
       - name: Playwright
         run: |
           playwright install chromium
-          playwright install-deps chromium
+          playwright install-deps chromium || echo "install-deps falhou (nao-fatal); seguindo com chromium headless"
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Dependencias Node
         run: npm install pg --no-save
