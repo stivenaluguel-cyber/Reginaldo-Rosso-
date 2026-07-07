@@ -6,7 +6,7 @@ from config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
-# ── Schema SQL ────────────────────────────────────────────────────
+# ââ Schema SQL ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS imoveis_caixa (
 id BIGSERIAL PRIMARY KEY,
@@ -78,7 +78,7 @@ END IF;
 END$;
 """
 
-# ── Tabela de alertas por e-mail ─────────────────────────────────
+# ââ Tabela de alertas por e-mail âââââââââââââââââââââââââââââââââ
 CREATE_ALERTAS_SQL = """
 CREATE TABLE IF NOT EXISTS alertas_leilao (
   id SERIAL PRIMARY KEY,
@@ -169,6 +169,7 @@ def init_db():
     _run_migrations_isolated([
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS texto_detalhe_bruto TEXT;",
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS data_fim TEXT;",
+        "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS suspeito_desde TIMESTAMP;",
         MIGRATE_SQL,
         MIGRATE_ALERTAS_SQL,
     ])
@@ -300,6 +301,44 @@ def mark_unavailable(ids: list):
                 )
                 total += cur.rowcount
                 logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
+
+def marcar_suspeitos(ids: list):
+    """Marca IDs ausentes do CSV geral como suspeito_encerrado (flag + timestamp),
+    SEM alterar status. O imovel continua Disponivel e publicado ate que
+    verificar_suspeitos_ativos confirme via pagina de detalhe."""
+    if not ids:
+        return
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE imoveis_caixa SET suspeito_desde=NOW() WHERE numero_imovel = ANY(%s) AND suspeito_desde IS NULL",
+                (list(ids),)
+            )
+            logger.info(f"Marcados {cur.rowcount} imoveis como suspeito_encerrado (aguardando confirmacao).")
+
+def limpar_suspeita(ids: list):
+    """Remove a flag de suspeita (o imovel voltou ao CSV ou foi confirmado ativo)."""
+    if not ids:
+        return
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE imoveis_caixa SET suspeito_desde=NULL WHERE numero_imovel = ANY(%s) AND suspeito_desde IS NOT NULL",
+                (list(ids),)
+            )
+            if cur.rowcount:
+                logger.info(f"Suspeita removida de {cur.rowcount} imoveis (ativos/voltaram ao CSV).")
+
+def get_suspeitos(limite: int = 15):
+    """Retorna ate `limite` suspeitos (mais recentes primeiro) para
+    verificar_suspeitos_ativos confirmar via pagina de detalhe."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT numero_imovel, uf, cidade FROM imoveis_caixa WHERE suspeito_desde IS NOT NULL AND status='Disponivel' ORDER BY suspeito_desde DESC LIMIT %s",
+                (int(limite),)
+            )
+            return [(r[0], r[1], r[2]) for r in cur.fetchall()]
 
 def upsert_imovel(data: dict):
     """Insere ou atualiza um imovel. data deve ter as chaves correspondentes as colunas."""
