@@ -643,3 +643,185 @@
 2026-07-04 15:17:49 [INFO] __main__: Etapa 2 concluido: 54 OK | 0 falhas | 54 no lote | progresso salvo
 2026-07-04 15:17:49 [INFO] __main__: === Vigia concluido: 54 novos processados, 0 encerrados ===
 2026-07-04 15:17:49 [INFO] __main__: === Vigia finalizado em 966s ===
+2026-07-07 13:53:52 [INFO] __main__: === Vigia Manha iniciado em 2026-07-07 13:53:52 ===
+2026-07-07 13:53:52 [INFO] __main__: --- Vigia: baixando CSV da Caixa ---
+2026-07-07 13:53:55 [WARNING] db: Migracao bloco ignorado: unterminated dollar-quoted string at or near "$$
+BEGIN
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='area') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN area NUMERIC(12,2);
+END IF;
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='fgts') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN fgts BOOLEAN;
+END IF;
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='tipo_real') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN tipo_real VARCHAR(50);
+END IF;
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='quartos') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN quartos SMALLINT;
+END IF;
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='data_fim') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN data_fim VARCHAR(20);
+END IF;
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='ocupacao') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN ocupacao TEXT;
+END IF;
+IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+WHERE table_name='imoveis_caixa' AND column_name='texto_detalhe_bruto') THEN
+ALTER TABLE imoveis_caixa ADD COLUMN texto_detalhe_bruto TEXT;
+END IF;
+END$;"
+LINE 1: DO $$
+           ^
+
+2026-07-07 13:53:55 [INFO] db: Banco de dados inicializado e migrado (migracoes isoladas).
+2026-07-07 13:53:55 [INFO] etapa1_csv: etapa1: Fase 0 - httpx HTTP/2...
+2026-07-07 13:53:57 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_RS.csv "HTTP/2 200 OK"
+2026-07-07 13:53:57 [INFO] etapa1_csv: etapa1: RS OK via httpx (249523 bytes)
+2026-07-07 13:53:57 [WARNING] etapa1_csv: etapa1: RS: nao foi possivel criar DataFrame
+2026-07-07 13:53:58 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SC.csv "HTTP/2 200 OK"
+2026-07-07 13:53:58 [INFO] etapa1_csv: etapa1: SC OK via httpx (54901 bytes)
+2026-07-07 13:53:58 [WARNING] etapa1_csv: etapa1: SC: nao foi possivel criar DataFrame
+2026-07-07 13:53:59 [INFO] etapa1_csv: etapa1: httpx ok=0, pendentes=2
+2026-07-07 13:53:59 [INFO] etapa1_csv: etapa1: Fase 3 - curl subprocess (amostra SP)...
+2026-07-07 13:53:59 [INFO] etapa1_csv: etapa1: curl RS conteudo invalido (18433B): '<head>   <title>Radware Bot Manager CAPTCHA</title><script type="text/javascript"> \twindow.SSJSInternal = 48397;  \tvar __uzdbm_1 = "562e4b75-4e89-4a66'
+2026-07-07 13:53:59 [INFO] etapa1_csv: etapa1: curl SC conteudo invalido (18433B): '<head>   <title>Radware Bot Manager CAPTCHA</title><script type="text/javascript"> \twindow.SSJSInternal = 48397;  \tvar __uzdbm_1 = "1f971db3-76fd-43a3'
+2026-07-07 13:53:59 [INFO] etapa1_csv: etapa1: curl ok=0, pendentes=2
+2026-07-07 13:53:59 [INFO] etapa1_csv: etapa1: Fase 1+2 - Playwright stealth para 2 estados...
+2026-07-07 13:54:06 [INFO] etapa1_csv: etapa1: RS OK via fetch-browser (249523 bytes)
+2026-07-07 13:54:06 [WARNING] etapa1_csv: etapa1: RS: nao foi possivel criar DataFrame
+2026-07-07 13:54:11 [INFO] etapa1_csv: etapa1: SC OK via fetch-browser (54901 bytes)
+2026-07-07 13:54:11 [WARNING] etapa1_csv: etapa1: SC: nao foi possivel criar DataFrame
+2026-07-07 13:54:13 [WARNING] etapa1_csv: etapa1: CSV suspeito (total_csv=0, banco=877). Pulando mark_unavailable para evitar apagar o estoque.
+2026-07-07 13:54:13 [INFO] etapa1_csv: etapa1: FINAL total_csv=0 | banco=877 | removidos=0 | novos=0 | ok=0 | falha=2
+2026-07-07 13:54:13 [INFO] __main__: CSV: 0 imoveis | 0 novos detectados
+2026-07-07 13:54:14 [INFO] __main__: Banco: 877 imoveis ativos em ['RS', 'SC']
+2026-07-07 13:54:14 [INFO] __main__: Vigia resultado: 0 novos | 877 encerrados/removidos
+2026-07-07 13:54:14 [INFO] __main__: Sinalizando 877 imoveis como suspeito_encerrado (aguardando confirmacao)...
+2026-07-07 13:54:15 [INFO] db: Marcados 877 imoveis como suspeito_encerrado (aguardando confirmacao).
+2026-07-07 13:54:16 [INFO] __main__: [SUSPEITOS] 877 imoveis sinalizados: ['8444431337412', '8787704130100', '8444429239786', '1444401205676', '8444400766680', '8787716562336', '8444401165486', '1555524525530', '8444424985030', '8555518860801']...
+2026-07-07 13:54:17 [INFO] reconciliar: [suspeito 1/15] verificando 8444426380895...
+2026-07-07 13:54:18 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8444426380895.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:54:19 [INFO] etapa2_scraper: [det-pdf 8444426380895] matricula OK (1375919B)
+2026-07-07 13:54:20 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444426380895/317c09478d2cfa66c4649c616ef41c08.pdf
+2026-07-07 13:54:20 [INFO] etapa2_scraper: [det 8444426380895] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444426380895/317c09478d2cfa66c4649c616ef41c08.pdf
+2026-07-07 13:54:50 [INFO] etapa2_scraper: [diag 8444426380895] texto=1833 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:54:53 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 13:54:53 [INFO] reconciliar:   8444426380895: CONFIRMADO ativo - suspeita removida
+2026-07-07 13:54:55 [INFO] reconciliar: [suspeito 2/15] verificando 8444420354370...
+2026-07-07 13:54:55 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8444420354370.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:54:56 [INFO] etapa2_scraper: [det-pdf 8444420354370] matricula OK (1754166B)
+2026-07-07 13:54:56 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444420354370/a08275d54ee47c3aa0da83812d0c2180.pdf
+2026-07-07 13:54:56 [INFO] etapa2_scraper: [det 8444420354370] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444420354370/a08275d54ee47c3aa0da83812d0c2180.pdf
+2026-07-07 13:55:26 [INFO] etapa2_scraper: [diag 8444420354370] texto=2417 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:55:27 [INFO] db: Marcados 1 imoveis como Indisponivel (1 atualizados)
+2026-07-07 13:55:28 [INFO] reconciliar:   8444420354370: CONFIRMADO encerrado - Indisponivel
+2026-07-07 13:55:30 [INFO] reconciliar: [suspeito 3/15] verificando 1787701804330...
+2026-07-07 13:55:31 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/SC/1787701804330.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:55:33 [INFO] etapa2_scraper: [det-pdf 1787701804330] matricula OK (2020237B)
+2026-07-07 13:55:33 [INFO] s3_uploader: PDF ja existe no S3: matriculas/1787701804330/8baf282f5a06b0514a5aa010897e115e.pdf
+2026-07-07 13:55:33 [INFO] etapa2_scraper: [det 1787701804330] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/1787701804330/8baf282f5a06b0514a5aa010897e115e.pdf
+2026-07-07 13:56:04 [INFO] etapa2_scraper: [diag 1787701804330] texto=2227 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:56:05 [INFO] db: Marcados 1 imoveis como Indisponivel (1 atualizados)
+2026-07-07 13:56:05 [INFO] reconciliar:   1787701804330: CONFIRMADO encerrado - Indisponivel
+2026-07-07 13:56:07 [INFO] reconciliar: [suspeito 4/15] verificando 8444424471362...
+2026-07-07 13:56:08 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8444424471362.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:56:09 [INFO] etapa2_scraper: [det-pdf 8444424471362] matricula OK (1255925B)
+2026-07-07 13:56:09 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444424471362/55d0a4ea0e649bca7c4770c6c0968d3f.pdf
+2026-07-07 13:56:09 [INFO] etapa2_scraper: [det 8444424471362] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444424471362/55d0a4ea0e649bca7c4770c6c0968d3f.pdf
+2026-07-07 13:56:40 [INFO] etapa2_scraper: [diag 8444424471362] texto=2305 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:56:42 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 13:56:42 [INFO] reconciliar:   8444424471362: CONFIRMADO ativo - suspeita removida
+2026-07-07 13:56:44 [INFO] reconciliar: [suspeito 5/15] verificando 8787708314981...
+2026-07-07 13:56:45 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8787708314981.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:56:46 [INFO] etapa2_scraper: [det-pdf 8787708314981] matricula OK (1104863B)
+2026-07-07 13:56:46 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8787708314981/3a539769de4bbbf9f2c60c6d4289ca7d.pdf
+2026-07-07 13:56:46 [INFO] etapa2_scraper: [det 8787708314981] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8787708314981/3a539769de4bbbf9f2c60c6d4289ca7d.pdf
+2026-07-07 13:57:17 [INFO] etapa2_scraper: [diag 8787708314981] texto=2440 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:57:19 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 13:57:19 [INFO] reconciliar:   8787708314981: CONFIRMADO ativo - suspeita removida
+2026-07-07 13:57:21 [INFO] reconciliar: [suspeito 6/15] verificando 8444433161087...
+2026-07-07 13:57:23 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8444433161087.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:57:25 [INFO] etapa2_scraper: [det-pdf 8444433161087] matricula OK (2438348B)
+2026-07-07 13:57:25 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444433161087/4c8ae5d95f973624601f0f6491ac893a.pdf
+2026-07-07 13:57:25 [INFO] etapa2_scraper: [det 8444433161087] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444433161087/4c8ae5d95f973624601f0f6491ac893a.pdf
+2026-07-07 13:57:56 [INFO] etapa2_scraper: [diag 8444433161087] texto=2441 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:57:58 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 13:57:58 [INFO] reconciliar:   8444433161087: CONFIRMADO ativo - suspeita removida
+2026-07-07 13:58:00 [INFO] reconciliar: [suspeito 7/15] verificando 10224695...
+2026-07-07 13:58:01 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/10224695.pdf "HTTP/1.1 404 Not Found"
+2026-07-07 13:58:01 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/edital/RS/10224695.pdf "HTTP/1.1 404 Not Found"
+2026-07-07 13:58:32 [INFO] etapa2_scraper: [diag 10224695] texto=2259 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:58:36 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 13:58:36 [INFO] reconciliar:   10224695: CONFIRMADO ativo - suspeita removida
+2026-07-07 13:58:38 [INFO] reconciliar: [suspeito 8/15] verificando 8444416882413...
+2026-07-07 13:58:39 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/SC/8444416882413.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:58:44 [INFO] etapa2_scraper: [det-pdf 8444416882413] matricula OK (4417494B)
+2026-07-07 13:58:44 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444416882413/40ddc1e0922611819ced6458943217ed.pdf
+2026-07-07 13:58:44 [INFO] etapa2_scraper: [det 8444416882413] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444416882413/40ddc1e0922611819ced6458943217ed.pdf
+2026-07-07 13:59:15 [INFO] etapa2_scraper: [diag 8444416882413] texto=2476 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:59:16 [INFO] db: Marcados 1 imoveis como Indisponivel (1 atualizados)
+2026-07-07 13:59:16 [INFO] reconciliar:   8444416882413: CONFIRMADO encerrado - Indisponivel
+2026-07-07 13:59:18 [INFO] reconciliar: [suspeito 9/15] verificando 8787716162702...
+2026-07-07 13:59:19 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/SC/8787716162702.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:59:21 [INFO] etapa2_scraper: [det-pdf 8787716162702] matricula OK (1810700B)
+2026-07-07 13:59:21 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8787716162702/dbd1790a55888686af20b74eb10ef0fd.pdf
+2026-07-07 13:59:21 [INFO] etapa2_scraper: [det 8787716162702] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8787716162702/dbd1790a55888686af20b74eb10ef0fd.pdf
+2026-07-07 13:59:51 [INFO] etapa2_scraper: [diag 8787716162702] texto=2170 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 13:59:52 [INFO] db: Marcados 1 imoveis como Indisponivel (1 atualizados)
+2026-07-07 13:59:52 [INFO] reconciliar:   8787716162702: CONFIRMADO encerrado - Indisponivel
+2026-07-07 13:59:55 [INFO] reconciliar: [suspeito 10/15] verificando 8444426400675...
+2026-07-07 13:59:56 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8444426400675.pdf "HTTP/1.1 200 OK"
+2026-07-07 13:59:58 [INFO] etapa2_scraper: [det-pdf 8444426400675] matricula OK (1602778B)
+2026-07-07 13:59:58 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444426400675/7c574952d76077088a15efced9f14498.pdf
+2026-07-07 13:59:58 [INFO] etapa2_scraper: [det 8444426400675] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444426400675/7c574952d76077088a15efced9f14498.pdf
+2026-07-07 14:00:28 [INFO] etapa2_scraper: [diag 8444426400675] texto=2354 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 14:00:31 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 14:00:31 [INFO] reconciliar:   8444426400675: CONFIRMADO ativo - suspeita removida
+2026-07-07 14:00:32 [INFO] reconciliar: [suspeito 11/15] verificando 1555533070273...
+2026-07-07 14:00:34 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/1555533070273.pdf "HTTP/1.1 200 OK"
+2026-07-07 14:00:35 [INFO] etapa2_scraper: [det-pdf 1555533070273] matricula OK (1164116B)
+2026-07-07 14:00:35 [INFO] s3_uploader: PDF ja existe no S3: matriculas/1555533070273/ed17bcc69f66ed5ec6705f724ff2291c.pdf
+2026-07-07 14:00:35 [INFO] etapa2_scraper: [det 1555533070273] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/1555533070273/ed17bcc69f66ed5ec6705f724ff2291c.pdf
+2026-07-07 14:01:05 [INFO] etapa2_scraper: [diag 1555533070273] texto=2222 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 14:01:06 [INFO] db: Marcados 1 imoveis como Indisponivel (1 atualizados)
+2026-07-07 14:01:07 [INFO] reconciliar:   1555533070273: CONFIRMADO encerrado - Indisponivel
+2026-07-07 14:01:09 [INFO] reconciliar: [suspeito 12/15] verificando 8444425847218...
+2026-07-07 14:01:09 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8444425847218.pdf "HTTP/1.1 200 OK"
+2026-07-07 14:01:10 [INFO] etapa2_scraper: [det-pdf 8444425847218] matricula OK (557035B)
+2026-07-07 14:01:10 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444425847218/fd459f9592a758988559c9ddb0a98f5c.pdf
+2026-07-07 14:01:10 [INFO] etapa2_scraper: [det 8444425847218] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444425847218/fd459f9592a758988559c9ddb0a98f5c.pdf
+2026-07-07 14:01:40 [INFO] etapa2_scraper: [diag 8444425847218] texto=2087 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 14:01:42 [INFO] db: Marcados 1 imoveis como Indisponivel (1 atualizados)
+2026-07-07 14:01:42 [INFO] reconciliar:   8444425847218: CONFIRMADO encerrado - Indisponivel
+2026-07-07 14:01:44 [INFO] reconciliar: [suspeito 13/15] verificando 8555535888719...
+2026-07-07 14:01:45 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/8555535888719.pdf "HTTP/1.1 200 OK"
+2026-07-07 14:01:46 [INFO] etapa2_scraper: [det-pdf 8555535888719] matricula OK (785727B)
+2026-07-07 14:01:46 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8555535888719/c68db963f69715e54cddd34b41a02021.pdf
+2026-07-07 14:01:46 [INFO] etapa2_scraper: [det 8555535888719] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8555535888719/c68db963f69715e54cddd34b41a02021.pdf
+2026-07-07 14:02:17 [INFO] etapa2_scraper: [diag 8555535888719] texto=2308 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 14:02:19 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 14:02:19 [INFO] reconciliar:   8555535888719: CONFIRMADO ativo - suspeita removida
+2026-07-07 14:02:22 [INFO] reconciliar: [suspeito 14/15] verificando 8444413003052...
+2026-07-07 14:02:22 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/SC/8444413003052.pdf "HTTP/1.1 200 OK"
+2026-07-07 14:02:22 [INFO] etapa2_scraper: [det-pdf 8444413003052] matricula OK (2361975B)
+2026-07-07 14:02:23 [INFO] s3_uploader: PDF ja existe no S3: matriculas/8444413003052/03103cda48e757a260b8c11a9223e4f8.pdf
+2026-07-07 14:02:23 [INFO] etapa2_scraper: [det 8444413003052] matricula via URL deterministica: https://s3.us-east-005.backblazeb2.com/reginaldo-rosso-docs/matriculas/8444413003052/03103cda48e757a260b8c11a9223e4f8.pdf
+2026-07-07 14:02:53 [INFO] etapa2_scraper: [diag 8444413003052] texto=2200 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 14:02:54 [INFO] db: Marcados 1 imoveis como Indisponivel (1 atualizados)
+2026-07-07 14:02:54 [INFO] reconciliar:   8444413003052: CONFIRMADO encerrado - Indisponivel
+2026-07-07 14:02:56 [INFO] reconciliar: [suspeito 15/15] verificando 10150725...
+2026-07-07 14:02:57 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/matricula/RS/10150725.pdf "HTTP/1.1 404 Not Found"
+2026-07-07 14:02:57 [INFO] httpx: HTTP Request: GET https://venda-imoveis.caixa.gov.br/editais/edital/RS/10150725.pdf "HTTP/1.1 404 Not Found"
+2026-07-07 14:03:27 [INFO] etapa2_scraper: [diag 10150725] texto=1893 chars | trecho='Ajuda para Acessar › Imprensa / EN / Imprensa Seguranca Downloads Sobre a Caixa Produtos Beneficios e Programas Atendimento Poder Publico Buscar  Acessar minha conta  Inicio › Produtos para voce › Imo'
+2026-07-07 14:03:32 [INFO] db: Suspeita removida de 1 imoveis (ativos/voltaram ao CSV).
+2026-07-07 14:03:32 [INFO] reconciliar:   10150725: CONFIRMADO ativo - suspeita removida
+2026-07-07 14:03:34 [INFO] reconciliar: === Verificacao de suspeitos concluida: 8 ativos, 7 encerrados, 0 pulados ===
+2026-07-07 14:03:34 [INFO] __main__: Suspeitos verificados: 8 ativos, 7 encerrados
+2026-07-07 14:03:34 [INFO] __main__: === Vigia concluido: 0 novos processados, 877 encerrados ===
+2026-07-07 14:03:34 [INFO] __main__: === Vigia finalizado em 583s ===
