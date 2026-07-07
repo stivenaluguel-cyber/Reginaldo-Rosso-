@@ -58,8 +58,8 @@ SEED_ATIVOS = {
 }
 
 SINAIS_ATIVO = ("venda online", "tempo restante", "valor minimo de venda")
-SINAIS_ENCERRADO = ("encerrad", "nao esta disponivel", "não está disponível",
-                    "imovel vendido", "imóvel vendido", "indisponivel para venda")
+SINAIS_ENCERRADO = ("encerrad", "nao esta disponivel", "nÃ£o estÃ¡ disponÃ­vel",
+                    "imovel vendido", "imÃ³vel vendido", "indisponivel para venda")
 
 
 def _norm(t):
@@ -95,7 +95,7 @@ def _cidade_de_comarca(texto):
     """Extrai cidade da linha 'Comarca: PELOTAS-RS' como fallback."""
     if not texto:
         return None
-    m = re.search(r"comarca[:\s]+([A-Za-zÀ-ÿ '\.]+?)\s*[-/]\s*[A-Z]{2}", texto, re.IGNORECASE)
+    m = re.search(r"comarca[:\s]+([A-Za-zÃ-Ã¿ '\.]+?)\s*[-/]\s*[A-Z]{2}", texto, re.IGNORECASE)
     if m:
         return m.group(1).strip().upper()
     return None
@@ -183,6 +183,70 @@ async def _reconciliar(candidatos):
     logger.info(f"Pulados    ({len(pulados)}): {pulados}")
     return reativados, inseridos, nao_ativos, pulados
 
+
+async def verificar_suspeitos_ativos(limite=15):
+    """Verifica a pagina de detalhe dos imoveis marcados como suspeito_encerrado
+    (ausentes do CSV geral, mas ainda nao confirmados como encerrados).
+
+    Usa o MESMO caminho de producao (scrape_imovel), sem burlar WAF/captcha.
+    Se confirmar ATIVO: limpa a suspeita e atualiza os dados (fica imune a
+    re-remocao ate a proxima ausencia do CSV). Se confirmar ENCERRADO: marca
+    Indisponivel de verdade. Se a raspagem falhar/rate-limit: mantem a
+    suspeita para tentar de novo no proximo run.
+
+    Lote limitado (padrao 15) para pacing educado - prioriza os suspeitos
+    mais recentes primeiro.
+    """
+    candidatos = db.get_suspeitos(limite)
+    if not candidatos:
+        logger.info("Nenhum suspeito para verificar.")
+        return [], []
+
+    confirmados_ativos, confirmados_encerrados, pulados = [], [], []
+    total = len(candidatos)
+    for idx, (numero, uf, cidade_hint) in enumerate(candidatos, 1):
+        if e2.RATE_LIMIT_ATIVO:
+            logger.warning("Rate limit ativo - abortando verificacao de suspeitos.")
+            break
+        logger.info(f"[suspeito {idx}/{total}] verificando {numero}...")
+        try:
+            dados = await scrape_imovel(numero, uf=uf)
+        except Exception as e:
+            logger.warning(f"  {numero}: erro na raspagem: {e}")
+            pulados.append(numero)
+            await asyncio.sleep(random.uniform(1.5, 2.5))
+            continue
+        if dados is None:
+            logger.warning(f"  {numero}: sem dados (rate limit/falha) - mantendo suspeita")
+            pulados.append(numero)
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+            continue
+        if _esta_ativo(dados):
+            cidade = cidade_hint or _cidade_de_comarca(dados.get("texto_detalhe_bruto"))
+            if cidade:
+                dados["cidade"] = cidade
+            dados["status"] = "Disponivel"
+            if uf and not dados.get("uf"):
+                dados["uf"] = uf
+            try:
+                db.upsert_imovel(dados)
+            except Exception as e:
+                logger.warning(f"  {numero}: upsert falhou: {e}")
+            db.limpar_suspeita([numero])
+            confirmados_ativos.append(numero)
+            logger.info(f"  {numero}: CONFIRMADO ativo - suspeita removida")
+        else:
+            db.mark_unavailable([numero])
+            confirmados_encerrados.append(numero)
+            logger.info(f"  {numero}: CONFIRMADO encerrado - Indisponivel")
+        await asyncio.sleep(random.uniform(1.5, 2.5))
+
+    logger.info(
+        f"=== Verificacao de suspeitos concluida: "
+        f"{len(confirmados_ativos)} ativos, {len(confirmados_encerrados)} encerrados, "
+        f"{len(pulados)} pulados ==="
+    )
+    return confirmados_ativos, confirmados_encerrados
 
 def main():
     ap = argparse.ArgumentParser()
