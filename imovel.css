@@ -161,7 +161,7 @@ footer b{color:#fff}
 /* ===== ETAPA 2: layout 2 colunas via float independente (foto/widget/descricao/documentos na esquerda; preco/regras/mais/cta/nota na direita) - evita gaps de altura entre colunas ===== */
 .ph img{transform:scale(1.06)}
 .regras h2,.mais h2,.docs h2{font-size:1.02rem;color:var(--ink);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-.dethead{clear:both}
+.dethead{max-width:1000px;margin:0 auto;padding:0 20px;box-sizing:border-box}
 .ph{float:left;width:55%;box-sizing:border-box;padding-right:13px}
 .alerta-card{float:left;width:55%;box-sizing:border-box;padding-right:13px;margin-top:16px;clear:left}
 .desc-chips{float:left;width:55%;box-sizing:border-box;padding-right:13px;margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;clear:left}
