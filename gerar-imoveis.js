@@ -768,6 +768,7 @@ const ldBreadcrumb = {
    ${specsHTML}
       </div>
    <main class="det">
+   <div class="col-left">
    <div class="ph">
    <div class="pholder">${esc(i.tipo)}</div>
    <img src="${foto}" alt="${esc(titulo)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
@@ -845,7 +846,12 @@ ${      (function(){
         '<\/script>'
       ].join("\n");
     })()}
-    <div class="price-block" id="price-block">
+${descChipsHTML(i.descricao)}
+${docsHTML}
+
+</div>
+<div class="col-right">
+<div class="price-block" id="price-block">
      <div class="price-block__row price-block__lance">
        <span class="price-block__label">Lance mínimo</span>
        <span class="price price--hero">${brl(i.preco)}</span>
@@ -891,16 +897,13 @@ ${htmlOcupacaoDetalhe(det.ocupacao || null)}
 
    ${maisHTML}
 
-   ${descChipsHTML(i.descricao)}
-
-         ${docsHTML}
-
    <div class="cta">
    <a class="btn gold" href="${wa}" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"></path></svg> Falar com o corretor sobre este imóvel</a>
    <a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg> Ficha oficial Caixa</a>
    <button class="btn share" id="sh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> Compartilhar</button>
    </div>
    ${notaHTML}
+   </div>
    <p class="back"><a href="../imoveis.html">&larr; Ver todos os imóveis</a></p>
    </main>
 
