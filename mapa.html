@@ -5,10 +5,10 @@
 <!-- Google Analytics (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-S00J9QCC99"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-S00J9QCC99');
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-S00J9QCC99');
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f324c">
@@ -36,55 +36,73 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  :root{--navy:#1f324c;--navy2:#27405f;--navy-d:#172638;--gold:#c6a052;--gold-soft:#d9c79f;--cream:#e7dcc2;--bg:#eef1f4;--card:#fff;--ink:#1f324c;--ink2:#33485f;--muted:#6b7c8e;--line:#e2e7ec}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Montserrat',-apple-system,system-ui,Arial,sans-serif;color:var(--ink2);background:var(--bg);line-height:1.6}
-  a{color:inherit;text-decoration:none}
-  .wrap{max-width:1240px;margin:0 auto;padding:0 20px}
-  h1{color:var(--ink);line-height:1.15}
+:root{--navy:#1f324c;--navy2:#27405f;--navy-d:#172638;--gold:#c6a052;--gold-soft:#d9c79f;--cream:#e7dcc2;--bg:#eef1f4;--card:#fff;--ink:#1f324c;--ink2:#33485f;--muted:#6b7c8e;--line:#e2e7ec}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',-apple-system,system-ui,Arial,sans-serif;color:var(--ink2);background:var(--bg);line-height:1.6}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+h1{color:var(--ink);line-height:1.15}
 
-  header{background:linear-gradient(180deg,var(--navy2),var(--navy));position:sticky;top:0;z-index:1000;box-shadow:0 2px 14px rgba(0,0,0,.18)}
-  .topbar{display:flex;align-items:center;gap:26px;padding:13px 20px;max-width:1280px;margin:0 auto}
-  .brand{display:flex;align-items:center;gap:12px}
-  .brand .logo{width:42px;height:42px;flex:0 0 42px}
-  .brand .bt{display:flex;flex-direction:column;line-height:1.05}
-  .brand .bt b{color:#fff;font-size:1rem;font-weight:700}
-  .brand .bt small{color:var(--gold-soft);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;margin-top:3px}
-  nav.menu{display:flex;gap:20px;margin-left:6px;flex:1}
-  nav.menu a{color:var(--cream);font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:6px 0;border-bottom:2px solid transparent;white-space:nowrap}
-  nav.menu a:hover,nav.menu a.on{color:#fff;border-color:var(--gold)}
-  .fones{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
-  .fones a{color:var(--gold-soft);font-size:.86rem;font-weight:600;display:flex;align-items:center;gap:6px}
-  .fones a:hover{color:#fff}.fones svg{width:14px;height:14px;fill:var(--gold)}
-  .burger{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:6px}
-  .burger span{width:25px;height:2px;background:var(--cream);display:block}
-  .mobile{display:none;background:var(--navy-d)}
-  .mobile a{display:block;color:var(--cream);padding:13px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
-  .mobile.open{display:block}.mobile .mf{color:var(--gold-soft);text-transform:none;letter-spacing:0}
+header{background:linear-gradient(180deg,var(--navy2),var(--navy));position:sticky;top:0;z-index:1000;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+.topbar{display:flex;align-items:center;gap:26px;padding:13px 20px;max-width:1280px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .logo{width:42px;height:42px;flex:0 0 42px}
+.brand .bt{display:flex;flex-direction:column;line-height:1.05}
+.brand .bt b{color:#fff;font-size:1rem;font-weight:700}
+.brand .bt small{color:var(--gold-soft);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;margin-top:3px}
+nav.menu{display:flex;gap:20px;margin-left:6px;flex:1}
+nav.menu a{color:var(--cream);font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:6px 0;border-bottom:2px solid transparent;white-space:nowrap}
+nav.menu a:hover,nav.menu a.on{color:#fff;border-color:var(--gold)}
+.fones{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+.fones a{color:var(--gold-soft);font-size:.86rem;font-weight:600;display:flex;align-items:center;gap:6px}
+.fones a:hover{color:#fff}.fones svg{width:14px;height:14px;fill:var(--gold)}
+.burger{display:none;background:none;border:0;cursor:pointer;flex-direction:column;gap:5px;padding:6px}
+.burger span{width:25px;height:2px;background:var(--cream);display:block}
+.mobile{display:none;background:var(--navy-d)}
+.mobile a{display:block;color:var(--cream);padding:13px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.mobile.open{display:block}.mobile .mf{color:var(--gold-soft);text-transform:none;letter-spacing:0}
 
-  .hero{padding:30px 0 6px}
-  .hero .k{color:var(--gold);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
-  .hero h1{font-size:clamp(1.6rem,3.2vw,2.2rem);font-weight:800;margin:8px 0 6px}
-  .hero p{color:var(--muted);max-width:680px}
-  .stat{display:inline-flex;gap:8px;align-items:center;margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-size:.85rem;font-weight:600;color:var(--ink2)}
-  .stat b{color:var(--navy)}
+.hero{padding:30px 0 6px}
+.hero .k{color:var(--gold);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+.hero h1{font-size:clamp(1.6rem,3.2vw,2.2rem);font-weight:800;margin:8px 0 6px}
+.hero p{color:var(--muted);max-width:680px}
+.stat{display:inline-flex;gap:8px;align-items:center;margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-size:.85rem;font-weight:600;color:var(--ink2)}
+.stat b{color:var(--navy)}
 
-  #map{height:560px;border-radius:16px;margin:18px 0 8px;border:1px solid var(--line);box-shadow:0 12px 34px rgba(31,50,76,.10);background:#dfe5ec;z-index:1}
-  .maperr{display:none;padding:26px;text-align:center;color:var(--muted)}
-  .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:.85rem;margin-bottom:10px}
-  .legend .dot{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid var(--navy);margin-right:6px;vertical-align:-2px}
-  .leaflet-popup-content{font-family:'Montserrat',sans-serif}
-  .pop b{color:var(--navy);font-size:1rem}
-  .pop a{display:inline-block;margin-top:8px;background:var(--navy);color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;font-size:.84rem}
-  .pop a:hover{background:var(--gold);color:var(--navy)}
-  .tip{background:var(--navy);color:#fff;border:0;border-radius:6px;font-weight:700;font-size:.72rem;padding:2px 6px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-  .tip::before{display:none}
+.filters{padding:16px 0 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.fbar{display:grid;grid-template-columns:1.2fr 1fr 1.2fr 1fr 1.2fr 1.2fr auto;gap:10px}
+.field label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:0 0 5px 2px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field input,.field select{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-weight:500;font-size:.92rem;padding:11px 12px;outline:none}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.field select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px;background-size:5px 5px;background-repeat:no-repeat}
+.clearbtn{align-self:end;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--muted);font-family:inherit;font-weight:700;font-size:.85rem;padding:11px 14px;cursor:pointer;white-space:nowrap}
+.clearbtn:hover{border-color:var(--gold);color:var(--ink)}
+.fcount{margin-top:12px;font-size:.85rem;color:var(--muted)}.fcount b{color:var(--ink)}
+.pslider{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:12px;padding:4px 0}
+.pslider-label{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);font-weight:700;white-space:nowrap;flex-shrink:0;min-width:80px}
+.pslider-track{position:relative;height:18px;display:flex;align-items:center;flex:1;min-width:200px}
+.pslider-rail{position:absolute;left:0;right:0;height:4px;background:#cdd4da;border-radius:2px}
+.pslider-fill{position:absolute;height:4px;background:var(--gold);border-radius:2px;pointer-events:none}
+.pslider input[type=range]{position:absolute;width:100%;margin:0;height:4px;background:transparent;-webkit-appearance:none;pointer-events:none;border:none;outline:none}
+.pslider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:#c6a052;border:2px solid #eef1f4;cursor:pointer;pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.pslider input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#c6a052;border:2px solid #eef1f4;cursor:pointer;pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 
-  footer{background:var(--navy-d);color:#9fb0c0;padding:30px 22px;font-size:.84rem;line-height:1.7;text-align:center;margin-top:24px}
-  footer b{color:#fff}
-  .wafloat{position:fixed;right:22px;bottom:22px;width:60px;height:60px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:1000}
-  .wafloat svg{width:32px;height:32px;fill:#fff}
-  /* FONE DROPDOWNS */
+#map{height:560px;border-radius:16px;margin:18px 0 8px;border:1px solid var(--line);box-shadow:0 12px 34px rgba(31,50,76,.10);background:#dfe5ec;z-index:1}
+.maperr{display:none;padding:26px;text-align:center;color:var(--muted)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:.85rem;margin-bottom:10px}
+.legend .dot{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid var(--navy);margin-right:6px;vertical-align:-2px}
+.leaflet-popup-content{font-family:'Montserrat',sans-serif}
+.pop b{color:var(--navy);font-size:1rem}
+.pop a{display:inline-block;margin-top:8px;background:var(--navy);color:#fff;padding:8px 14px;border-radius:8px;font-weight:700;font-size:.84rem}
+.pop a:hover{background:var(--gold);color:var(--navy)}
+.tip{background:var(--navy);color:#fff;border:0;border-radius:6px;font-weight:700;font-size:.72rem;padding:2px 6px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.tip::before{display:none}
+
+footer{background:var(--navy-d);color:#9fb0c0;padding:30px 0;font-size:.84rem;line-height:1.7;text-align:center;margin-top:24px}
+footer b{color:#fff}
+.wafloat{position:fixed;right:22px;bottom:22px;width:60px;height:60px;border-radius:50%;background:#25D366;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:1000}
+.wafloat svg{width:32px;height:32px;fill:#fff}
+/* FONE DROPDOWNS */
 .fones{flex-direction:row;gap:8px;align-items:center}
 .fone-drop{position:relative}
 .fone-btn{background:transparent;border:1.5px solid var(--gold-soft);color:var(--gold-soft);font-family:inherit;font-size:.78rem;font-weight:700;letter-spacing:.06em;padding:5px 11px;border-radius:6px;cursor:pointer;transition:.2s;white-space:nowrap}
@@ -95,13 +113,20 @@
 .fone-menu a:hover{background:rgba(198,160,82,.12);color:#fff}
 .fone-menu svg{width:13px;height:13px;fill:var(--gold);flex:0 0 13px}
 @media(max-width:1080px){nav.menu,.fones{display:none}.burger{display:flex;margin-left:auto}#map{height:460px}}
+@media(max-width:880px){
+.fbar{grid-template-columns:1fr 1fr;gap:8px}
+.fbar .field:first-child{grid-column:1/-1}
+.fbar .clearbtn{grid-column:1/-1;width:100%}
+.pslider{grid-column:1/-1;min-width:0;max-width:100%}
+}
+@media(max-width:480px){#map{height:400px}}
 </style>
 
-  <!-- Meta Pixel Code -->
-  <script>
-  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','2118239195406628');fbq('track','PageView');</script>
-  <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2118239195406628&ev=PageView&noscript=1"/></noscript>
-  <!-- End Meta Pixel Code -->
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','2118239195406628');fbq('track','PageView');</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=2118239195406628&ev=PageView&noscript=1"/></noscript>
+<!-- End Meta Pixel Code -->
 <!-- Google Ads Tag -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-872430371"></script>
 <script>
@@ -114,182 +139,327 @@ gtag('config','AW-872430371');
 
 </head>
 <body>
-
 <header>
-  <div class="topbar">
-    <a class="brand" href="index.html">
-      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 23h5v5" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="42" width="4" height="8" fill="#c6a052"/><rect x="26" y="38" width="4" height="12" fill="#c6a052"/><rect x="34" y="40" width="4" height="10" fill="#c6a052"/></svg>
-      <span class="bt"><b>Reginaldo Rosso</b><small>Imóveis Caixa · RS &amp; SC</small></span>
-    </a>
-    <nav class="menu">
-      <a href="index.html">Início</a>
-      <a href="imoveis.html">Imóveis Caixa</a>
-      <a href="mapa.html" class="on">Mapa</a>
-      <a href="como-funciona.html">Como funciona</a>
-    <a href="gestao.html">Gestão</a>
-      <a href="gestao.html">Gestão</a>
-      <a href="index.html#relatorio">Relatório</a>
-      <a href="index.html#contato">Contato</a>
-    </nav>
-    <div class="fones">
-      <a href="tel:5551991104976"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 99110-4976 · RS</a>
-      <a href="tel:5548991642332"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99164-2332 · SC</a>
-    </div>
-    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
-  </div>
-  <div class="mobile" id="mobile">
-    <a href="index.html">Início</a>
-    <a href="imoveis.html">Imóveis Caixa</a>
-    <a href="mapa.html">Mapa</a>
-    <a href="como-funciona.html">Como funciona</a>
-    <a href="index.html#relatorio">Relatório</a>
-    <a href="index.html#contato">Contato</a>
-    <a class="mf" href="tel:5551991104976">📞 (51) 99110-4976 · RS</a>
-    <a class="mf" href="tel:5548991642332">📞 (48) 99164-2332 · SC</a>
-  </div>
+<div class="topbar">
+<a class="brand" href="index.html">
+<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 23h5v5" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="42" width="4" height="8" fill="#c6a052"/><rect x="26" y="38" width="4" height="12" fill="#c6a052"/><rect x="34" y="40" width="4" height="10" fill="#c6a052"/></svg>
+<span class="bt"><b>Reginaldo Rosso</b><small>Imóveis Caixa · RS &amp; SC</small></span>
+</a>
+<nav class="menu">
+<a href="index.html">Início</a>
+<a href="imoveis.html">Imóveis Caixa</a>
+<a href="mapa.html" class="on">Mapa</a>
+<a href="como-funciona.html">Como funciona</a>
+<a href="gestao.html">Gestão</a>
+<a href="calculadora.html">Calculadora ROI</a>
+<a href="index.html#contato">Contato</a>
+</nav>
+<div class="fones">
+<div class="fone-drop">
+<button class="fone-btn">Allan ▾</button>
+<div class="fone-menu">
+<a href="tel:5551991104976"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 99110-4976 · RS</a>
+<a href="tel:5548991642332"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99164-2332 · SC</a>
+</div>
+</div>
+<div class="fone-drop">
+<button class="fone-btn">Reginaldo ▾</button>
+<div class="fone-menu">
+<a href="tel:5551982017867"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (51) 98201-7867 · RS</a>
+<a href="tel:5548999359022"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg> (48) 99935-9022 · SC</a>
+</div>
+</div>
+</div>
+<button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+</div>
+<div class="mobile" id="mobile">
+<a href="index.html">Início</a>
+<a href="imoveis.html">Imóveis Caixa</a>
+<a href="mapa.html">Mapa</a>
+<a href="como-funciona.html">Como funciona</a>
+<a href="gestao.html">Gestão</a>
+<a href="calculadora.html">Calculadora ROI</a>
+<a href="index.html#contato">Contato</a>
+<a class="mf" href="tel:5551991104976">📞 Allan (51) 99110-4976 · RS</a>
+<a class="mf" href="tel:5548991642332">📞 Allan (48) 99164-2332 · SC</a>
+<a class="mf" href="tel:5551982017867">📞 Reginaldo (51) 98201-7867 · RS</a>
+<a class="mf" href="tel:5548999359022">📞 Reginaldo (48) 99935-9022 · SC</a>
+</div>
 </header>
 
 <div class="hero wrap">
-  <div class="k">Onde estão os imóveis</div>
-  <h1>Mapa dos imóveis da Caixa</h1>
-  <p>Veja em quais cidades do RS e SC há imóveis disponíveis. O tamanho do círculo mostra a quantidade — clique para ver os imóveis daquela cidade.</p>
-  <div class="stat" id="stat">Carregando mapa…</div>
+<div class="k">Onde estão os imóveis</div>
+<h1>Mapa dos imóveis da Caixa</h1>
+<p>Veja em quais cidades do RS e SC há imóveis disponíveis. O tamanho do círculo mostra a quantidade — clique para ver os imóveis daquela cidade.</p>
+<div class="stat" id="stat">Carregando mapa…</div>
 </div>
 
+<section class="filters">
 <div class="wrap">
-  <div class="legend"><span><span class="dot"></span>Cada círculo é uma cidade — quanto maior, mais imóveis</span></div>
-  <div id="map"></div>
-  <div class="maperr" id="maperr">Não foi possível carregar o mapa agora. Tente recarregar a página, ou veja a <a href="imoveis.html" style="color:var(--navy);font-weight:700">lista de imóveis</a>.</div>
+<div class="fbar">
+<div class="field"><label for="f-cidade">Cidade</label><select id="f-cidade"><option value="">Todas</option></select></div>
+<div class="field"><label for="f-tipo">Tipo</label><select id="f-tipo"><option value="">Todos</option></select></div>
+<div class="field"><label for="f-modalidade">Modalidade</label><select id="f-modalidade"><option value="">Todas</option></select></div>
+<div class="field"><label for="f-financiamento">Financiamento</label><select id="f-financiamento"><option value="">Todos</option></select></div>
+<div class="field"><label for="f-dtrib">Déb. Tributos</label><select id="f-dtrib"><option value="">Todos</option></select></div>
+<div class="field"><label for="f-dcond">Déb. Condomínio</label><select id="f-dcond"><option value="">Todos</option></select></div>
+<button class="clearbtn" id="f-clear">Limpar</button>
+<div class="field pslider" id="pslider">
+<label class="pslider-label">Preço: <span id="pMinLbl" style="font-weight:400;text-transform:none;letter-spacing:0">Qualquer</span></label>
+<div class="pslider-track">
+<div class="pslider-rail"></div>
+<div class="pslider-fill" id="pFill"></div>
+<input type="range" id="pRangeMin" min="0" max="1000000" step="5000" value="0">
+<input type="range" id="pRangeMax" min="0" max="1000000" step="5000" value="1000000">
+</div>
+</div>
+</div>
+<div class="fcount" id="fcount"></div>
+</div>
+</section>
+
+<div class="wrap">
+<div class="legend"><span><span class="dot"></span>Cada círculo é uma cidade — quanto maior, mais imóveis</span></div>
+<div id="map"></div>
+<div class="maperr" id="maperr">Não foi possível carregar o mapa agora. Tente recarregar a página, ou veja a <a href="imoveis.html" style="color:var(--navy);font-weight:700">lista de imóveis</a>.</div>
 </div>
 
 <footer>
-  <b>Reginaldo Rosso</b> — Corretor de Imóveis · CRECI/RS 28565J · CRECI/SC 8152J<br>
-  Localização aproximada por cidade. Este site é um canal de um corretor credenciado e não é um site oficial da CAIXA.
+<div class="wrap">
+Dados obtidos da base pública da CAIXA Econômica Federal, atualizados diariamente. Valores e situação podem mudar — confirme sempre no edital oficial.<br>
+© 2026 — Reginaldo Rosso · Corretor de Imóveis · CRECI/RS 28565J · CRECI/SC 8152J.
+</div>
 </footer>
 
 <a class="wafloat" href="https://wa.me/5551991104976" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94zm11.38-5.46c-.07-.12-.27-.2-.57-.35s-1.76-.87-2.03-.97-.47-.15-.67.15-.77.96-.94 1.16-.35.22-.65.07a8.1 8.1 0 01-2.38-1.47 9 9 0 01-1.65-2.05c-.17-.3 0-.45.13-.6.13-.13.3-.35.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52s-.67-1.6-.91-2.2c-.24-.58-.49-.5-.67-.5l-.57-.01c-.2 0-.52.07-.79.37s-1.04 1.01-1.04 2.46 1.06 2.86 1.21 3.06c.15.2 2.09 3.2 5.07 4.48.71.3 1.26.49 1.69.63.71.22 1.35.19 1.86.12.57-.09 1.76-.72 2-1.41.25-.7.25-1.29.18-1.42z"/></svg></a>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  document.getElementById('burger').addEventListener('click',function(){document.getElementById('mobile').classList.toggle('open');});
+document.getElementById('burger').addEventListener('click',function(){document.getElementById('mobile').classList.toggle('open');});
+document.querySelectorAll('#mobile a').forEach(function(a){a.addEventListener('click',function(){document.getElementById('mobile').classList.remove('open');});});
 
-  // Fontes de dados (mesmos CSVs do portal)
-  const FONTES=[{u:"Lista_imoveis_RS.csv",uf:"RS"},{u:"Lista_imoveis_SC.csv",uf:"SC"}];
-  const UF_NOME={RS:"Rio Grande do Sul",SC:"Santa Catarina"};
+// Coordenadas (centro aproximado) das cidades — cobre as principais.
+// Cidades fora desta lista são posicionadas automaticamente (geocodificação) e guardadas no navegador.
+const COORDS={
+"PORTO ALEGRE":[-30.0346,-51.2177],"PELOTAS":[-31.7649,-52.3371],"CAXIAS DO SUL":[-29.1678,-51.1794],
+"GRAVATAI":[-29.9444,-50.9919],"SAO LEOPOLDO":[-29.7603,-51.1472],"CANOAS":[-29.9178,-51.1836],
+"ALVORADA":[-29.9897,-51.0809],"SAPUCAIA DO SUL":[-29.8276,-51.1453],"NOVO HAMBURGO":[-29.6783,-51.1306],
+"JOINVILLE":[-26.3045,-48.8487],"CACHOEIRINHA":[-29.9511,-51.0939],"BLUMENAU":[-26.9194,-49.0661],
+"SAO JOSE":[-27.6136,-48.6366],"CRICIUMA":[-28.6775,-49.3697],"ESTEIO":[-29.8606,-51.1842],
+"VIAMAO":[-30.0811,-51.0233],"PALHOCA":[-27.6386,-48.6703],"MONTENEGRO":[-29.6883,-51.4615],
+"PASSO FUNDO":[-28.2576,-52.4091],"SANTA MARIA":[-29.6868,-53.8149],"URUGUAIANA":[-29.7547,-57.0883],
+"RIO GRANDE":[-32.0350,-52.0986],"TRAMANDAI":[-29.9847,-50.1322],"CHAPECO":[-27.1004,-52.6152],
+"BAGE":[-31.3314,-54.1069],"SANTA CRUZ DO SUL":[-29.7175,-52.4258],"BIGUACU":[-27.4939,-48.6556],
+"GUAIBA":[-30.1086,-51.3250],"CAPAO DO LEAO":[-31.7625,-52.4912],"ESTANCIA VELHA":[-29.6481,-51.1761],
+"LAJEADO":[-29.4669,-51.9614],"SAO JOAO BATISTA":[-27.2756,-48.8497],"TUBARAO":[-28.4666,-49.0069],
+"CAMAQUA":[-30.8511,-51.8122],"CARLOS BARBOSA":[-29.2975,-51.5036],"CHARQUEADAS":[-29.9558,-51.6253],
+"CRUZ ALTA":[-28.6386,-53.6064],"SANTO ANGELO":[-28.2992,-54.2631],"SAPIRANGA":[-29.6383,-51.0069],
+"ARAQUARI":[-26.3702,-48.7222],"ICARA":[-28.7136,-49.3047],"INDAIAL":[-26.8978,-49.2317],
+"LAGES":[-27.8161,-50.3259],"CACAPAVA DO SUL":[-30.5125,-53.4914],"CARAZINHO":[-28.2839,-52.7864],
+"ERECHIM":[-27.6339,-52.2739],"GRAMADO":[-29.3747,-50.8761],"OSORIO":[-29.8869,-50.2697],
+"QUARAI":[-30.3878,-56.4514],"SANTO ANTONIO DA PATRULHA":[-29.8225,-50.5189],"SAO MARCOS":[-28.9706,-51.0681],
+"SARANDI":[-27.9444,-52.9233],"SOLEDADE":[-28.8181,-52.5100],"VERA CRUZ":[-29.7178,-52.5147],
+"BRUSQUE":[-27.0978,-48.9106],"DIONISIO CERQUEIRA":[-26.2656,-53.6383],"ITAJAI":[-26.9078,-48.6619],
+"JARAGUA DO SUL":[-26.4851,-49.0667],"MAFRA":[-26.1114,-49.8050],"MORRO DA FUMACA":[-28.6519,-49.2169],
+"VIDEIRA":[-27.0083,-51.1517],"BENTO GONCALVES":[-29.1681,-51.5189],"CAMPO BOM":[-29.6747,-51.0600],
+"CAPAO DA CANOA":[-29.7456,-50.0103],"CIDREIRA":[-30.1811,-50.2056],"DOM PEDRITO":[-30.9828,-54.6731],
+"ELDORADO DO SUL":[-30.0847,-51.6189],"ESTRELA":[-29.5000,-51.9650],"FARROUPILHA":[-29.2250,-51.3478],
+"IJUI":[-28.3878,-53.9150],"IMBE":[-29.9747,-50.1278],"ITAQUI":[-29.1253,-56.5531],
+"JAGUARAO":[-32.5661,-53.3756],"NOVA PETROPOLIS":[-29.3756,-51.1136],"NOVA SANTA RITA":[-29.8517,-51.2822],
+"PANAMBI":[-28.2922,-53.5017],"PAROBE":[-29.6294,-50.8344],"SAO JERONIMO":[-29.9600,-51.7222],
+"SAO LUIZ GONZAGA":[-28.4083,-54.9608],"TAQUARA":[-29.6506,-50.7806],"TORRES":[-29.3353,-49.7269],
+"TRES PASSOS":[-27.4561,-53.9319],"TRIUNFO":[-29.9450,-51.7136],"VERANOPOLIS":[-28.9361,-51.5536],
+"XANGRI-LA":[-29.8067,-50.0506],"ARARANGUA":[-28.9356,-49.4861],"BARRA VELHA":[-26.6314,-48.6839],
+"FLORIANOPOLIS":[-27.5949,-48.5482],"GASPAR":[-26.9319,-48.9586],"ITAPEMA":[-27.0903,-48.6114],
+"ITAPOA":[-26.1128,-48.6164],"RIO NEGRINHO":[-26.2553,-49.5181],"SAO FRANCISCO DO SUL":[-26.2433,-48.6383],
+"TIJUCAS":[-27.2414,-48.6336],"CURITIBANOS":[-27.2828,-50.5836],"COLINAS":[-29.3933,-51.8556],
+"ARROIO DO MEIO":[-29.4006,-51.9450],"SANANDUVA":[-27.9489,-51.8081],"SAO PEDRO DO SUL":[-29.6219,-54.1781],
+"MARAU":[-28.4497,-52.1992],"SOBRADINHO":[-29.4156,-53.0339],"CANDELARIA":[-29.6669,-52.7872],
+"GENERAL CAMARA":[-29.9036,-51.7611],"NOVA HARTZ":[-29.5797,-50.9008],"PORTAO":[-29.7019,-51.2417],
+"HORIZONTINA":[-27.6261,-54.3078],"TUPANCIRETA":[-29.0808,-53.8358]
+};
 
-  // Coordenadas (centro aproximado) das cidades — cobre as principais.
-  // Cidades fora desta lista são posicionadas automaticamente (geocodificação) e guardadas no navegador.
-  const COORDS={
-    "PORTO ALEGRE":[-30.0346,-51.2177],"PELOTAS":[-31.7649,-52.3371],"CAXIAS DO SUL":[-29.1678,-51.1794],
-    "GRAVATAI":[-29.9444,-50.9919],"SAO LEOPOLDO":[-29.7603,-51.1472],"CANOAS":[-29.9178,-51.1836],
-    "ALVORADA":[-29.9897,-51.0809],"SAPUCAIA DO SUL":[-29.8276,-51.1453],"NOVO HAMBURGO":[-29.6783,-51.1306],
-    "JOINVILLE":[-26.3045,-48.8487],"CACHOEIRINHA":[-29.9511,-51.0939],"BLUMENAU":[-26.9194,-49.0661],
-    "SAO JOSE":[-27.6136,-48.6366],"CRICIUMA":[-28.6775,-49.3697],"ESTEIO":[-29.8606,-51.1842],
-    "VIAMAO":[-30.0811,-51.0233],"PALHOCA":[-27.6386,-48.6703],"MONTENEGRO":[-29.6883,-51.4615],
-    "PASSO FUNDO":[-28.2576,-52.4091],"SANTA MARIA":[-29.6868,-53.8149],"URUGUAIANA":[-29.7547,-57.0883],
-    "RIO GRANDE":[-32.0350,-52.0986],"TRAMANDAI":[-29.9847,-50.1322],"CHAPECO":[-27.1004,-52.6152],
-    "BAGE":[-31.3314,-54.1069],"SANTA CRUZ DO SUL":[-29.7175,-52.4258],"BIGUACU":[-27.4939,-48.6556],
-    "GUAIBA":[-30.1086,-51.3250],"CAPAO DO LEAO":[-31.7625,-52.4912],"ESTANCIA VELHA":[-29.6481,-51.1761],
-    "LAJEADO":[-29.4669,-51.9614],"SAO JOAO BATISTA":[-27.2756,-48.8497],"TUBARAO":[-28.4666,-49.0069],
-    "CAMAQUA":[-30.8511,-51.8122],"CARLOS BARBOSA":[-29.2975,-51.5036],"CHARQUEADAS":[-29.9558,-51.6253],
-    "CRUZ ALTA":[-28.6386,-53.6064],"SANTO ANGELO":[-28.2992,-54.2631],"SAPIRANGA":[-29.6383,-51.0069],
-    "ARAQUARI":[-26.3702,-48.7222],"ICARA":[-28.7136,-49.3047],"INDAIAL":[-26.8978,-49.2317],
-    "LAGES":[-27.8161,-50.3259],"CACAPAVA DO SUL":[-30.5125,-53.4914],"CARAZINHO":[-28.2839,-52.7864],
-    "ERECHIM":[-27.6339,-52.2739],"GRAMADO":[-29.3747,-50.8761],"OSORIO":[-29.8869,-50.2697],
-    "QUARAI":[-30.3878,-56.4514],"SANTO ANTONIO DA PATRULHA":[-29.8225,-50.5189],"SAO MARCOS":[-28.9706,-51.0681],
-    "SARANDI":[-27.9444,-52.9233],"SOLEDADE":[-28.8181,-52.5100],"VERA CRUZ":[-29.7178,-52.5147],
-    "BRUSQUE":[-27.0978,-48.9106],"DIONISIO CERQUEIRA":[-26.2656,-53.6383],"ITAJAI":[-26.9078,-48.6619],
-    "JARAGUA DO SUL":[-26.4851,-49.0667],"MAFRA":[-26.1114,-49.8050],"MORRO DA FUMACA":[-28.6519,-49.2169],
-    "VIDEIRA":[-27.0083,-51.1517],"BENTO GONCALVES":[-29.1681,-51.5189],"CAMPO BOM":[-29.6747,-51.0600],
-    "CAPAO DA CANOA":[-29.7456,-50.0103],"CIDREIRA":[-30.1811,-50.2056],"DOM PEDRITO":[-30.9828,-54.6731],
-    "ELDORADO DO SUL":[-30.0847,-51.6189],"ESTRELA":[-29.5000,-51.9650],"FARROUPILHA":[-29.2250,-51.3478],
-    "IJUI":[-28.3878,-53.9150],"IMBE":[-29.9747,-50.1278],"ITAQUI":[-29.1253,-56.5531],
-    "JAGUARAO":[-32.5661,-53.3756],"NOVA PETROPOLIS":[-29.3756,-51.1136],"NOVA SANTA RITA":[-29.8517,-51.2822],
-    "PANAMBI":[-28.2922,-53.5017],"PAROBE":[-29.6294,-50.8344],"SAO JERONIMO":[-29.9600,-51.7222],
-    "SAO LUIZ GONZAGA":[-28.4083,-54.9608],"TAQUARA":[-29.6506,-50.7806],"TORRES":[-29.3353,-49.7269],
-    "TRES PASSOS":[-27.4561,-53.9319],"TRIUNFO":[-29.9450,-51.7136],"VERANOPOLIS":[-28.9361,-51.5536],
-    "XANGRI-LA":[-29.8067,-50.0506],"ARARANGUA":[-28.9356,-49.4861],"BARRA VELHA":[-26.6314,-48.6839],
-    "FLORIANOPOLIS":[-27.5949,-48.5482],"GASPAR":[-26.9319,-48.9586],"ITAPEMA":[-27.0903,-48.6114],
-    "ITAPOA":[-26.1128,-48.6164],"RIO NEGRINHO":[-26.2553,-49.5181],"SAO FRANCISCO DO SUL":[-26.2433,-48.6383],
-    "TIJUCAS":[-27.2414,-48.6336],"CURITIBANOS":[-27.2828,-50.5836],"COLINAS":[-29.3933,-51.8556],
-    "ARROIO DO MEIO":[-29.4006,-51.9450],"SANANDUVA":[-27.9489,-51.8081],"SAO PEDRO DO SUL":[-29.6219,-54.1781],
-    "MARAU":[-28.4497,-52.1992],"SOBRADINHO":[-29.4156,-53.0339],"CANDELARIA":[-29.6669,-52.7872],
-    "GENERAL CAMARA":[-29.9036,-51.7611],"NOVA HARTZ":[-29.5797,-50.9008],"PORTAO":[-29.7019,-51.2417],
-    "HORIZONTINA":[-27.6261,-54.3078],"TUPANCIRETA":[-29.0808,-53.8358]
-  };
+function norm(s){return (s||"").toUpperCase().replace(/[ÁÀÂÃ]/g,"A").replace(/[ÉÊ]/g,"E").replace(/Í/g,"I").replace(/[ÓÔÕ]/g,"O").replace(/Ú/g,"U").replace(/Ç/g,"C").replace(/['’`.]/g,"").replace(/\s+/g," ").trim();}
+const COORDS_N={}; for(const k in COORDS) COORDS_N[norm(k)]=COORDS[k];
 
-  function norm(s){return (s||"").toUpperCase().replace(/[ÁÀÂÃ]/g,"A").replace(/[ÉÊ]/g,"E").replace(/Í/g,"I").replace(/[ÓÔÕ]/g,"O").replace(/Ú/g,"U").replace(/Ç/g,"C").replace(/['’`.]/g,"").replace(/\s+/g," ").trim();}
-  const COORDS_N={}; for(const k in COORDS) COORDS_N[norm(k)]=COORDS[k];
+function geoCache(){try{return JSON.parse(localStorage.getItem("rr_geo")||"{}")}catch(e){return{}}}
+function geoSave(o){try{localStorage.setItem("rr_geo",JSON.stringify(o))}catch(e){}}
 
-  // cache de geocodificação no navegador
-  function geoCache(){try{return JSON.parse(localStorage.getItem("rr_geo")||"{}")}catch(e){return{}}}
-  function geoSave(o){try{localStorage.setItem("rr_geo",JSON.stringify(o))}catch(e){}}
+const UF_NOME={RS:"Rio Grande do Sul",SC:"Santa Catarina"};
 
-  function parseCidades(texto){ // retorna [{cidade, ...}] -> só precisamos da cidade
-    const linhas=texto.split(/\r?\n/);
-    let hi=linhas.findIndex(l=>/idade/i.test(l)&&/(pre[cç]o)/i.test(l)); if(hi<0)hi=0;
-    const hdr=linhas[hi].split(";").map(h=>h.trim().toLowerCase());
-    const ci=hdr.findIndex(h=>h.indexOf("idade")>=0);
-    const out=[];
-    for(let i=hi+1;i<linhas.length;i++){ if(linhas[i].indexOf(";")<0) continue; const c=linhas[i].split(";"); if(c[ci]&&c[ci].trim()) out.push(c[ci].trim().toUpperCase()); }
-    return out;
-  }
+let ALL=[];
+const state={cidade:"",tipo:"",modalidade:"",financiamento:"",dtrib:"",dcond:"",min:null,max:null};
+let CITY_LL={};
 
-  async function carregar(){
-    const contagem={}; // chave "CIDADE|UF" -> {cidade,uf,n}
-    for(const f of FONTES){
-      try{
-        const r=await fetch(f.u+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) continue;
-        const buf=await r.arrayBuffer(); const txt=new TextDecoder("iso-8859-1").decode(buf);
-        parseCidades(txt).forEach(cid=>{ const k=cid+"|"+f.uf; (contagem[k]=contagem[k]||{cidade:cid,uf:f.uf,n:0}).n++; });
-      }catch(e){}
-    }
-    const pontos=Object.values(contagem);
-    const cache=geoCache(); let novos=false; const semCoord=[];
-    pontos.forEach(p=>{
-      const ll=COORDS_N[norm(p.cidade)] || cache[norm(p.cidade)+"|"+p.uf];
-      if(ll){p.lat=ll[0];p.lng=ll[1];} else semCoord.push(p);
-    });
-    window.__points=pontos;
-    const totImoveis=pontos.reduce((s,p)=>s+p.n,0);
-    document.getElementById("stat").innerHTML="<b>"+totImoveis.toLocaleString("pt-BR")+"</b> imóveis em <b>"+pontos.length.toLocaleString("pt-BR")+"</b> cidades";
-    iniciarMapa(pontos.filter(p=>p.lat));
-    // geocodifica em segundo plano as cidades sem coordenada (uma por vez, gentil com o serviço)
-    geocodarFila(semCoord, cache);
-  }
+async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
 
-  let MAP=null, LAYER=null;
-  function raio(n){return Math.max(7, Math.min(34, 6+Math.sqrt(n)*3.2));}
-  function addMarcador(p){
-    if(!MAP) return;
-    const m=L.circleMarker([p.lat,p.lng],{radius:raio(p.n),color:"#1f324c",weight:2,fillColor:"#c6a052",fillOpacity:.85});
-    const cidade=p.cidade.charAt(0)+p.cidade.slice(1).toLowerCase();
-    const link="imoveis.html#cidade="+encodeURIComponent(p.cidade);
-    m.bindPopup('<div class="pop"><b>'+cidade+' · '+p.uf+'</b><br>'+p.n+(p.n===1?' imóvel':' imóveis')+' disponível'+(p.n===1?'':'eis')+'<br><a href="'+link+'">Ver imóveis</a></div>');
-    if(p.n>=8) m.bindTooltip(String(p.n),{permanent:true,direction:"center",className:"tip"});
-    m.addTo(LAYER);
-  }
-  function iniciarMapa(pts){
-    if(typeof L==="undefined"){ document.getElementById("map").style.display="none"; document.getElementById("maperr").style.display="block"; return; }
-    MAP=L.map("map",{scrollWheelZoom:false}).setView([-29.5,-51.0],7);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(MAP);
-    LAYER=L.layerGroup().addTo(MAP);
-    pts.forEach(addMarcador);
-    if(pts.length){ const b=L.latLngBounds(pts.map(p=>[p.lat,p.lng])); MAP.fitBounds(b.pad(0.12)); }
-    if(window.gtag) gtag("event","view_map",{cidades:pts.length});
-  }
-  async function geocodarFila(lista, cache){
-    for(const p of lista){
-      try{
-        const url="https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&state="+encodeURIComponent(UF_NOME[p.uf])+"&city="+encodeURIComponent(p.cidade);
-        const r=await fetch(url,{headers:{"Accept":"application/json"}});
-        const j=await r.json();
-        if(j&&j[0]){ p.lat=parseFloat(j[0].lat); p.lng=parseFloat(j[0].lon); cache[norm(p.cidade)+"|"+p.uf]=[p.lat,p.lng]; geoSave(cache); addMarcador(p); }
-      }catch(e){}
-      await new Promise(r=>setTimeout(r,1200)); // 1 req por vez, com pausa
-    }
-  }
-  carregar();
+function _parseTrib(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('tributo');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if((sec.includes('inferior a 10')||sec.includes('quando o debito for inferior'))&&(sec.includes('superior a 10')||sec.includes('caixa paga integralmente quando')))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
+function _parseCond(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('condomin');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if(sec.includes('ate o limite de 10%')||sec.includes('valor que exceder')||sec.includes('10% em relacao'))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
+function _labelFin(v){ return v===true||v==='true'?'Aceita':v===false||v==='false'?'Não aceita':'Não informado'; }
+function _labelTipo(i){ const tr=i.tipo_real; return (tr&&String(tr).trim()&&String(tr).trim()!=='-')?String(tr).trim():String(i.tipo||'Imóvel').trim(); }
+
+function _contarCampo(arr){
+const m={};
+arr.forEach(function(v){const k=(v===null||v===undefined||String(v).trim()===''||String(v).trim()==='-')?'__nil__':String(v).trim();m[k]=(m[k]||0)+1;});
+const keyMap={};const counts={};
+Object.keys(m).forEach(function(k){
+if(k==='__nil__') return;
+const lo=k.toLowerCase();
+if(!keyMap[lo]){keyMap[lo]=k;counts[lo]=0;}
+counts[lo]+=m[k];
+});
+const items=Object.keys(keyMap).map(function(lo){return {label:keyMap[lo],count:counts[lo]};});
+items.sort(function(a,b){return b.count-a.count;});
+const nil=m['__nil__']||0;
+if(nil>0) items.push({label:'Não informado',count:nil});
+return items;
+}
+function _fillSelect(id, allLabel, items){
+const s=document.getElementById(id); if(!s) return;
+const prev=s.value;
+s.innerHTML='';
+const total=items.reduce(function(a,x){return a+x.count;},0);
+const o0=document.createElement('option'); o0.value=''; o0.textContent=allLabel+' ('+total.toLocaleString('pt-BR')+')'; s.appendChild(o0);
+items.forEach(function(it){const o=document.createElement('option');o.value=it.label;o.textContent=it.label+' ('+it.count.toLocaleString('pt-BR')+')';s.appendChild(o);});
+if(prev && [...s.options].some(function(o){return o.value===prev;})) s.value=prev;
+}
+
+function preencherFiltros(){
+_fillSelect('f-cidade','Todas',_contarCampo(ALL.map(function(i){return i.cidade;})));
+_fillSelect('f-tipo','Todos',_contarCampo(ALL.map(function(i){return _labelTipo(i);})));
+_fillSelect('f-modalidade','Todas',_contarCampo(ALL.map(function(i){return i.modalidade;})));
+_fillSelect('f-financiamento','Todos',_contarCampo(ALL.map(function(i){return _labelFin(i.financiamento);})));
+_fillSelect('f-dtrib','Todos',_contarCampo(ALL.map(function(i){return i.debito_tributos||null;})));
+_fillSelect('f-dcond','Todos',_contarCampo(ALL.map(function(i){return i.debito_condominio||null;})));
+}
+
+function passaFiltro(i){
+if(state.cidade && i.cidade!==state.cidade) return false;
+if(state.tipo && _labelTipo(i)!==state.tipo) return false;
+if(state.modalidade && i.modalidade!==state.modalidade) return false;
+if(state.financiamento){const fl=_labelFin(i.financiamento); if(fl.toLowerCase()!==state.financiamento.toLowerCase()) return false;}
+if(state.dtrib){const dt=i.debito_tributos?String(i.debito_tributos).trim():'Não informado'; if(dt.toLowerCase()!==state.dtrib.toLowerCase()) return false;}
+if(state.dcond){const dc=i.debito_condominio?String(i.debito_condominio).trim():'Não informado'; if(dc.toLowerCase()!==state.dcond.toLowerCase()) return false;}
+if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
+if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
+return true;
+}
+
+let MAP=null, LAYER=null;
+function raio(n){return Math.max(7, Math.min(34, 6+Math.sqrt(n)*3.2));}
+function addMarcador(p){
+if(!MAP) return;
+const m=L.circleMarker([p.lat,p.lng],{radius:raio(p.n),color:"#1f324c",weight:2,fillColor:"#c6a052",fillOpacity:.85});
+const cidade=p.cidade.charAt(0)+p.cidade.slice(1).toLowerCase();
+const link="imoveis.html#cidade="+encodeURIComponent(p.cidade);
+m.bindPopup('<div class="pop"><b>'+cidade+' · '+p.uf+'</b><br>'+p.n+(p.n===1?' imóvel':' imóveis')+' disponível'+(p.n===1?'':'eis')+' com os filtros atuais<br><a href="'+link+'">Ver os '+p.n+' imóveis de '+cidade+'</a></div>');
+if(p.n>=8) m.bindTooltip(String(p.n),{permanent:true,direction:"center",className:"tip"});
+m.addTo(LAYER);
+}
+function iniciarMapaSeNecessario(){
+if(MAP) return;
+if(typeof L==="undefined"){ document.getElementById("map").style.display="none"; document.getElementById("maperr").style.display="block"; return; }
+MAP=L.map("map",{scrollWheelZoom:false}).setView([-29.5,-51.0],7);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(MAP);
+LAYER=L.layerGroup().addTo(MAP);
+}
+function desenharMapa(pts, ajustarZoom){
+iniciarMapaSeNecessario();
+if(!MAP) return;
+LAYER.clearLayers();
+pts.forEach(addMarcador);
+if(ajustarZoom && pts.length){ const b=L.latLngBounds(pts.map(function(p){return [p.lat,p.lng];})); MAP.fitBounds(b.pad(0.12)); }
+if(window.gtag) gtag("event","view_map",{cidades:pts.length});
+}
+
+function aplicar(ajustarZoom){
+const view = ALL.filter(passaFiltro);
+const contagem={};
+view.forEach(function(i){ const k=norm(i.cidade)+"|"+i.uf; (contagem[k]=contagem[k]||{cidade:i.cidade,uf:i.uf,n:0}).n++; });
+const pontos=Object.values(contagem).map(function(p){ const ll=CITY_LL[norm(p.cidade)+"|"+p.uf]; if(ll){p.lat=ll[0];p.lng=ll[1];} return p; });
+const comCoord=pontos.filter(function(p){return p.lat;});
+document.getElementById("stat").innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> imóveis em <b>"+pontos.length.toLocaleString("pt-BR")+"</b> cidades";
+const fc=document.getElementById("fcount");
+if(fc) fc.innerHTML="<b>"+view.length.toLocaleString("pt-BR")+"</b> "+(view.length===1?"imóvel encontrado":"imóveis encontrados")+" com os filtros atuais";
+desenharMapa(comCoord, ajustarZoom!==false);
+}
+
+async function carregar(){
+try{
+const [rs,sc]=await Promise.all([carregarJSON("imoveis-rs.json"),carregarJSON("imoveis-sc.json")]);
+ALL=[...(rs||[]),...(sc||[])];
+ALL.forEach(function(item){
+if(!item.debito_tributos) item.debito_tributos=_parseTrib(item.descricao);
+if(!item.debito_condominio) item.debito_condominio=_parseCond(item.descricao);
+});
+preencherFiltros();
+const cidadesUnicas={};
+ALL.forEach(function(i){ const k=norm(i.cidade)+"|"+i.uf; cidadesUnicas[k]=cidadesUnicas[k]||{cidade:i.cidade,uf:i.uf}; });
+const cache=geoCache(); const semCoord=[];
+Object.values(cidadesUnicas).forEach(function(c){
+const k=norm(c.cidade)+"|"+c.uf;
+const ll=COORDS_N[norm(c.cidade)] || cache[k];
+if(ll){ CITY_LL[k]=ll; } else semCoord.push(c);
+});
+aplicar(true);
+geocodarFila(semCoord, cache);
+}catch(e){
+document.getElementById("maperr").style.display="block";
+document.getElementById("map").style.display="none";
+}
+}
+
+async function geocodarFila(lista, cache){
+for(const c of lista){
+try{
+const url="https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&state="+encodeURIComponent(UF_NOME[c.uf])+"&city="+encodeURIComponent(c.cidade);
+const r=await fetch(url,{headers:{"Accept":"application/json"}});
+const j=await r.json();
+if(j&&j[0]){ const lat=parseFloat(j[0].lat), lng=parseFloat(j[0].lon); const k=norm(c.cidade)+"|"+c.uf; CITY_LL[k]=[lat,lng]; cache[k]=[lat,lng]; geoSave(cache); aplicar(false); }
+}catch(e){}
+await new Promise(function(r){setTimeout(r,1200);});
+}
+}
+
+document.getElementById('f-cidade').addEventListener('change',function(e){state.cidade=e.target.value;aplicar(true);});
+document.getElementById('f-tipo').addEventListener('change',function(e){state.tipo=e.target.value;aplicar(true);});
+document.getElementById('f-modalidade').addEventListener('change',function(e){state.modalidade=e.target.value;aplicar(true);});
+document.getElementById('f-financiamento').addEventListener('change',function(e){state.financiamento=e.target.value;aplicar(true);});
+document.getElementById('f-dtrib').addEventListener('change',function(e){state.dtrib=e.target.value;aplicar(true);});
+document.getElementById('f-dcond').addEventListener('change',function(e){state.dcond=e.target.value;aplicar(true);});
+
+(function(){
+function fmtPreco(v){if(v>=1000000)return"R$1M+";if(v>=1000)return"R$"+Math.round(v/1000)+"k";return"R$"+v;}
+function updSlider(){
+const mn=document.getElementById("pRangeMin"),mx=document.getElementById("pRangeMax");
+const lbl=document.getElementById("pMinLbl"),fill=document.getElementById("pFill");
+if(!mn||!mx) return;
+let lo=+mn.value,hi=+mx.value;
+if(lo>hi-50000){if(mn===document.activeElement)hi=lo+50000;else lo=hi-50000;mn.value=lo;mx.value=hi;}
+const pct=function(v){return (v/1000000)*100;};
+if(fill){fill.style.left=pct(lo)+"%";fill.style.width=(pct(hi)-pct(lo))+"%";}
+const noFilter=(lo===0&&hi===1000000);
+if(lbl) lbl.textContent=noFilter?"Qualquer":fmtPreco(lo)+(lo>0||hi<1000000?" – ":"")+fmtPreco(hi);
+state.min=noFilter?null:lo;
+state.max=noFilter?null:hi;
+aplicar(true);
+}
+const mn=document.getElementById("pRangeMin"),mx=document.getElementById("pRangeMax");
+if(mn) mn.addEventListener("input",updSlider);
+if(mx) mx.addEventListener("input",updSlider);
+})();
+
+document.getElementById('f-clear').addEventListener('click',function(){
+Object.assign(state,{cidade:"",tipo:"",modalidade:"",financiamento:"",dtrib:"",dcond:"",min:null,max:null});
+["f-cidade","f-tipo","f-modalidade","f-financiamento","f-dtrib","f-dcond"].forEach(function(id){document.getElementById(id).value="";});
+const _mn=document.getElementById("pRangeMin"),_mx=document.getElementById("pRangeMax");
+if(_mn){_mn.value=0;_mx.value=1000000;}
+const _lbl=document.getElementById("pMinLbl");if(_lbl)_lbl.textContent="Qualquer";
+const _fl=document.getElementById("pFill");if(_fl){_fl.style.left="0%";_fl.style.width="100%";}
+aplicar(true);
+});
+
+carregar();
 </script>
 </body>
 </html>
