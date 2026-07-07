@@ -24,6 +24,28 @@ const HUB_CIDADES = [
   { slug: "gravatai",      cidade: "GRAVATAI",       uf: "RS", nome: "Gravataí"      },
   { slug: "tramandai",     cidade: "TRAMANDAI",      uf: "RS", nome: "Tramandaí"     },
   { slug: "criciuma",      cidade: "CRICIUMA",       uf: "SC", nome: "Criciúma"      },
+  { slug: "pelotas",           cidade: "PELOTAS",            uf: "RS", nome: "Pelotas"            },
+  { slug: "sao-leopoldo",      cidade: "SAO LEOPOLDO",       uf: "RS", nome: "São Leopoldo"       },
+  { slug: "canoas",            cidade: "CANOAS",             uf: "RS", nome: "Canoas"             },
+  { slug: "alvorada",          cidade: "ALVORADA",           uf: "RS", nome: "Alvorada"           },
+  { slug: "caxias-do-sul",     cidade: "CAXIAS DO SUL",      uf: "RS", nome: "Caxias do Sul"      },
+  { slug: "novo-hamburgo",     cidade: "NOVO HAMBURGO",      uf: "RS", nome: "Novo Hamburgo"      },
+  { slug: "sapucaia-do-sul",   cidade: "SAPUCAIA DO SUL",    uf: "RS", nome: "Sapucaia do Sul"    },
+  { slug: "cachoeirinha",      cidade: "CACHOEIRINHA",       uf: "RS", nome: "Cachoeirinha"       },
+  { slug: "viamao",            cidade: "VIAMAO",             uf: "RS", nome: "Viamão"             },
+  { slug: "esteio",            cidade: "ESTEIO",             uf: "RS", nome: "Esteio"             },
+  { slug: "passo-fundo",       cidade: "PASSO FUNDO",        uf: "RS", nome: "Passo Fundo"        },
+  { slug: "montenegro",        cidade: "MONTENEGRO",         uf: "RS", nome: "Montenegro"         },
+  { slug: "santa-maria",       cidade: "SANTA MARIA",        uf: "RS", nome: "Santa Maria"        },
+  { slug: "santa-cruz-do-sul", cidade: "SANTA CRUZ DO SUL",  uf: "RS", nome: "Santa Cruz do Sul"  },
+  { slug: "uruguaiana",        cidade: "URUGUAIANA",         uf: "RS", nome: "Uruguaiana"         },
+  { slug: "lajeado",           cidade: "LAJEADO",            uf: "RS", nome: "Lajeado"            },
+  { slug: "bage",              cidade: "BAGE",               uf: "RS", nome: "Bagé"               },
+  { slug: "joinville",         cidade: "JOINVILLE",          uf: "SC", nome: "Joinville"          },
+  { slug: "blumenau",          cidade: "BLUMENAU",           uf: "SC", nome: "Blumenau"           },
+  { slug: "sao-jose",          cidade: "SAO JOSE",           uf: "SC", nome: "São José"           },
+  { slug: "palhoca",           cidade: "PALHOCA",            uf: "SC", nome: "Palhoça"            },
+  { slug: "biguacu",           cidade: "BIGUACU",            uf: "SC", nome: "Biguaçu"            },
 ];
 // Mapa rapido: cidade uppercase -> hub (para BreadcrumbList nas paginas de imovel)
 const HUB_MAPA = {};
@@ -1039,8 +1061,11 @@ for(const im of imoveis){
 }
 
  const hoje = new Date().toISOString().slice(0,10);
-   const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html","/calculadora.html"];
+   const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html","/calculadora.html","/assessoria.html"];
   const artigos = [
+     "/diferenca-primeiro-segundo-leilao-caixa.html",
+     "/custos-para-arrematar-imovel-caixa.html",
+     "/indice-desagio-imoveis-caixa.html",
      "/venda-direta-caixa-vale-a-pena.html",
      "/quem-paga-corretor-credenciado-caixa.html",
      "/imovel-ocupado-caixa-e-seguro.html",
@@ -1115,10 +1140,17 @@ function parseTipoAreaFromDesc(desc) {
    const imoveisSC = imoveis.filter(im=>im.uf==="SC"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
    fs.writeFileSync(path.join(__dirname,"imoveis-rs.json"), JSON.stringify(imoveisRS));
    fs.writeFileSync(path.join(__dirname,"imoveis-sc.json"), JSON.stringify(imoveisSC));
+   // Estatisticas de desagio (consumidas por /assessoria.html e /indice-desagio-imoveis-caixa.html)
+   const _todosDisp = imoveisRS.concat(imoveisSC);
+   const _comDesagio = _todosDisp.filter(i=>i.avaliacao>0&&i.preco>0&&i.preco<i.avaliacao);
+   const _descs = _comDesagio.map(i=>(1-i.preco/i.avaliacao)*100);
    const meta = {
       atualizado: new Date().toISOString(),
       total: imoveis.length,
-      porEstado: { RS: imoveisRS.length, SC: imoveisSC.length }
+      porEstado: { RS: imoveisRS.length, SC: imoveisSC.length },
+      comDesagio: _comDesagio.length,
+      desagioMedio: _descs.length ? Math.round(_descs.reduce((s,d)=>s+d,0)/_descs.length*10)/10 : null,
+      desagioMax: _descs.length ? Math.round(Math.max.apply(null,_descs)*10)/10 : null
    };
    fs.writeFileSync(path.join(__dirname,"meta.json"), JSON.stringify(meta));
    console.log("JSONs atualizados: imoveis-rs("+imoveisRS.length+"), imoveis-sc("+imoveisSC.length+"), meta(total="+imoveis.length+").");
