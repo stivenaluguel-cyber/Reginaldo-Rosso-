@@ -16,7 +16,7 @@ header{background:linear-gradient(180deg,var(--navy2),var(--navy));box-shadow:0 
 .crumb{max-width:1000px;margin:0 auto;padding:14px 20px 0;font-size:.82rem;color:var(--muted)}
 .crumb a:hover{color:var(--gold)}.crumb span{color:var(--ink2);font-weight:600}
 
-.det{max-width:1000px;margin:0 auto;padding:16px 20px 30px;display:grid;grid-template-columns:1.1fr 1fr;gap:26px;align-items:start}
+.det{max-width:1000px;margin:0 auto;padding:16px 20px 30px}.det::after{content:'';display:table;clear:both}
 .ph{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:4/3;background:linear-gradient(135deg,var(--navy2),var(--navy-d));box-shadow:0 14px 34px -16px rgba(31,50,76,.5)}
 .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ph .pholder{position:absolute;inset:0;display:grid;place-items:center;color:#5b7da3;font-weight:600}
@@ -158,21 +158,21 @@ footer b{color:#fff}
   margin-top: 4px;
 }
 
-/* ===== ETAPA 2: layout 2 colunas via CSS Grid order (foto/widget/descricao/documentos na esquerda; preco/regras/mais/cta/nota na direita) ===== */
+/* ===== ETAPA 2: layout 2 colunas via float independente (foto/widget/descricao/documentos na esquerda; preco/regras/mais/cta/nota na direita) - evita gaps de altura entre colunas ===== */
 .ph img{transform:scale(1.06)}
 .regras h2,.mais h2,.docs h2{font-size:1.02rem;color:var(--ink);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-.dethead{grid-column:1/-1}
-.ph{grid-column:1;order:1}
-.alerta-card{grid-column:1;order:2}
-.desc-chips{grid-column:1;order:3;display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px}
-.docs{grid-column:1;order:4}
-.price-block{grid-column:2;order:1}
-.regras{grid-column:2;order:2}
-.mais{grid-column:2;order:3}
-.cta{grid-column:2;order:4}
-.note{grid-column:2;order:5}
+.dethead{clear:both}
+.ph{float:left;width:55%;box-sizing:border-box;padding-right:13px}
+.alerta-card{float:left;width:55%;box-sizing:border-box;padding-right:13px;margin-top:16px;clear:left}
+.desc-chips{float:left;width:55%;box-sizing:border-box;padding-right:13px;margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;clear:left}
+.docs{float:left;width:55%;box-sizing:border-box;padding-right:13px;margin-top:16px;clear:left}
+.price-block{float:right;width:45%;box-sizing:border-box;padding-left:13px;clear:right}
+.regras{float:right;width:45%;box-sizing:border-box;padding-left:13px;margin-top:16px;clear:right}
+.mais{float:right;width:45%;box-sizing:border-box;padding-left:13px;margin-top:16px;clear:right}
+.cta{float:right;width:45%;box-sizing:border-box;padding-left:13px;margin-top:16px;clear:right}
+.note{float:right;width:45%;box-sizing:border-box;padding-left:13px;margin-top:16px;clear:right}
 .dchip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.85rem;color:var(--ink2);font-weight:600}
 .alerta-form input[type=tel]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#1e2b3f;outline:none;transition:border-color .2s}
 .alerta-form label.check input{width:16px;height:16px}
 .footer-inner{max-width:960px;margin:0 auto}
-@media(max-width:820px){.det{grid-template-columns:1fr}.dethead{order:0}.ph{grid-column:1;order:1}.alerta-card{grid-column:1;order:2}.price-block{grid-column:1;order:3}.regras{grid-column:1;order:4}.mais{grid-column:1;order:5}.desc-chips{grid-column:1;order:6}.docs{grid-column:1;order:7}.cta{grid-column:1;order:8}.note{grid-column:1;order:9}}
+@media(max-width:820px){.ph,.alerta-card,.desc-chips,.docs,.price-block,.regras,.mais,.cta,.note{float:none;width:100%;padding:0;clear:none;margin-top:16px}.ph{margin-top:0}}
