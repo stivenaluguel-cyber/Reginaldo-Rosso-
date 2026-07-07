@@ -146,19 +146,18 @@ def _processar_linha(row: dict) -> dict | None:
     update = {"numero_imovel": nr}
     mudou = False
 
-    # --- parse_descricao_csv: tipo_real e area ---
-    # A descricao do banco pode ser a descricao CSV ou a descricao de detalhe.
-    # O formato CSV comeca com o tipo antes da primeira virgula.
-    # A descricao de detalhe e mais longa (texto da Caixa).
-    # Rodamos parse_descricao_csv em qualquer um - se o tipo ainda nao esta preenchido.
-    if not row.get("tipo_real") or not row.get("area"):
-        csv_parsed = parse_descricao_csv(desc)
-        if csv_parsed.get("tipo_real") and not row.get("tipo_real"):
-            update["tipo_real"] = csv_parsed["tipo_real"]
-            mudou = True
-        if csv_parsed.get("area") and not row.get("area"):
-            update["area"] = csv_parsed["area"]
-            mudou = True
+      # --- parse_descricao_csv: apenas area (tipo_real NAO e mais tratado aqui) ---
+      # A descricao no banco pode ser a descricao CSV OU a descricao de detalhe
+      # (texto da Caixa, que comeca com a lista de comodos - classificar tipo_real
+      # a partir desse campo ambiguo foi a causa do bug que gerava tipo_real=Sala
+      # em massa. tipo_real agora e responsabilidade exclusiva da etapa1 (le a
+      # Descricao verdadeira do CSV a cada ciclo - ver update_csv_parsed_bulk em
+      # db.py. area continua extraida aqui pois seu regex nao depende da 1a palavra.
+      if not row.get("area"):
+          csv_parsed = parse_descricao_csv(desc)
+          if csv_parsed.get("area"):
+              update["area"] = csv_parsed["area"]
+              mudou = True
 
     # --- parse_detalhe: fgts, financiamento, debito_tributos, debito_condominio, quartos ---
     # Roda sempre que descricao contem texto de detalhe (>200 chars = provavelmente detalhe)
