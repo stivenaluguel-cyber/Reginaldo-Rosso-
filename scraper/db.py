@@ -388,7 +388,7 @@ def upsert_imoveis_bulk(lista, batch_size=500):
         'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
         'matricula_s3_url', 'scraped_at',
         ]
-        preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
+        preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'tipo_real'}
         update_set = ', '.join(
         [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
         else f"{c}=EXCLUDED.{c}"
@@ -418,7 +418,7 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
     (nao so os novos). Chamado pela etapa1.
 
     Preenche (sem sobrescrever dados nao-nulos ja existentes):
-      - tipo_real, area, aceita_financiamento, descricao (se vazio);
+      - area, aceita_financiamento, descricao (se vazio); tipo_real: SEMPRE corrige com o valor do CSV quando presente - fonte autoritativa (ver COALESCE(v.tipo_real, t.tipo_real) abaixo);
       - cidade, bairro, endereco, uf: FONTE DE CORRECAO. Muitos imoveis foram
         gravados com cidade=NULL por desalinhamento de colunas na ingestao
         inicial, e o gerar-imoveis.js exclui linhas com cidade IS NULL. Como o
@@ -452,7 +452,7 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                 sql = """
                         UPDATE imoveis_caixa AS t
                         SET
-                        tipo_real = COALESCE(t.tipo_real, v.tipo_real),
+                        tipo_real = COALESCE(v.tipo_real, t.tipo_real),
                         area = COALESCE(t.area, v.area),
                         aceita_financiamento = COALESCE(t.aceita_financiamento, v.aceita_financiamento),
                         descricao = COALESCE(NULLIF(t.descricao, ''), v.descricao),
