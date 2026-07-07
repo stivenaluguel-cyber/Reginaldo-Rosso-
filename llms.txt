@@ -1,0 +1,35 @@
+# Reginaldo Rosso — Imóveis Caixa (RS e SC)
+
+> Assessoria 100% gratuita para arrematar imóveis de leilão e venda direta da Caixa Econômica Federal no Rio Grande do Sul e em Santa Catarina. Reginaldo Rosso é corretor credenciado Caixa (CRECI/RS 28565J · CRECI/SC 8152J). A comissão do corretor credenciado é paga pela própria Caixa — o comprador não paga nada pela assessoria; basta incluir o CRECI do corretor na proposta.
+
+O site mantém um portal próprio com centenas de imóveis da Caixa (leilão SFI, licitação aberta, venda online e venda direta), atualizado automaticamente várias vezes ao dia a partir das listas públicas da Caixa, com dados de preço, avaliação, deságio, débitos, aceitação de financiamento habitacional e FGTS.
+
+## Páginas principais
+
+- [Portal de imóveis](https://reginaldorosso.com.br/imoveis.html): todos os imóveis Caixa disponíveis em RS e SC, com filtros dinâmicos
+- [Assessoria gratuita](https://reginaldorosso.com.br/assessoria.html): como funciona a assessoria sem custo para o comprador
+- [Calculadora ROI](https://reginaldorosso.com.br/calculadora.html): simula retorno de investimento em imóveis de leilão
+- [Como funciona](https://reginaldorosso.com.br/como-funciona.html): o processo de arrematação passo a passo
+- [Índice de deságio](https://reginaldorosso.com.br/indice-desagio-imoveis-caixa.html): estatísticas reais e atualizadas de desconto dos imóveis Caixa em RS e SC
+
+## Guias do arrematante
+
+- [Como funciona o leilão de imóvel da Caixa](https://reginaldorosso.com.br/como-funciona-leilao-imovel-caixa.html)
+- [Como dar lance em imóvel da Caixa](https://reginaldorosso.com.br/como-dar-lance-imovel-caixa.html)
+- [1º e 2º leilão da Caixa: diferenças e onde o desconto é maior](https://reginaldorosso.com.br/diferenca-primeiro-segundo-leilao-caixa.html)
+- [Quanto custa arrematar um imóvel da Caixa (ITBI, registro, custos reais)](https://reginaldorosso.com.br/custos-para-arrematar-imovel-caixa.html)
+- [Venda direta da Caixa vale a pena?](https://reginaldorosso.com.br/venda-direta-caixa-vale-a-pena.html)
+- [Quem paga o corretor credenciado da Caixa](https://reginaldorosso.com.br/quem-paga-corretor-credenciado-caixa.html)
+- [Imóvel ocupado da Caixa é seguro?](https://reginaldorosso.com.br/imovel-ocupado-caixa-e-seguro.html)
+- [Como comprar imóvel da Caixa com desconto](https://reginaldorosso.com.br/como-comprar-imovel-da-caixa-com-desconto.html)
+- [Como usar o FGTS para comprar imóvel da Caixa](https://reginaldorosso.com.br/como-usar-fgts-imovel-caixa.html)
+- [Documentos para comprar imóvel da Caixa](https://reginaldorosso.com.br/documentos-para-comprar-imovel-caixa.html)
+
+## Cobertura local
+
+Hubs de cidade em /leilao-caixa/{uf}/{cidade}.html com contagem de imóveis atualizada automaticamente — inclui Porto Alegre, Pelotas, Canoas, São Leopoldo, Caxias do Sul, Novo Hamburgo, Santa Maria e Passo Fundo (RS); Joinville, Blumenau, São José, Palhoça e Criciúma (SC), entre outras.
+
+## Contato
+
+- WhatsApp RS: +55 51 99110-4976 · WhatsApp SC: +55 48 99164-2332
+- E-mail: reginaldo@reginaldorosso.com.br
