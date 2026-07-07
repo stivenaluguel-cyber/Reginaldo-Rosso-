@@ -749,7 +749,6 @@ const ldBreadcrumb = {
    <a href="tel:5548991642332">(48) 99164-2332 - SC</a>
    </div>
    </div>
-   </div>
    <nav class="main-nav" style="background:#27405f;padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center">
    <a href="../index.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Início</a>
    <a href="../imoveis.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Imóveis Caixa</a>
@@ -762,6 +761,12 @@ const ldBreadcrumb = {
 
    <div class="crumb"><a href="../index.html">Início</a> &rsaquo; <a href="../imoveis.html">Imóveis Caixa</a> &rsaquo; <a href="../imoveis.html#q=${encodeURIComponent(i.cidade)}">${esc(cidade)}</a> &rsaquo; <span>cod. ${esc(i.id)}</span></div>
 
+   <div class="body dethead">
+   <div class="ctype">${esc(kicker)}</div>
+   <h1>${esc(cidade)}${bairro?` &middot; ${esc(bairro)}`:""}</h1>
+   <div class="addr">${esc(i.endereco||"")}</div>
+   ${specsHTML}
+      </div>
    <main class="det">
    <div class="ph">
    <div class="pholder">${esc(i.tipo)}</div>
@@ -769,13 +774,8 @@ const ldBreadcrumb = {
    <span class="uf">${esc(i.uf)}</span>
    ${i.desconto>0?'<span class="off">'+Math.round(i.desconto)+'% OFF</span>':""}
    </div>
+   <script>(function(){var im=document.querySelector('.ph img');if(!im||im.complete)return;var done=false;im.addEventListener('load',function(){done=true;});im.addEventListener('error',function(){done=true;});setTimeout(function(){if(!done&&!im.complete){im.src='';im.style.display='none';}},6000);})();</script>
 
-   <div class="body dethead">
-   <div class="ctype">${esc(kicker)}</div>
-   <h1>${esc(cidade)}${bairro?` &middot; ${esc(bairro)}`:""}</h1>
-   <div class="addr">${esc(i.endereco||"")}</div>
-   ${specsHTML}
-      </div>
 ${      (function(){
       const hasFim = !!(det.data_fim && det.data_fim.trim());
       const tid = 'alerta-' + i.id;
