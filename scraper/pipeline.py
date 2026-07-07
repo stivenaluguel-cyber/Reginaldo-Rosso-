@@ -37,7 +37,8 @@ from etapa1_csv import _executar as etapa1_executar
 from etapa2_scraper import scrape_imovel, baixar_matriculas_em_massa, RATE_LIMIT_ATIVO
 from db import (upsert_imovel, upsert_imoveis_bulk, get_pendentes_com_uf,
                 get_uf_por_ids, get_pendentes_matricula_com_uf,
-                get_ids_by_uf, mark_unavailable)
+                get_ids_by_uf, mark_unavailable, marcar_suspeitos, limpar_suspeita)
+from reconciliar_ativos import verificar_suspeitos_ativos
 import etapa2_scraper as _e2
 
 # -- Logging -------------------------------------------------------
@@ -135,7 +136,7 @@ async def run_etapa2(lote: list):
                     if _e2.RATE_LIMIT_ATIVO:
                         abortado = True
                         logger.warning(
-                            f"[pipeline] Rate limit detectado em {numero_imovel} — "
+                            f"[pipeline] Rate limit detectado em {numero_imovel} â "
                             "abortando lote e salvando progresso."
                         )
                         return
@@ -173,7 +174,7 @@ async def run_etapa2(lote: list):
     if processados > 0 and persistidos == 0 and not abortado:
         logger.error(
             f"[SENTINELA] FALHA: {processados} imoveis processados mas 0 persistidos "
-            "(nenhum rate limit) — possivel falha silenciosa de gravacao. Abortando com exit 1."
+            "(nenhum rate limit) â possivel falha silenciosa de gravacao. Abortando com exit 1."
         )
         sys.exit(1)
 
@@ -207,6 +208,10 @@ async def run_vigia():
 
         # Detecta removidos: ativos no banco mas fora do CSV atual
         ids_removidos = [i for i in ids_no_banco if i not in ids_no_csv]
+        # Recuperados: voltaram a aparecer no CSV - limpa suspeita antiga.
+        ids_recuperados = [i for i in ids_no_banco if i in ids_no_csv]
+        if ids_recuperados:
+            limpar_suspeita(ids_recuperados)
 
         logger.info(
             f"Vigia resultado: {len(ids_novos)} novos | "
@@ -221,7 +226,7 @@ async def run_vigia():
             if total_publicado is not None and total_publicado != total_banco:
                 logger.warning(
                     f"Divergencia banco ({total_banco}) vs publicado ({total_publicado}) "
-                    "— republicando"
+                    "â republicando"
                 )
                 _set_github_output("mudancas", "true")
                 _set_github_output("novos", "0")
@@ -238,9 +243,9 @@ async def run_vigia():
 
         # Processa removidos: marca Indisponivel no banco
         if ids_removidos:
-            logger.info(f"Marcando {len(ids_removidos)} imoveis como Indisponivel...")
-            mark_unavailable(ids_removidos)
-            logger.info(f"[ENCERRADOS] {len(ids_removidos)} imoveis marcados como Indisponivel: {ids_removidos[:10]}{'...' if len(ids_removidos)>10 else ''}")
+            logger.info(f"Sinalizando {len(ids_removidos)} imoveis como suspeito_encerrado (aguardando confirmacao)...")
+            marcar_suspeitos(ids_removidos)
+            logger.info(f"[SUSPEITOS] {len(ids_removidos)} imoveis sinalizados: {ids_removidos[:10]}{'...' if len(ids_removidos)>10 else ''}")
 
         # Processa novos: raspa detalhes
         if ids_novos:
@@ -252,6 +257,14 @@ async def run_vigia():
                 logger.warning(f"Nao foi possivel buscar UFs dos novos: {e}")
             pares = [(nid, uf_map.get(nid)) for nid in ids_novos]
             await run_etapa2(pares)
+
+        # Verifica suspeitos (ausentes do CSV, aguardando confirmacao via detalhe)
+        try:
+            ativos_conf, encerrados_conf = await verificar_suspeitos_ativos(limite=15)
+            if ativos_conf or encerrados_conf:
+                logger.info(f"Suspeitos verificados: {len(ativos_conf)} ativos, {len(encerrados_conf)} encerrados")
+        except Exception as e:
+            logger.warning(f"Falha ao verificar suspeitos: {e}")
 
         # Emite outputs para o workflow
         _set_github_output("mudancas", "true")
@@ -288,6 +301,14 @@ async def run_pipeline():
             f"{len(ids_novos)} novos | "
             f"estados ok={len(estados_ok)} | falha={len(estados_falha)}"
         )
+
+        # Verifica suspeitos (ausentes do CSV, aguardando confirmacao via detalhe)
+        try:
+            ativos_conf, encerrados_conf = await verificar_suspeitos_ativos(limite=15)
+            if ativos_conf or encerrados_conf:
+                logger.info(f"Suspeitos verificados: {len(ativos_conf)} ativos, {len(encerrados_conf)} encerrados")
+        except Exception as e:
+            logger.warning(f"Falha ao verificar suspeitos: {e}")
 
         focos_mat = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
         mat_limit = int(os.getenv("MATRICULA_BATCH_LIMIT", "20000"))
