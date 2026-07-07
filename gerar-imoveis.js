@@ -371,10 +371,10 @@ ${similHTML}
 </div>
 </main>
 
-<footer style="max-width:960px;margin:0 auto;padding:1.5rem 1rem;white-space:normal;word-break:normal;text-align:center">
+<footer style="padding:1.5rem 1rem;white-space:normal;word-break:normal;text-align:center"><div class="footer-inner">
 <b>Reginaldo Rosso</b> - Corretor de Imóveis &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
 Valores e situação sujeitos a alteração — confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
-</footer>
+</div></footer>
 
 <div class="sticky-cta sticky-cta--visible" id="sticky-cta-enc" aria-hidden="false">
   <span class="sticky-cta__savings">Imóvel encerrado — avise-me de similares</span>
@@ -568,16 +568,16 @@ ${faqHTML}
 <p class="back"><a href="../../imoveis.html">&larr; Ver todos os imóveis RS &amp; SC</a></p>
 </div>
 
-<footer style="max-width:960px;margin:0 auto;padding:1.5rem 1rem;text-align:center;font-size:.85rem;color:var(--muted)">
+<footer style="padding:1.5rem 1rem;text-align:center;font-size:.85rem;color:var(--muted)"><div class="footer-inner">
 <b>Reginaldo Rosso</b> - Corretor de Imóveis &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
 Valores e situação sujeitos a alteração &mdash; confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
-</footer>
+</div></footer>
 <a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
 </body>
 </html>`;
 }
 
-function pagina(i){
+function descChipsHTML(desc){if(!desc)return "";let t=String(desc);const cut=t.toLowerCase().indexOf('formas de pagamento');if(cut>=0)t=t.slice(0,cut);const fixMap={'wc':'WC','quartos':'Quartos','quarto':'Quarto','dormitorio':'Dormitório','dormitorios':'Dormitórios','sala':'Sala','cozinha':'Cozinha','banheiro':'Banheiro','banheiros':'Banheiros','garagem':'Garagem','area de servico':'Área de Serviço','lavabo':'Lavabo','copa':'Copa','emp':'Empregada','vaga':'Vaga','vagas':'Vagas'};const parts=t.split(/[,.;]/).map(function(s){return s.trim();}).filter(function(s){return s&&s.length<=40;});const chips=parts.map(function(p){const low=p.toLowerCase();if(fixMap[low])return fixMap[low];return p.replace(/\b\w/g,function(c){return c.toUpperCase();});}).filter(function(c,idx,arr){return arr.indexOf(c)===idx;});if(!chips.length)return "";return '<div class="desc-chips">'+chips.map(function(c){return '<span class="dchip">'+esc(c)+'</span>';}).join('')+'</div>';}function pagina(i){
    const det = i._det || {};
 // B2/B3: tipo real do banco (quando houver) e kicker de modalidade
 const tipoReal = (det.tipo_real && String(det.tipo_real).trim()) ? String(det.tipo_real).trim() : "";
@@ -770,12 +770,13 @@ const ldBreadcrumb = {
    ${i.desconto>0?'<span class="off">'+Math.round(i.desconto)+'% OFF</span>':""}
    </div>
 
-   <div class="body">
+   <div class="body dethead">
    <div class="ctype">${esc(kicker)}</div>
    <h1>${esc(cidade)}${bairro?` &middot; ${esc(bairro)}`:""}</h1>
    <div class="addr">${esc(i.endereco||"")}</div>
    ${specsHTML}
-    ${(function(){
+      </div>
+${      (function(){
       const hasFim = !!(det.data_fim && det.data_fim.trim());
       const tid = 'alerta-' + i.id;
       return [
@@ -892,7 +893,7 @@ ${htmlOcupacaoDetalhe(det.ocupacao || null)}
 
    ${docsHTML}
 
-   ${i.descricao?`<div class="desc"><b>Descrição:</b> ${esc(i.descricao)}</div>`:""}
+   ${descChipsHTML(i.descricao)}
 
    <div class="cta">
    <a class="btn wa" href="${wa}" target="_blank" rel="noopener">&#128242; Tenho interesse - falar no WhatsApp</a>
@@ -901,13 +902,12 @@ ${htmlOcupacaoDetalhe(det.ocupacao || null)}
    </div>
    ${notaHTML}
    <p class="back"><a href="../imoveis.html">&larr; Ver todos os imóveis</a></p>
-   </div>
    </main>
 
-   <footer style="max-width:960px;margin:0 auto;padding:1.5rem 1rem;white-space:normal;word-break:normal;text-align:center">
+   <footer style="padding:1.5rem 1rem;white-space:normal;word-break:normal;text-align:center"><div class="footer-inner">
    <b>Reginaldo Rosso</b> - Corretor de Imoveis &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
    Valores e situação sujeitos a alteração - confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
-   </footer>
+   </div></footer>
 
    <div class="sticky-cta" id="sticky-cta" aria-hidden="true">
      <span class="sticky-cta__savings">${i.desconto>0?'Economia de '+brl(i.avaliacao-i.preco)+' ('+Math.round(i.desconto)+'%)':brl(i.preco)}</span>
