@@ -91,8 +91,8 @@ def _is_csv_valido(conteudo: bytes) -> bool:
     # Verificar keywords nas primeiras 5 linhas (nao apenas na primeira)
     linhas = texto.split("\n")[:5]
     texto_cabecalho = " ".join(linhas).lower()
-    keywords = ["imovel", "imóvel", "cidade", "preco", "preço", "valor", "uf",
-                "modalidade", "bairro", "descricao", "avalia", "endereco", "endereço",
+    keywords = ["imovel", "imÃ³vel", "cidade", "preco", "preÃ§o", "valor", "uf",
+                "modalidade", "bairro", "descricao", "avalia", "endereco", "endereÃ§o",
                 "logradouro", "lista de im", "caixa", "financiam"]
     return any(kw in texto_cabecalho for kw in keywords)
 
@@ -136,7 +136,7 @@ def _parse_csv(conteudo, estado):
         header_idx = None
         for _i, _ln in enumerate(linhas):
             _low = _ln.lower()
-            _tem_imovel = ("imóvel" in _low) or ("imovel" in _low)
+            _tem_imovel = ("imÃ³vel" in _low) or ("imovel" in _low)
             if _tem_imovel and ("uf" in _low) and ("cidade" in _low) and _ln.count(";") >= 5:
                 header_idx = _i
                 break
@@ -162,7 +162,7 @@ def _parse_csv(conteudo, estado):
                         dtype=str,
                     )
                     _cols = " ".join(str(c).lower() for c in df_test.columns)
-                    if (("imóvel" in _cols) or ("imovel" in _cols)) and ("uf" in _cols):
+                    if (("imÃ³vel" in _cols) or ("imovel" in _cols)) and ("uf" in _cols):
                         df = df_test
                         break
                 except Exception:
@@ -588,8 +588,17 @@ async def _executar() -> dict:
         ids_removidos = set()
     ids_novos = ids_csv - ids_banco
 
+    # Imoveis que voltaram a aparecer no CSV: limpa qualquer suspeita antiga.
+    ids_recuperados = ids_banco & ids_csv
+    if ids_recuperados:
+        db.limpar_suspeita(list(ids_recuperados))
+
     if ids_removidos:
-        db.mark_unavailable(list(ids_removidos))
+        # NAO marca Indisponivel de imediato: alguns imoveis ativos (Venda
+        # Online) nao aparecem no CSV geral da Caixa. Apenas sinaliza como
+        # suspeito; verificar_suspeitos_ativos (reconciliar_ativos.py) confirma
+        # via pagina de detalhe antes de remover de fato.
+        db.marcar_suspeitos(list(ids_removidos))
 
     novos = [im for im in todos_imoveis if im["numero_imovel"] in ids_novos]
     # Upsert em lote (MUITO mais rapido que um-por-um com Neon remoto)
