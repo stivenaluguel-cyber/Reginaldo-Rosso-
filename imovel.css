@@ -173,7 +173,7 @@ footer b{color:#fff}
 @media(max-width:820px){
   .det{flex-direction:column}
   .col-left,.col-right{display:contents}
-    .ph{order:1;margin-top:0}
+    .ph{order:1;margin-top:0;width:100%}
       .price-block{order:2}
       .alerta-card{order:3}
       .regras{order:4}
