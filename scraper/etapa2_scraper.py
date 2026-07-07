@@ -212,7 +212,7 @@ def _parse_tipo(full_text, descricao_csv=""):
             return "Casa"
         if "terreno" in t or "lote" in t or "gleba" in t:
             return "Terreno"
-        if "loja" in t or "sala comercial" in t or "comercial" in t or "galpao" in t or "predio" in t:
+        if "loja" in t or "sala comercial" in t or "galpao" in t or "predio" in t:
             return "Imovel Comercial"
         if "rural" in t or "chacara" in t or "sitio" in t or "fazenda" in t:
             return "Imovel Rural"
@@ -498,10 +498,7 @@ async def _extrair_dados_playwright(page, numero_imovel):
                 desc_raw = full_text[idx_titulo:idx_titulo + 1000]
         dados["descricao"] = _sanitizar_descricao(desc_raw)
 
-        # === Tipo real ===
-        tipo = _parse_tipo(full_text)
-        if tipo:
-            dados["tipo_real"] = tipo
+        # Tipo real: NAO reclassifica aqui - o CSV (etapa1/parse_descricao_csv) e a fonte autoritativa e nunca deve ser sobrescrito pelo texto da pagina de detalhe (lista de comodos tipo "sala, 2 quartos..." fazia tipo_real virar "Sala"). _parse_tipo() continua definida acima so para referencia/diagnostico.
 
         # === Quartos ===
         quartos = _parse_quartos(full_text)
