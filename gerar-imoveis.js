@@ -956,7 +956,7 @@ async function carregarImoveisDoBanco(){
       await cli.connect();
       const r = await cli.query(
          "SELECT numero_imovel, uf, cidade, bairro, endereco, preco_avaliacao, preco_minimo, " +
-         "modalidade, descricao, area_total, area_privativa, debito_tributos, debito_condominio, " +
+         "modalidade, descricao, tipo_real, area_total, area_privativa, debito_tributos, debito_condominio, " +
          "aceita_fgts, aceita_financiamento, quartos, data_fim, ocupacao, matricula_s3_url, status, scraped_at " +
          "FROM imoveis_caixa " +
          "WHERE status IN ('Disponivel','Indisponivel') AND uf IN ('RS','SC') " +
@@ -977,7 +977,7 @@ async function carregarImoveisDoBanco(){
                                     // financiamento: null quando DB nao tem dado (CSV fallback sera aplicado em resolverFinanciamento)
                                     financiamento: finDb,
                                     descricao: row.descricao||"", modalidade: row.modalidade||"",
-                                    tipo: tipoDe(row.descricao||""),
+                                     tipo: (row.tipo_real && String(row.tipo_real).trim()) || tipoDe(row.descricao||''),
                                     link: "https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel="+id
                                ,
                                status: row.status||"Disponivel"
