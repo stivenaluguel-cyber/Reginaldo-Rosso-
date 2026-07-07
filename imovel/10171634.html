@@ -35,6 +35,7 @@
 .alerta-card__sub--sem-data{color:#92400e;background:#fef3c7;border-radius:6px;padding:.4rem .6rem;font-size:.82rem;margin:0 0 1rem;display:block}
 .alerta-form{display:flex;flex-direction:column;gap:.6rem}
 .alerta-form input[type=text],.alerta-form input[type=email]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#1e2b3f;outline:none;transition:border-color .2s}
+.alerta-input{min-height:44px;width:100%;box-sizing:border-box}
 .alerta-form input:focus{border-color:#c6a052}
 .alerta-form label.check{display:flex;align-items:flex-start;gap:.4rem;font-size:.8rem;color:#4b5563;cursor:pointer;line-height:1.4}
 .alerta-form label.check input{margin-top:3px;flex-shrink:0;accent-color:#c6a052}
@@ -62,19 +63,21 @@
    <span class="bt"><b>Reginaldo Rosso</b><small>Imoveis Caixa - RS &amp; SC</small></span>
    </a>
    <div class="fones">
-   <a href="tel:5551991104976">(51) 99110-4976 - RS</a>
-   <a href="tel:5548991642332">(48) 99164-2332 - SC</a>
+   <a href="tel:5551991104976" class="fone-ico"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg><span class="fone-txt">(51) 99110-4976 - RS</span><span class="fone-short">RS</span></a>
+   <a href="tel:5548991642332" class="fone-ico"><svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1z"/></svg><span class="fone-txt">(48) 99164-2332 - SC</span><span class="fone-short">SC</span></a>
    </div>
+   <button class="burger" id="burger" aria-label="Abrir menu"><span></span><span></span><span></span></button>
    </div>
-   <nav class="main-nav" style="background:#27405f;padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center">
-   <a href="../index.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Início</a>
-   <a href="../imoveis.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Imóveis Caixa</a>
-   <a href="../mapa.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
-   <a href="../como-funciona.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Como Funciona</a>
-   <a href="../calculadora.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
-   <a href="../index.html#contato" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
+   <nav class="main-nav" id="mainnav">
+   <a href="../index.html">Início</a>
+   <a href="../imoveis.html">Imóveis Caixa</a>
+   <a href="../mapa.html">Mapa</a>
+   <a href="../como-funciona.html">Como Funciona</a>
+   <a href="../calculadora.html">Calculadora ROI</a>
+   <a href="../index.html#contato">Contato</a>
    </nav>
    </header>
+   <script>document.getElementById('burger').addEventListener('click',function(){document.getElementById('mainnav').classList.toggle('open');});</script>
 
    <div class="crumb"><a href="../index.html">Início</a> &rsaquo; <a href="../imoveis.html">Imóveis Caixa</a> &rsaquo; <a href="../imoveis.html#q=MONTENEGRO">Montenegro</a> &rsaquo; <span>cod. 10171634</span></div>
 
@@ -191,7 +194,7 @@ er.textContent=m;er.style.display="block";
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
        <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=venda_direta&valorLance=908232&valorAvaliacao=1830000&comissaoLeiloeiro=0" style="margin-top:10px;display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI</a>
      </div>
-     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 07/07/2026, 21:40.</p>
+     <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 07/07/2026, 21:43.</p>
    </div>
 
    <div class="regras"><h2>Débitos e responsabilidades</h2><div class="regra"><b>Tributos (IPTU):</b> Arrematante paga ate 10%</div><div class="regra"><b>Condominio:</b> Arrematante paga ate 10%</div></div>
@@ -227,7 +230,7 @@ er.textContent=m;er.style.display="block";
        var hidden=!entries[0].isIntersecting;
        sc.classList.toggle('sticky-cta--visible',hidden);
        sc.setAttribute('aria-hidden',hidden?'false':'true');
-       if(wf)wf.style.display=hidden?'none':'';
+if(wf){ if(window.innerWidth<=768){ wf.style.display=hidden?'none':''; } else { wf.style.display=''; } }
      },{threshold:0});
      io.observe(pb);
    })();
