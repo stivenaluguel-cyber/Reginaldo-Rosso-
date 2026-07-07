@@ -904,9 +904,9 @@ ${htmlOcupacaoDetalhe(det.ocupacao || null)}
    </div>
    ${notaHTML}
    </div>
-   <p class="back"><a href="../imoveis.html">&larr; Ver todos os imóveis</a></p>
-   </main>
-
+      </main>
+         <p class="back"><a href="../imoveis.html">&larr; Ver todos os imóveis</a></p>
+         
    <footer style="padding:1.5rem 1rem;white-space:normal;word-break:normal;text-align:center"><div class="footer-inner">
    <b>Reginaldo Rosso</b> - Corretor de Imoveis &middot; CRECI/RS 28565J &middot; CRECI/SC 8152J<br>
    Valores e situação sujeitos a alteração - confirme sempre no edital e na ficha oficial da Caixa. Site de um corretor credenciado; não é um site oficial da CAIXA.
