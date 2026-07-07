@@ -362,8 +362,8 @@ return `<!doctype html>
 <div class="addr">${esc(im.endereco||"")}</div>
 <p style="color:#6b7280;margin:.5rem 0 1.5rem">Este imóvel não está mais disponível na lista da Caixa Econômica Federal.</p>
 
-<a class="btn wa" href="${wa}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-bottom:1rem">&#128242; Quero ser avisado de oportunidades como essa</a>
-<a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener" style="display:block;text-align:center">&#128196; Ver ficha na Caixa</a>
+<a class="btn wa" href="${wa}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-bottom:1rem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI Quero ser avisado de oportunidades como essa</a>
+<a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener" style="display:block;text-align:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg> Ver ficha na Caixa</a>
 
 ${similHTML}
 
@@ -378,7 +378,7 @@ Valores e situação sujeitos a alteração — confirme sempre no edital e na f
 
 <div class="sticky-cta sticky-cta--visible" id="sticky-cta-enc" aria-hidden="false">
   <span class="sticky-cta__savings">Imóvel encerrado — avise-me de similares</span>
-  <a class="btn wa sticky-cta__btn" href="${wa}" target="_blank" rel="noopener">&#128242; Quero ser avisado</a>
+  <a class="btn wa sticky-cta__btn" href="${wa}" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI Quero ser avisado</a>
 </div>
 <a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
 </body>
@@ -559,7 +559,7 @@ ${cardsHTML}
 <h2>Assessoria com CRECI próprio em ${esc(nome)}</h2>
 <div class="hub-cta-box">
 <p>Reginaldo Rosso &mdash; CRECI/RS 28565J &middot; CRECI/SC 8152J &mdash; confere edital, matrícula e situação de ocupação <strong>sem custo para o comprador</strong>. A comissão é paga pela Caixa.</p>
-<a class="btn wa" href="${wa}" target="_blank" rel="noopener" style="display:inline-flex">&#128242; Analisar um imóvel em ${esc(nome)}</a>
+<a class="btn wa" href="${wa}" target="_blank" rel="noopener" style="display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI Analisar um imóvel em ${esc(nome)}</a>
 </div>
 
 <h2>Dúvidas frequentes sobre leilões da Caixa em ${esc(nome)}</h2>
@@ -635,14 +635,14 @@ const mais = [];
 
 // ---- documentos ----
 const docs = [];
-   if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" download target="_blank" rel="noopener">&#128196; Baixar Matrícula (PDF)</a>']);
-   else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener">&#128196; Matrícula</a>']);
+   if(matriculaUrl) docs.push(['<a class="doc" href="'+esc(matriculaUrl)+'" download target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg> Baixar Matrícula (PDF)</a>']);
+   else docs.push(['<a class="doc" href="'+esc(fichaCaixa)+'" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg> Matrícula</a>']);
    const docsHTML = '<div class="docs"><h2>Documentos</h2><div class="docs-row">'+docs.join("")+'</div></div>';
 
 const temDetalhe = (fgts!=null||fin!=null||tributos||condominio||matriculaUrl||areaPriv);
    const notaHTML = temDetalhe
-   ? '<div class="note">Informacoes extraidas da ficha oficial da Caixa'+(atualizado?" (atualizado em "+esc(atualizado)+")":"")+'. Confirme sempre no edital antes de dar um lance. Preparo seu <b>Relatório Confidencial</b> sem custo.</div>'
-      : '<div class="note">Matrícula, FGTS, parcelamento, tributos/condominio e valores de praca constam na ficha oficial da Caixa. Eu confiro tudo com voce antes de qualquer lance - e preparo seu <b>Relatório Confidencial</b> sem custo.</div>';
+   ? '<div class="note">Informações extraídas da ficha oficial da Caixa'+(atualizado?" (atualizado em "+esc(atualizado)+")":"")+'. Confirme sempre no edital antes de dar um lance. Preparo seu <b>Relatório Confidencial</b> sem custo.</div>'
+      : '<div class="note">Matrícula, FGTS, parcelamento, tributos/condomínio e valores de praça constam na ficha oficial da Caixa. Eu confiro tudo com você antes de qualquer lance - e preparo seu <b>Relatório Confidencial</b> sem custo.</div>';
 
 const ld = {
   "@context": "https://schema.org",
@@ -781,7 +781,7 @@ ${      (function(){
       const tid = 'alerta-' + i.id;
       return [
         '<div class="alerta-card" id="' + tid + '">',
-        '<h3 class="alerta-titulo">\uD83D\uDD14 Quer ser avisado sobre este leil\u00E3o?</h3>',
+        '<h3 class="alerta-titulo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> Quer ser avisado sobre este leil\u00E3o?</h3>',
         hasFim
           ? '<p class="alerta-sub">Receba lembretes por e-mail 24h, 4h e 1h antes do encerramento.</p>'
           : '<div class="alerta-sem-data">\u26A0\uFE0F Ainda n\u00E3o temos a data de encerramento deste leil\u00E3o. Deixe seu e-mail e avisamos assim que sair.</div>',
@@ -882,7 +882,7 @@ ${htmlPrazoDetalhe(det.data_fim || null)}
 ${htmlOcupacaoDetalhe(det.ocupacao || null)}
           <div class="price-block__costs">
        Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
-       <a class="btn roi-btn" href="${roiUrl}" style="margin-top:10px;display:inline-flex">&#128202; Calcular ROI</a>
+       <a class="btn roi-btn" href="${roiUrl}" style="margin-top:10px;display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI</a>
      </div>
      <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em ${new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}.</p>
    </div>
@@ -896,9 +896,9 @@ ${htmlOcupacaoDetalhe(det.ocupacao || null)}
    ${descChipsHTML(i.descricao)}
 
    <div class="cta">
-   <a class="btn wa" href="${wa}" target="_blank" rel="noopener">&#128242; Tenho interesse - falar no WhatsApp</a>
-   <a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener">&#128196; Ver ficha oficial na Caixa</a>
-   <button class="btn share" id="sh">&#128279; Compartilhar</button>
+   <a class="btn gold" href="${wa}" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"></path></svg> Falar com o corretor sobre este imóvel</a>
+   <a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg> Ficha oficial Caixa</a>
+   <button class="btn share" id="sh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> Compartilhar</button>
    </div>
    ${notaHTML}
    <p class="back"><a href="../imoveis.html">&larr; Ver todos os imóveis</a></p>
@@ -911,7 +911,7 @@ ${htmlOcupacaoDetalhe(det.ocupacao || null)}
 
    <div class="sticky-cta" id="sticky-cta" aria-hidden="true">
      <span class="sticky-cta__savings">${i.desconto>0?'Economia de '+brl(i.avaliacao-i.preco)+' ('+Math.round(i.desconto)+'%)':brl(i.preco)}</span>
-     <a class="btn wa sticky-cta__btn" href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Quero a análise do imóvel '+i.id+' em '+i.cidade)}" target="_blank" rel="noopener">&#128242; Analisar este imóvel</a>
+     <a class="btn wa sticky-cta__btn" href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Quero a análise do imóvel '+i.id+' em '+i.cidade)}" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI Analisar este imóvel</a>
    </div>
       <script>
    (function(){
