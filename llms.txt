@@ -33,6 +33,8 @@ O site mantém um portal próprio com centenas de imóveis da Caixa (leilão SFI
 
 Hubs de cidade em /leilao-caixa/{uf}/{cidade}.html com contagem de imóveis atualizada automaticamente — inclui Porto Alegre, Pelotas, Canoas, São Leopoldo, Caxias do Sul, Novo Hamburgo, Santa Maria e Passo Fundo (RS); Joinville, Blumenau, São José, Palhoça e Criciúma (SC), entre outras.
 
+Páginas dedicadas de assessoria local: [Porto Alegre](https://reginaldorosso.com.br/corretor-credenciado-caixa-porto-alegre.html), [Pelotas](https://reginaldorosso.com.br/corretor-credenciado-caixa-pelotas.html), [Florianópolis](https://reginaldorosso.com.br/corretor-credenciado-caixa-florianopolis.html) e [Joinville](https://reginaldorosso.com.br/corretor-credenciado-caixa-joinville.html).
+
 ## Contato
 
 - WhatsApp RS: +55 51 99110-4976 · WhatsApp SC: +55 48 99164-2332

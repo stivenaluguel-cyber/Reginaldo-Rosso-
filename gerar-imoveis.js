@@ -1079,6 +1079,7 @@ for(const im of imoveis){
      "/corretor-credenciado-caixa-porto-alegre.html",
      "/corretor-credenciado-caixa-florianopolis.html",
      "/corretor-credenciado-caixa-pelotas.html",
+     "/corretor-credenciado-caixa-joinville.html",
      "/como-dar-lance-imovel-caixa.html",
      "/como-funciona-leilao-imovel-caixa.html"
     ,
