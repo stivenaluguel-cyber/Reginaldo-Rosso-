@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#1f324c" />
+<meta name="robots" content="noindex,nofollow">
+<title>Painel Interno — Reginaldo Rosso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1f324c;--navy2:#27405f;--navy-d:#172638;--gold:#c6a052;--gold-soft:#d9c79f;--cream:#e7dcc2;--bg:#eef1f4;--card:#fff;--ink:#1f324c;--ink2:#33485f;--muted:#6b7c8e;--line:#e2e7ec;--green:#1f9d57;--maxw:1240px;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink2);font-family:'Montserrat',-apple-system,system-ui,Arial,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+a{color:inherit;text-decoration:none}
+h1,h2{color:var(--ink);font-weight:700;margin:0;line-height:1.15}
+header{background:linear-gradient(180deg,var(--navy2),var(--navy));padding:18px 0;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+header .titulo{display:flex;flex-direction:column;gap:2px}
+header .titulo b{color:#fff;font-size:1.15rem;font-weight:800}
+header .titulo small{color:var(--gold-soft);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase}
+header .badge-priv{background:rgba(198,160,82,.16);border:1px solid rgba(198,160,82,.4);color:var(--gold-soft);font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:999px}
+.resumo{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:26px 0 22px}
+.stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:12px;padding:16px 18px}
+.stat b{display:block;font-size:1.7rem;font-weight:800;color:var(--ink)}
+.stat span{font-size:.74rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.painel-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px}
+.busca{flex:1 1 260px;min-width:220px}
+.busca label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:0 0 5px 2px;font-weight:700}
+.busca input{width:100%;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-weight:500;font-size:.92rem;padding:11px 12px;outline:none}
+.busca input:focus{border-color:var(--gold)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:.82rem;color:var(--muted);cursor:pointer;font-weight:600;font-family:inherit}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:auto;margin-bottom:30px}
+table{width:100%;border-collapse:collapse;min-width:920px}
+thead th{position:sticky;top:0;background:var(--navy);color:#fff;text-align:left;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{background:var(--navy2)}
+thead th .arrow{color:var(--gold-soft);margin-left:4px;font-size:.7rem}
+tbody td{padding:11px 14px;border-top:1px solid var(--line);font-size:.86rem;color:var(--ink2);white-space:nowrap}
+tbody tr:nth-child(even){background:#f7f9fb}
+tbody tr:hover{background:#eef3f8}
+tbody td a{color:var(--navy);font-weight:700}
+tbody td a:hover{color:var(--gold)}
+.badge-status{display:inline-block;border-radius:7px;padding:3px 9px;font-size:.72rem;font-weight:800}
+.badge-status.disp{background:rgba(31,157,87,.12);color:var(--green)}
+.badge-status.saiu{background:rgba(107,124,142,.14);color:var(--muted)}
+.vazio{text-align:center;color:var(--muted);padding:50px 20px}
+.contagem{font-size:.82rem;color:var(--muted);margin-left:auto}
+.contagem b{color:var(--ink)}
+footer{background:var(--navy-d);color:#9fb0c0;padding:26px 0;font-size:.8rem;line-height:1.7;text-align:center}
+@media(max-width:880px){.resumo{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body><header>
+<div class="wrap">
+<div class="titulo"><b>Painel Interno</b><small>Reginaldo Rosso · Uso do corretor</small></div>
+<span class="badge-priv">Não indexado</span>
+</div>
+</header>
+
+<div class="wrap">
+<section class="resumo" id="resumo">
+<div class="stat"><b id="stTotal">—</b><span>Total ativos</span></div>
+<div class="stat"><b id="stNovosHoje">—</b><span>Novos hoje</span></div>
+<div class="stat"><b id="stReduziram">—</b><span>Reduziram preço (7 dias)</span></div>
+<div class="stat"><b id="stParados">—</b><span>Parados há 60+ dias</span></div>
+<div class="stat"><b id="stSaidas">—</b><span>Saíram (7 dias)</span></div>
+</section>
+
+<section class="painel-filtros">
+<div class="busca">
+<label for="busca">Buscar (cidade ou código)</label>
+<input id="busca" type="search" placeholder="Ex.: Porto Alegre, 10214912…" autocomplete="off">
+</div>
+<div class="chips" id="chips">
+<button class="chip" data-filtro="" aria-pressed="true">Todos</button>
+<button class="chip" data-filtro="parados" aria-pressed="false">Parados 60+ dias (<span id="nParados">0</span>)</button>
+<button class="chip" data-filtro="reduziram" aria-pressed="false">Reduziram recentemente (<span id="nReduziram">0</span>)</button>
+<button class="chip" data-filtro="novos" aria-pressed="false">Novos (3 dias) (<span id="nNovos">0</span>)</button>
+<button class="chip" data-filtro="saidas" aria-pressed="false">Saídas (7 dias) (<span id="nSaidas">0</span>)</button>
+</div>
+<span class="contagem" id="contagem"></span>
+</section>
+
+<div class="tablewrap">
+<table>
+<thead>
+<tr>
+<th data-col="codigo">Código<span class="arrow" id="arr-codigo"></span></th>
+<th data-col="cidade">Cidade/UF<span class="arrow" id="arr-cidade"></span></th>
+<th data-col="tipo">Tipo<span class="arrow" id="arr-tipo"></span></th>
+<th data-col="preco">Preço atual<span class="arrow" id="arr-preco"></span></th>
+<th data-col="desconto">Desconto<span class="arrow" id="arr-desconto"></span></th>
+<th data-col="dias">Dias no site<span class="arrow" id="arr-dias"></span></th>
+<th data-col="reducoes">Nº reduções<span class="arrow" id="arr-reducoes"></span></th>
+<th data-col="pct">% reduzido<span class="arrow" id="arr-pct"></span></th>
+<th data-col="mudanca">Última mudança<span class="arrow" id="arr-mudanca"></span></th>
+<th data-col="status">Status<span class="arrow" id="arr-status"></span></th>
+</tr>
+</thead>
+<tbody id="corpo"></tbody>
+</table>
+</div>
+</div>
+
+<footer id="rodape">Carregando…</footer>
+
+<script>var BRL = function(v){
+  if(v==null || isNaN(v)) return "—";
+  return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+};
+var norm = function(s){
+  return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+};
+function diasDesde(iso){
+  if(!iso) return null;
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return null;
+  return Math.floor((Date.now()-d.getTime())/86400000);
+}
+function fmtData(iso){
+  if(!iso) return "—";
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR");
+}
+
+var IMOVEIS = [], SAIDAS = [], GERADO_EM = null;
+var state = { filtro: "", busca: "", sortCol: "dias", sortDir: "desc" };
+
+function linhaCanonica(i, isSaida){
+  return {
+    codigo: i.numero_imovel,
+    cidade: i.cidade || "",
+    uf: i.uf || "",
+    tipo: i.tipo_real || "—",
+    preco: i.preco_minimo,
+    desconto: isSaida ? null : i.desconto,
+    dias: isSaida ? null : i.dias_no_site,
+    reducoes: isSaida ? null : i.qtd_reducoes,
+    pct: isSaida ? null : i.total_reduzido_pct,
+    mudancaData: isSaida ? i.data_saida : i.ultima_mudanca,
+    status: isSaida ? "Saiu" : "Disponível",
+    isSaida: !!isSaida
+  };
+}
+
+function reduziuRecente(i){
+  return !!(i.qtd_reducoes > 0 && i.ultima_mudanca && diasDesde(i.ultima_mudanca) <= 7);
+}
+function atualizarContadores(){
+  var nParados = IMOVEIS.filter(function(i){ return i.dias_no_site!=null && i.dias_no_site>=60; }).length;
+  var nReduziram = IMOVEIS.filter(reduziuRecente).length;
+  var nNovos = IMOVEIS.filter(function(i){ return i.dias_no_site!=null && i.dias_no_site<=3; }).length;
+  var nSaidas = SAIDAS.length;
+  var nNovosHoje = IMOVEIS.filter(function(i){ return i.dias_no_site!=null && i.dias_no_site<=0; }).length;
+
+  document.getElementById("stTotal").textContent = IMOVEIS.length.toLocaleString("pt-BR");
+  document.getElementById("stNovosHoje").textContent = nNovosHoje.toLocaleString("pt-BR");
+  document.getElementById("stReduziram").textContent = nReduziram.toLocaleString("pt-BR");
+  document.getElementById("stParados").textContent = nParados.toLocaleString("pt-BR");
+  document.getElementById("stSaidas").textContent = nSaidas.toLocaleString("pt-BR");
+
+  document.getElementById("nParados").textContent = nParados.toLocaleString("pt-BR");
+  document.getElementById("nReduziram").textContent = nReduziram.toLocaleString("pt-BR");
+  document.getElementById("nNovos").textContent = nNovos.toLocaleString("pt-BR");
+  document.getElementById("nSaidas").textContent = nSaidas.toLocaleString("pt-BR");
+
+  var mapa = { parados:nParados, reduziram:nReduziram, novos:nNovos, saidas:nSaidas };
+  document.querySelectorAll(".chip[data-filtro]").forEach(function(c){
+    var f = c.dataset.filtro;
+    if(f === "") return;
+    c.style.display = mapa[f] > 0 ? "" : "none";
+  });
+}
+
+function linhasBase(){
+  if(state.filtro === "saidas"){
+    return SAIDAS.map(function(i){ return linhaCanonica(i, true); });
+  }
+  var arr = IMOVEIS;
+  if(state.filtro === "parados") arr = arr.filter(function(i){ return i.dias_no_site!=null && i.dias_no_site>=60; });
+  else if(state.filtro === "reduziram") arr = arr.filter(reduziuRecente);
+  else if(state.filtro === "novos") arr = arr.filter(function(i){ return i.dias_no_site!=null && i.dias_no_site<=3; });
+  return arr.map(function(i){ return linhaCanonica(i, false); });
+}
+
+function aplicarBusca(arr){
+  if(!state.busca) return arr;
+  var b = norm(state.busca);
+  var bTrim = state.busca.trim();
+  return arr.filter(function(r){
+    return norm(r.cidade).indexOf(b) >= 0 || String(r.codigo).indexOf(bTrim) >= 0;
+  });
+}
+function valorOrdenacao(r, col){
+  if(col === "codigo") return Number(r.codigo) || 0;
+  if(col === "cidade") return norm(r.cidade);
+  if(col === "tipo") return norm(r.tipo);
+  if(col === "preco") return r.preco==null ? -1 : r.preco;
+  if(col === "desconto") return r.desconto==null ? -1 : r.desconto;
+  if(col === "dias") return r.dias==null ? -1 : r.dias;
+  if(col === "reducoes") return r.reducoes==null ? -1 : r.reducoes;
+  if(col === "pct") return r.pct==null ? -1 : r.pct;
+  if(col === "mudanca") return r.mudancaData ? new Date(r.mudancaData).getTime() : -1;
+  if(col === "status") return r.status;
+  return 0;
+}
+
+function ordenar(arr){
+  var col = state.sortCol, dir = state.sortDir;
+  arr.sort(function(a,b){
+    var va = valorOrdenacao(a, col), vb = valorOrdenacao(b, col);
+    var r;
+    if(typeof va === "string") r = va.localeCompare(vb);
+    else r = va - vb;
+    return dir === "asc" ? r : -r;
+  });
+  return arr;
+}
+
+function celStatus(r){
+  var cls = r.isSaida ? "saiu" : "disp";
+  return '<span class="badge-status ' + cls + '">' + r.status + '</span>';
+}
+
+function render(){
+  var arr = ordenar(aplicarBusca(linhasBase()));
+  var corpo = document.getElementById("corpo");
+  if(!arr.length){
+    corpo.innerHTML = '<tr><td colspan="10"><div class="vazio">Nenhum imóvel encontrado com esses filtros.</div></td></tr>';
+  } else {
+    var html = "";
+    for(var k=0;k<arr.length;k++){
+      var r = arr[k];
+      html += "<tr>";
+      html += '<td><a href="/imovel/' + r.codigo + '.html" target="_blank" rel="noopener">' + r.codigo + '</a></td>';
+      html += "<td>" + (r.cidade || "—") + (r.uf ? "/" + r.uf : "") + "</td>";
+      html += "<td>" + (r.tipo || "—") + "</td>";
+      html += "<td>" + BRL(r.preco) + "</td>";
+      html += "<td>" + (r.desconto!=null ? Math.round(r.desconto) + "%" : "—") + "</td>";
+      html += "<td>" + (r.dias!=null ? r.dias.toLocaleString("pt-BR") : "—") + "</td>";
+      html += "<td>" + (r.reducoes!=null ? r.reducoes.toLocaleString("pt-BR") : "—") + "</td>";
+      html += "<td>" + (r.pct!=null && r.pct>0 ? Math.round(r.pct) + "%" : "—") + "</td>";
+      html += "<td>" + (r.mudancaData ? fmtData(r.mudancaData) : "—") + "</td>";
+      html += "<td>" + celStatus(r) + "</td>";
+      html += "</tr>";
+    }
+    corpo.innerHTML = html;
+  }
+  var ce = document.getElementById("contagem");
+  ce.innerHTML = "<b>" + arr.length.toLocaleString("pt-BR") + "</b> " + (arr.length===1 ? "resultado" : "resultados");
+  document.querySelectorAll(".arrow").forEach(function(a){ a.textContent = ""; });
+  var arrEl = document.getElementById("arr-" + state.sortCol);
+  if(arrEl) arrEl.textContent = state.sortDir === "asc" ? " ▲" : " ▼";
+}
+document.getElementById("busca").addEventListener("input", function(e){
+  state.busca = e.target.value;
+  render();
+});
+
+document.querySelectorAll(".chip[data-filtro]").forEach(function(c){
+  c.addEventListener("click", function(){
+    var f = c.dataset.filtro;
+    document.querySelectorAll(".chip[data-filtro]").forEach(function(x){ x.setAttribute("aria-pressed","false"); });
+    if(state.filtro === f && f !== ""){
+      state.filtro = "";
+      document.querySelector('.chip[data-filtro=""]').setAttribute("aria-pressed","true");
+    } else {
+      state.filtro = f;
+      c.setAttribute("aria-pressed","true");
+    }
+    render();
+  });
+});
+
+document.querySelectorAll("th[data-col]").forEach(function(th){
+  th.addEventListener("click", function(){
+    var col = th.dataset.col;
+    if(state.sortCol === col){
+      state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+    } else {
+      state.sortCol = col;
+      state.sortDir = "desc";
+    }
+    render();
+  });
+});
+
+function carregar(){
+  fetch("painel-dados.json", {cache:"no-store"}).then(function(r){
+    return r.ok ? r.json() : null;
+  }).then(function(data){
+    if(!data){ throw new Error("sem dados"); }
+    IMOVEIS = data.imoveis || [];
+    SAIDAS = data.saidas_7d || [];
+    GERADO_EM = data.gerado_em || null;
+    atualizarContadores();
+    render();
+    var rodape = document.getElementById("rodape");
+    if(GERADO_EM){
+      var d = new Date(GERADO_EM);
+      var txt = isNaN(d.getTime()) ? GERADO_EM : d.toLocaleString("pt-BR");
+      rodape.textContent = "Painel gerado em " + txt + " · Uso interno — não indexado.";
+    } else {
+      rodape.textContent = "Uso interno — não indexado.";
+    }
+  }).catch(function(){
+    document.getElementById("corpo").innerHTML = '<tr><td colspan="10"><div class="vazio">Não consegui carregar os dados agora. Atualize a página em instântes.</div></td></tr>';
+    document.getElementById("rodape").textContent = "Uso interno — não indexado.";
+  });
+}
+carregar();
+</script>
+</body>
+</html>
