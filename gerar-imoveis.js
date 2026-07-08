@@ -611,6 +611,7 @@ const areaPriv = det.area_privativa || null;
 const areaTot = det.area_total || null;
 const matriculaUrl = det.matricula_s3_url || null;
 const atualizado = dataBR(det.scraped_at);
+const precoAnterior = (i.preco_anterior_14d != null && Number(i.preco_anterior_14d) > i.preco) ? Number(i.preco_anterior_14d) : null;
 
 // ---- condicoes (chips) ----
 // B1: badges vermelhos removidos — info ja consta nos cards FINANCIAMENTO/FGTS
@@ -859,6 +860,13 @@ ${docsHTML}
 <span class="price-block__label">Lance mínimo</span>
 <span class="price price--hero">${brl(i.preco)}</span>
 </div>
+${precoAnterior ? `<div class="price-block__row price-block__reduzido">
+<span class="price-block__label">Preço anterior</span>
+<span class="price price--old-reduzido" style="text-decoration:line-through;color:#94a3b8;font-weight:600">${brl(precoAnterior)}</span>
+</div>
+<div class="price-block__row price-block__economia-add">
+<span class="price-reduzido-msg" style="color:#c6a052;font-weight:700;font-size:.85rem">Preço reduzido — economia adicional de ${brl(precoAnterior - i.preco)}</span>
+</div>` : ""}
 <div class="price-block__row price-block__aval">
 <span class="price-block__label">Avaliação Caixa</span>
 <span class="price price--aval old">${brl(i.avaliacao)}</span>
