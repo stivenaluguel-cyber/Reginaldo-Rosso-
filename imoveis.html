@@ -168,6 +168,8 @@ gtag('config','AW-872430371');
   .card .specs svg{width:14px;height:14px;fill:var(--gold-soft)}
   .card .price{font-weight:800;font-size:1.38rem;line-height:1}
   .card .price .old{font-size:.76rem;color:#c3cedb;text-decoration:line-through;font-weight:500;margin-left:8px}
+.card .bflag{background:rgba(23,38,56,.92);color:#c6a052;border-radius:7px;padding:4px 9px;font-size:.72rem;font-weight:800;letter-spacing:.02em}
+.card .price-old-strike{font-size:.78rem;color:#c3cedb;text-decoration:line-through;font-weight:600;margin-bottom:2px}
 
   .loadmore{display:block;margin:18px auto 40px;background:#fff;border:1px solid var(--line);border-radius:12px;color:var(--navy);font-family:inherit;font-weight:700;font-size:.92rem;padding:14px 28px;cursor:pointer}
   .loadmore:hover{border-color:var(--gold)}
@@ -335,6 +337,8 @@ gtag('config','AW-872430371');
       
       <button class="chip" data-mindesc="30" aria-pressed="false">Desconto 30%+</button>
       <button class="chip chip-fav" id="chipFav" aria-pressed="false">♥ Favoritos (<span id="favN">0</span>)</button>
+<button class="chip" id="chipBaixaram" data-baixou="1" aria-pressed="false" style="display:none">Baixaram de preço (<span id="nBaixaram">0</span>)</button>
+<button class="chip" id="chipNovos" data-novo="1" aria-pressed="false" style="display:none">Novos (<span id="nNovos">0</span>)</button>
       <button class="chip chip-send" id="sendFav" style="display:none">Enviar favoritos no WhatsApp</button>
       <span class="count" id="count"></span>
     <a id="mapaLink" href="mapa.html" style="display:none;font-size:.75rem;color:var(--gold);text-decoration:none;margin-left:10px">🗺️ Ver no mapa</a>
@@ -472,7 +476,7 @@ async function carregar(){
             elU.textContent="Atualizado "+(rel||new Date(quando).toLocaleDateString("pt-BR"))+" \u00b7 "+ALL.length+" imoveis";
           } else { elU.textContent=ALL.length+" imoveis disponiveis"; }
         }
-        preencherFiltros(); aplicarHash(); aplicar(); updateFavUI();
+        preencherFiltros(); aplicarHash(); aplicar(); updateFavUI(); atualizarContadoresChips();
         try{ const _did=_idDaURL(); if(_did) abrirPorId(_did); }catch(_){}
       }catch(e){
         loadingEl.innerHTML="<h2>Nao consegui carregar a lista agora.</h2><p>Atualize a pagina em instantes.</p>";
@@ -480,7 +484,17 @@ async function carregar(){
     }
     
 
-  function preencherFiltros(){
+  function atualizarContadoresChips(){
+const nb=ALL.filter(function(i){return !!(i.preco_anterior && i.preco_anterior>i.preco);}).length;
+const nn=ALL.filter(function(i){return isNovo(i);}).length;
+const cb=document.getElementById("chipBaixaram"), cn=document.getElementById("chipNovos");
+const sb=document.getElementById("nBaixaram"), sn=document.getElementById("nNovos");
+if(sb) sb.textContent=nb.toLocaleString("pt-BR");
+if(sn) sn.textContent=nn.toLocaleString("pt-BR");
+if(cb) cb.style.display = nb>0 ? "" : "none";
+if(cn) cn.style.display = nn>0 ? "" : "none";
+}
+function preencherFiltros(){
     function _norm(v){ return String(v||'').trim().toLowerCase(); }
     function _labelFin(v){ return v===true||v==='true'?'Aceita':v===false||v==='false'?'Não aceita':'Não informado'; }
     function _labelTipo(i){ const tr=i.tipo_real; return (tr&&String(tr).trim()&&String(tr).trim()!=='-')?String(tr).trim():String(i.tipo||'Imóvel').trim(); }
@@ -551,6 +565,8 @@ function aplicar(){
       if(state.min!=null && (i.preco==null||i.preco<state.min)) return false;
       if(state.max!=null && (i.preco==null||i.preco>state.max)) return false;
       if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
+if(state.baixou && !(i.preco_anterior && i.preco_anterior>i.preco)) return false;
+if(state.novo && !isNovo(i)) return false;
       if(state.onlyFav && !isFav(i.id)) return false;
       if(state.q){
         const hay=norm(i.cidade+" "+i.bairro+" "+i.endereco+" "+i.descricao+" "+i.tipo);
@@ -616,7 +632,25 @@ function aplicar(){
       if(!parts.length) return "";
       return '<div class="cdims">'+parts.join(" \u00b7 ")+'</div>';
     }
-    function labelTipo(i){
+    function diasDesdeData(dataStr){
+if(!dataStr) return null;
+const d=new Date(dataStr+"T00:00:00");
+if(isNaN(d.getTime())) return null;
+return Math.floor((new Date()-d)/864e5);
+}
+function isNovo(i){
+const d=diasDesdeData(i.data_inclusao);
+return d!=null && d>=0 && d<=3;
+}
+function badgeFlagHTML(i){
+if(i.preco_anterior && i.preco_anterior>i.preco){
+const dif=Math.round(i.preco_anterior-i.preco);
+return '<span class="bflag">BAIXOU '+BRL(dif)+'</span>';
+}
+if(isNovo(i)) return '<span class="bflag">NOVO</span>';
+return "";
+}
+function labelTipo(i){
       if(i && i.tipo_real && String(i.tipo_real).trim()) return String(i.tipo_real).trim().toUpperCase();
       if(i && i.tipo && String(i.tipo).trim() && !/^im[oó]vel$/i.test(String(i.tipo).trim())) return String(i.tipo).trim().toUpperCase();
       if(i && i.modalidade && String(i.modalidade).trim()) return String(i.modalidade).trim().toUpperCase();
@@ -638,6 +672,7 @@ function aplicar(){
         <div class="grad"></div>
         <div class="badges">${urgenciaHTML(i)}
           <span class="uf">${i.uf}</span>
+${badgeFlagHTML(i)}
           ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
           ${i.financiamento===true?'<span class="fin-badge">🏦 Financia</span>':""}
         </div>
@@ -651,7 +686,8 @@ function aplicar(){
         <div class="cbot">
           <div class="ctype">${labelTipo(i)}</div>
           <div class="specs">${specsHTML(i)}</div>${dimsHTML(i)}
-          <div class="price">${BRL(i.preco)}${i.avaliacao&&i.avaliacao>i.preco?`<span class="old">${BRL(i.avaliacao)}</span>`:""}</div>
+          ${i.preco_anterior && i.preco_anterior>i.preco ? `<div class="price-old-strike">${BRL(i.preco_anterior)}</div>` : ""}
+<div class="price">${BRL(i.preco)}${i.avaliacao&&i.avaliacao>i.preco?`<span class="old">${BRL(i.avaliacao)}</span>`:""}</div>
         </div>`;
       el.querySelector(".fav").addEventListener("click",function(ev){
         ev.stopPropagation();
@@ -785,7 +821,7 @@ function aplicar(){
         try{
           if(state.q) n++; if(state.uf) n++; if(state.cidade) n++; if(state.tipo) n++;
           if(state.modalidade) n++; if(state.financiamento) n++;
-          if(state.max) n++; if(state.mindesc) n++;
+          if(state.max) n++; if(state.mindesc) n++; if(state.baixou) n++; if(state.novo) n++;
         }catch(_){}
         return n;
       }
@@ -825,6 +861,13 @@ document.getElementById("dcond").addEventListener("change",e=>{state.dcond=e.tar
       const on=c.getAttribute("aria-pressed")==="true";
       c.setAttribute("aria-pressed",on?"false":"true"); state.mindesc=on?null:+c.dataset.mindesc;
     }
+else if(c.dataset.baixou!==undefined){
+const on=c.getAttribute("aria-pressed")==="true";
+c.setAttribute("aria-pressed",on?"false":"true"); state.baixou=on?false:true;
+}else if(c.dataset.novo!==undefined){
+const on=c.getAttribute("aria-pressed")==="true";
+c.setAttribute("aria-pressed",on?"false":"true"); state.novo=on?false:true;
+}
     aplicar();
 
 
@@ -862,7 +905,7 @@ document.getElementById("dcond").addEventListener("change",e=>{state.dcond=e.tar
   document.getElementById("sendFav").addEventListener("click",sendFavs);
 
   document.getElementById("clear").addEventListener("click",()=>{
-    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",dtrib:"",dcond:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc"});
+    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",dtrib:"",dcond:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc",baixou:false,novo:false});
     const _mn=document.getElementById("pRangeMin"),_mx=document.getElementById("pRangeMax");if(_mn){_mn.value=0;_mx.value=1000000;const _lbl=document.getElementById("pMinLbl");if(_lbl)_lbl.textContent="Qualquer";const _fl=document.getElementById("pFill");if(_fl){_fl.style.left="0%";_fl.style.width="100%";}}
     var _cf=document.getElementById("chipFav"); if(_cf)_cf.setAttribute("aria-pressed","false");
     document.getElementById("q").value="";["cidade","tipo","modalidade","financiamento","dtrib","dcond"].forEach(id=>document.getElementById(id).value="");
