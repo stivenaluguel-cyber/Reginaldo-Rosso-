@@ -371,6 +371,7 @@ return `<!doctype html>
 <a href="../mapa.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
 <a href="../como-funciona.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Como Funciona</a>
 <a href="../calculadora.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
+<a href="../assessoria.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Assessoria Grátis</a>
 <a href="../index.html#contato" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
 </nav>
 </header>
@@ -542,6 +543,7 @@ details[open] .faq-q::before{content:"- "}
 <a href="../../mapa.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
 <a href="../../como-funciona.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Como Funciona</a>
 <a href="../../calculadora.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
+<a href="../../assessoria.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Assessoria Grátis</a>
 <a href="../../index.html#contato" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
 </nav>
 </header>
@@ -780,6 +782,7 @@ const ldBreadcrumb = {
    <a href="../mapa.html">Mapa</a>
    <a href="../como-funciona.html">Como Funciona</a>
    <a href="../calculadora.html">Calculadora ROI</a>
+   <a href="../assessoria.html">Assessoria Grátis</a>
    <a href="../index.html#contato">Contato</a>
    </nav>
    </header>
