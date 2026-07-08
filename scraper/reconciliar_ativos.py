@@ -61,9 +61,43 @@ SINAIS_ATIVO = ("venda online", "tempo restante", "valor minimo de venda")
 SINAIS_ENCERRADO = ("encerrad", "nao esta disponivel", "nÃ£o estÃ¡ disponÃ­vel",
                     "imovel vendido", "imÃ³vel vendido", "indisponivel para venda")
 
+# Camada extra de defesa: sinais explicitos de pagina de bloqueio (WAF/CAPTCHA).
+# Se aparecerem, o resultado e sempre inconclusivo, nunca "encerrado".
+SINAIS_PAGINA_GENERICA = ("radware", "bot manager", "captcha")
+
 
 def _norm(t):
     return (t or "").lower()
+
+
+def _classificar(dados):
+    """Classifica a raspagem em 'ativo', 'encerrado' ou 'inconclusivo'.
+
+    So retorna 'encerrado' quando ha um sinal EXPLICITO de encerramento
+    (texto de encerrado ou data_fim ja vencida). A mera AUSENCIA de sinal de
+    venda ativa NAO significa encerrado - pode ser so uma pagina generica
+    (menu/home da Caixa) que o scraper recebeu por bloqueio de WAF, sem
+    conteudo real do imovel. Foi exatamente essa confusao (ausencia de sinal
+    tratada como "encerrado") que marcou ~43 imoveis reais como vendidos
+    durante um bloqueio do Radware em 08/07/2026 14h09-14h15 UTC - o texto
+    daquelas paginas tinha >2000 caracteres (nao curto) e nao continha
+    "captcha"/"radware" (era so o menu de navegacao da Caixa), entao qualquer
+    guard baseado em tamanho ou nessas palavras nao pegaria o caso real.
+    """
+    if not dados:
+        return "inconclusivo"
+    txt = _norm(dados.get("texto_detalhe_bruto"))
+    if not txt:
+        return "inconclusivo"
+    if any(s in txt for s in SINAIS_PAGINA_GENERICA):
+        return "inconclusivo"
+    if any(s in txt for s in SINAIS_ENCERRADO):
+        return "encerrado"
+    if _data_fim_futura(dados) is False:
+        return "encerrado"
+    if any(s in txt for s in SINAIS_ATIVO):
+        return "ativo"
+    return "inconclusivo"
 
 
 def _status_atual(numero):
@@ -112,21 +146,6 @@ def _data_fim_futura(dados):
         return None
 
 
-def _esta_ativo(dados):
-    if not dados:
-        return False
-    txt = _norm(dados.get("texto_detalhe_bruto"))
-    if not txt:
-        return False
-    if any(s in txt for s in SINAIS_ENCERRADO):
-        return False
-    if not any(s in txt for s in SINAIS_ATIVO):
-        return False
-    if _data_fim_futura(dados) is False:
-        return False
-    return True
-
-
 async def _reconciliar(candidatos):
     # candidatos: lista de (numero, uf, cidade_hint)
     reativados, inseridos, pulados, nao_ativos = [], [], [], []
@@ -151,8 +170,14 @@ async def _reconciliar(candidatos):
             pulados.append(numero)
             await asyncio.sleep(random.uniform(2.0, 3.0))
             continue
-        if not _esta_ativo(dados):
-            logger.info(f"  {numero}: NAO confirmado ativo - mantendo como esta")
+        classificacao = _classificar(dados)
+        if classificacao == "inconclusivo":
+            logger.warning(f"  {numero}: pagina generica/inconclusiva (WAF?) - mantendo como esta")
+            pulados.append(numero)
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+            continue
+        if classificacao != "ativo":
+            logger.info(f"  {numero}: NAO confirmado ativo (encerrado) - mantendo como esta")
             nao_ativos.append(numero)
             await asyncio.sleep(random.uniform(1.5, 2.5))
             continue
@@ -221,7 +246,13 @@ async def verificar_suspeitos_ativos(limite=15):
             pulados.append(numero)
             await asyncio.sleep(random.uniform(2.0, 3.0))
             continue
-        if _esta_ativo(dados):
+        classificacao = _classificar(dados)
+        if classificacao == "inconclusivo":
+            logger.warning(f"  {numero}: pagina generica/inconclusiva (WAF?) - mantendo suspeita para nova tentativa")
+            pulados.append(numero)
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+            continue
+        if classificacao == "ativo":
             cidade = cidade_hint or _cidade_de_comarca(dados.get("texto_detalhe_bruto"))
             if cidade:
                 dados["cidade"] = cidade
