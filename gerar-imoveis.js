@@ -1066,6 +1066,9 @@ for(const im of imoveis){
  const hoje = new Date().toISOString().slice(0,10);
    const fixas = ["/","/imoveis.html","/mapa.html","/como-funciona.html","/calculadora.html","/assessoria.html","/privacidade.html"];
   const artigos = [
+     "/quanto-tempo-desocupacao-imovel-caixa.html",
+     "/leilao-caixa-vale-a-pena.html",
+     "/financiamento-imovel-leilao-caixa.html",
      "/diferenca-primeiro-segundo-leilao-caixa.html",
      "/custos-para-arrematar-imovel-caixa.html",
      "/indice-desagio-imoveis-caixa.html",
