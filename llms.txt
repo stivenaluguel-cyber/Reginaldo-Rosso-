@@ -8,6 +8,7 @@ O site mantém um portal próprio com centenas de imóveis da Caixa (leilão SFI
 
 - [Portal de imóveis](https://reginaldorosso.com.br/imoveis.html): todos os imóveis Caixa disponíveis em RS e SC, com filtros dinâmicos
 - [Assessoria gratuita](https://reginaldorosso.com.br/assessoria.html): como funciona a assessoria sem custo para o comprador
+- [Investidores](https://reginaldorosso.com.br/investidores.html): assessoria gratuita na arrematação e gestão pós-compra pela SA Gestão, para quem monta portfólio de imóveis Caixa
 - [Calculadora ROI](https://reginaldorosso.com.br/calculadora.html): simula retorno de investimento em imóveis de leilão
 - [Como funciona](https://reginaldorosso.com.br/como-funciona.html): o processo de arrematação passo a passo
 - [Índice de deságio](https://reginaldorosso.com.br/indice-desagio-imoveis-caixa.html): estatísticas reais e atualizadas de desconto dos imóveis Caixa em RS e SC
