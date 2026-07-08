@@ -6,7 +6,7 @@ from config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
-# ââ Schema SQL ââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# -- Schema SQL -----------------------------------------------------
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS imoveis_caixa (
 id BIGSERIAL PRIMARY KEY,
@@ -75,23 +75,23 @@ IF NOT EXISTS (SELECT 1 FROM information_schema.columns
 WHERE table_name='imoveis_caixa' AND column_name='texto_detalhe_bruto') THEN
 ALTER TABLE imoveis_caixa ADD COLUMN texto_detalhe_bruto TEXT;
 END IF;
-END$;
+END$$;
 """
 
-# ââ Tabela de alertas por e-mail âââââââââââââââââââââââââââââââââ
+# -- Tabela de alertas por e-mail ------------------------------------
 CREATE_ALERTAS_SQL = """
 CREATE TABLE IF NOT EXISTS alertas_leilao (
-  id SERIAL PRIMARY KEY,
-  imovel_id TEXT NOT NULL,
-  nome TEXT NOT NULL,
-  email TEXT NOT NULL,
-  criado_em TIMESTAMP DEFAULT now(),
-  enviado_24h BOOLEAN DEFAULT false,
-  enviado_4h BOOLEAN DEFAULT false,
-  enviado_1h BOOLEAN DEFAULT false,
-  ativo BOOLEAN DEFAULT true,
-  unsubscribe_token TEXT UNIQUE NOT NULL,
-  UNIQUE(imovel_id, email)
+id SERIAL PRIMARY KEY,
+imovel_id TEXT NOT NULL,
+nome TEXT NOT NULL,
+email TEXT NOT NULL,
+criado_em TIMESTAMP DEFAULT now(),
+enviado_24h BOOLEAN DEFAULT false,
+enviado_4h BOOLEAN DEFAULT false,
+enviado_1h BOOLEAN DEFAULT false,
+ativo BOOLEAN DEFAULT true,
+unsubscribe_token TEXT UNIQUE NOT NULL,
+UNIQUE(imovel_id, email)
 );
 CREATE INDEX IF NOT EXISTS idx_alertas_imovel ON alertas_leilao(imovel_id);
 CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativo = true;
@@ -100,27 +100,93 @@ CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativ
 MIGRATE_ALERTAS_SQL = """
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM information_schema.tables
-                 WHERE table_name='alertas_leilao') THEN
-    CREATE TABLE alertas_leilao (
-      id SERIAL PRIMARY KEY,
-      imovel_id TEXT NOT NULL,
-      nome TEXT NOT NULL,
-      email TEXT NOT NULL,
-      criado_em TIMESTAMP DEFAULT now(),
-      enviado_24h BOOLEAN DEFAULT false,
-      enviado_4h BOOLEAN DEFAULT false,
-      enviado_1h BOOLEAN DEFAULT false,
-      ativo BOOLEAN DEFAULT true,
-      unsubscribe_token TEXT UNIQUE NOT NULL,
-      UNIQUE(imovel_id, email)
-    );
-    CREATE INDEX IF NOT EXISTS idx_alertas_imovel ON alertas_leilao(imovel_id);
-    CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativo = true;
-  END IF;
+IF NOT EXISTS (SELECT 1 FROM information_schema.tables
+WHERE table_name='alertas_leilao') THEN
+CREATE TABLE alertas_leilao (
+id SERIAL PRIMARY KEY,
+imovel_id TEXT NOT NULL,
+nome TEXT NOT NULL,
+email TEXT NOT NULL,
+criado_em TIMESTAMP DEFAULT now(),
+enviado_24h BOOLEAN DEFAULT false,
+enviado_4h BOOLEAN DEFAULT false,
+enviado_1h BOOLEAN DEFAULT false,
+ativo BOOLEAN DEFAULT true,
+unsubscribe_token TEXT UNIQUE NOT NULL,
+UNIQUE(imovel_id, email)
+);
+CREATE INDEX IF NOT EXISTS idx_alertas_imovel ON alertas_leilao(imovel_id);
+CREATE INDEX IF NOT EXISTS idx_alertas_ativo ON alertas_leilao(ativo) WHERE ativo = true;
+END IF;
 END$$;
 """
 
+# -- Historico de mudancas por imovel ---------------------------------
+# Cada imovel tem um "livro" de eventos: quando entrou no site, quando o
+# preco ou a modalidade mudaram, quando saiu e quando voltou a ficar
+# disponivel. A gravacao e feita inteiramente pelo trigger abaixo (nao
+# pelo codigo Python dos upserts), entao funciona para upsert_imovel,
+# upsert_imoveis_bulk ou qualquer outro caminho de escrita futuro.
+CREATE_HISTORICO_SQL = """
+CREATE TABLE IF NOT EXISTS historico_imoveis (
+id BIGSERIAL PRIMARY KEY,
+numero_imovel VARCHAR(30) NOT NULL,
+evento VARCHAR(30) NOT NULL,
+valor_anterior NUMERIC(14,2),
+valor_novo NUMERIC(14,2),
+detalhe TEXT,
+criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_historico_imovel_data ON historico_imoveis(numero_imovel, criado_em);
+"""
+
+# Funcao + trigger: dispara em INSERT (evento 'entrou') e em UPDATE,
+# gravando SOMENTE quando o valor de fato mudou (IS DISTINCT FROM),
+# por causa dos updates "vazios" que os upserts fazem (updated_at=NOW()
+# mesmo sem mudanca real de dado).
+CREATE_TRIGGER_HISTORICO_SQL = """
+CREATE OR REPLACE FUNCTION trg_historico_imoveis() RETURNS TRIGGER AS $trg$
+BEGIN
+IF TG_OP = 'INSERT' THEN
+INSERT INTO historico_imoveis (numero_imovel, evento, valor_novo)
+VALUES (NEW.numero_imovel, 'entrou', NEW.preco_minimo);
+RETURN NEW;
+END IF;
+
+IF TG_OP = 'UPDATE' THEN
+IF NEW.preco_minimo IS DISTINCT FROM OLD.preco_minimo THEN
+INSERT INTO historico_imoveis (numero_imovel, evento, valor_anterior, valor_novo)
+VALUES (NEW.numero_imovel, 'preco_alterado', OLD.preco_minimo, NEW.preco_minimo);
+END IF;
+
+IF NEW.modalidade IS DISTINCT FROM OLD.modalidade THEN
+INSERT INTO historico_imoveis (numero_imovel, evento, detalhe)
+VALUES (NEW.numero_imovel, 'modalidade_alterada',
+'de ' || COALESCE(OLD.modalidade, '-') || ' para ' || COALESCE(NEW.modalidade, '-'));
+END IF;
+
+IF NEW.status IS DISTINCT FROM OLD.status THEN
+IF NEW.status = 'Indisponivel' THEN
+INSERT INTO historico_imoveis (numero_imovel, evento)
+VALUES (NEW.numero_imovel, 'saiu');
+ELSIF OLD.status = 'Indisponivel' AND NEW.status = 'Disponivel' THEN
+INSERT INTO historico_imoveis (numero_imovel, evento)
+VALUES (NEW.numero_imovel, 'voltou');
+END IF;
+END IF;
+
+RETURN NEW;
+END IF;
+
+RETURN NULL;
+END;
+$trg$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trigger_historico_imoveis ON imoveis_caixa;
+CREATE TRIGGER trigger_historico_imoveis
+AFTER INSERT OR UPDATE ON imoveis_caixa
+FOR EACH ROW EXECUTE FUNCTION trg_historico_imoveis();
+"""
 
 @contextmanager
 def get_connection():
@@ -163,15 +229,17 @@ def init_db():
         with conn.cursor() as cur:
             cur.execute(CREATE_TABLE_SQL)
     # 2) Migracoes idempotentes, cada BLOCO isolado em autocommit
-    #    para que uma falha nao aborte os demais blocos.
-    #    Colunas criticas garantidas com ALTER ... IF NOT EXISTS proprio,
-    #    para nao depender do bloco DO $ maior de MIGRATE_SQL.
+    # para que uma falha nao aborte os demais blocos.
+    # Colunas criticas garantidas com ALTER ... IF NOT EXISTS proprio,
+    # para nao depender do bloco DO $ maior de MIGRATE_SQL.
     _run_migrations_isolated([
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS texto_detalhe_bruto TEXT;",
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS data_fim TEXT;",
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS suspeito_desde TIMESTAMP;",
         MIGRATE_SQL,
         MIGRATE_ALERTAS_SQL,
+        CREATE_HISTORICO_SQL,
+        CREATE_TRIGGER_HISTORICO_SQL,
     ])
     logger.info("Banco de dados inicializado e migrado (migracoes isoladas).")
 
@@ -295,12 +363,12 @@ def mark_unavailable(ids: list):
             for i in range(0, len(ids), batch_size):
                 batch = ids[i:i + batch_size]
                 cur.execute(
-                "UPDATE imoveis_caixa SET status='Indisponivel', updated_at=NOW() "
-                "WHERE numero_imovel = ANY(%s)",
-                (batch,)
+                    "UPDATE imoveis_caixa SET status='Indisponivel', updated_at=NOW() "
+                    "WHERE numero_imovel = ANY(%s)",
+                    (batch,)
                 )
                 total += cur.rowcount
-                logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
+            logger.info(f"Marcados {len(ids)} imoveis como Indisponivel ({total} atualizados)")
 
 def marcar_suspeitos(ids: list):
     """Marca IDs ausentes do CSV geral como suspeito_encerrado (flag + timestamp),
@@ -343,29 +411,29 @@ def get_suspeitos(limite: int = 15):
 def upsert_imovel(data: dict):
     """Insere ou atualiza um imovel. data deve ter as chaves correspondentes as colunas."""
     cols = [
-    'numero_imovel', 'status', 'uf', 'cidade', 'bairro', 'endereco',
-    'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
-    'area_total', 'area_privativa', 'area',
-    'debito_tributos', 'debito_condominio',
-    'aceita_fgts', 'fgts', 'aceita_financiamento',
-    'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
-    'matricula_s3_url', 'scraped_at',
+        'numero_imovel', 'status', 'uf', 'cidade', 'bairro', 'endereco',
+        'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
+        'area_total', 'area_privativa', 'area',
+        'debito_tributos', 'debito_condominio',
+        'aceita_fgts', 'fgts', 'aceita_financiamento',
+        'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
+        'matricula_s3_url', 'scraped_at',
     ]
     values = [data.get(c) for c in cols]
     placeholders = ', '.join(['%s'] * len(cols))
     # Preserva campos CSV existentes se EXCLUDED for NULL
     preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
     update_set = ', '.join(
-    [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
-    else f"{c}=EXCLUDED.{c}"
-    for c in cols if c != 'numero_imovel']
+        [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
+         else f"{c}=EXCLUDED.{c}"
+         for c in cols if c != 'numero_imovel']
     )
     sql = f"""
-    INSERT INTO imoveis_caixa ({', '.join(cols)})
-    VALUES ({placeholders})
-    ON CONFLICT (numero_imovel) DO UPDATE SET
-    {update_set},
-    updated_at = NOW()
+        INSERT INTO imoveis_caixa ({', '.join(cols)})
+        VALUES ({placeholders})
+        ON CONFLICT (numero_imovel) DO UPDATE SET
+        {update_set},
+        updated_at = NOW()
     """
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -378,8 +446,8 @@ def upsert_imoveis_bulk(lista, batch_size=500):
     vistos = {}
     for item in lista:
         vistos[item.get("numero_imovel")] = item
-        lista = list(vistos.values())
-        cols = [
+    lista = list(vistos.values())
+    cols = [
         'numero_imovel', 'status', 'uf', 'cidade', 'bairro', 'endereco',
         'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
         'area_total', 'area_privativa', 'area',
@@ -387,30 +455,30 @@ def upsert_imoveis_bulk(lista, batch_size=500):
         'aceita_fgts', 'fgts', 'aceita_financiamento',
         'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
         'matricula_s3_url', 'scraped_at',
-        ]
-        preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'tipo_real'}
-        update_set = ', '.join(
+    ]
+    preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'tipo_real'}
+    update_set = ', '.join(
         [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
-        else f"{c}=EXCLUDED.{c}"
-        for c in cols if c != 'numero_imovel']
-        )
-        sql = f"""
+         else f"{c}=EXCLUDED.{c}"
+         for c in cols if c != 'numero_imovel']
+    )
+    sql = f"""
         INSERT INTO imoveis_caixa ({', '.join(cols)})
         VALUES %s
         ON CONFLICT (numero_imovel) DO UPDATE SET
         {update_set},
         updated_at = NOW()
-        """
-        total = 0
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                for i in range(0, len(lista), batch_size):
-                    batch = lista[i:i + batch_size]
-                    valores = [tuple(d.get(c) for c in cols) for d in batch]
-                    psycopg2.extras.execute_values(cur, sql, valores, page_size=batch_size)
-                    total += len(batch)
-                    logger.info(f"upsert_imoveis_bulk: {total} imoveis processados em lote")
-                    return total
+    """
+    total = 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            for i in range(0, len(lista), batch_size):
+                batch = lista[i:i + batch_size]
+                valores = [tuple(d.get(c) for c in cols) for d in batch]
+                psycopg2.extras.execute_values(cur, sql, valores, page_size=batch_size)
+                total += len(batch)
+    logger.info(f"upsert_imoveis_bulk: {total} imoveis processados em lote")
+    return total
 
 def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
     """
@@ -418,13 +486,13 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
     (nao so os novos). Chamado pela etapa1.
 
     Preenche (sem sobrescrever dados nao-nulos ja existentes):
-      - area, aceita_financiamento, descricao (se vazio); tipo_real: SEMPRE corrige com o valor do CSV quando presente - fonte autoritativa (ver COALESCE(v.tipo_real, t.tipo_real) abaixo);
-      - cidade, bairro, endereco, uf: FONTE DE CORRECAO. Muitos imoveis foram
-        gravados com cidade=NULL por desalinhamento de colunas na ingestao
-        inicial, e o gerar-imoveis.js exclui linhas com cidade IS NULL. Como o
-        upsert so roda para IDs novos, o CSV nunca reparava esses NULLs. Aqui
-        reaplicamos os campos de localizacao do CSV quando o valor no banco
-        estiver NULL/vazio (COALESCE preserva o que ja existe).
+    - area, aceita_financiamento, descricao (se vazio); tipo_real: SEMPRE corrige com o valor do CSV quando presente - fonte autoritativa (ver COALESCE(v.tipo_real, t.tipo_real) abaixo);
+    - cidade, bairro, endereco, uf: FONTE DE CORRECAO. Muitos imoveis foram
+      gravados com cidade=NULL por desalinhamento de colunas na ingestao
+      inicial, e o gerar-imoveis.js exclui linhas com cidade IS NULL. Como o
+      upsert so roda para IDs novos, o CSV nunca reparava esses NULLs. Aqui
+      reaplicamos os campos de localizacao do CSV quando o valor no banco
+      estiver NULL/vazio (COALESCE preserva o que ja existe).
     """
     if not lista:
         return 0
@@ -450,8 +518,8 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                 if not rows:
                     continue
                 sql = """
-                        UPDATE imoveis_caixa AS t
-                        SET
+                    UPDATE imoveis_caixa AS t
+                    SET
                         tipo_real = COALESCE(v.tipo_real, t.tipo_real),
                         area = COALESCE(t.area, v.area),
                         aceita_financiamento = COALESCE(t.aceita_financiamento, v.aceita_financiamento),
@@ -461,21 +529,21 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         endereco = COALESCE(NULLIF(t.endereco, ''), v.endereco),
                         uf = COALESCE(NULLIF(t.uf, ''), v.uf),
                         updated_at = NOW()
-                        FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao, cidade, bairro, endereco, uf)
-                        WHERE t.numero_imovel = v.numero_imovel
-                        AND (t.tipo_real IS NULL OR t.area IS NULL
-                        OR t.aceita_financiamento IS NULL
-                        OR t.descricao IS NULL OR t.descricao = ''
-                        OR t.cidade IS NULL OR t.cidade = ''
-                        OR t.bairro IS NULL OR t.bairro = ''
-                        OR t.endereco IS NULL OR t.endereco = ''
-                        OR t.uf IS NULL OR t.uf = '')
+                    FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao, cidade, bairro, endereco, uf)
+                    WHERE t.numero_imovel = v.numero_imovel
+                    AND (t.tipo_real IS NULL OR t.area IS NULL
+                         OR t.aceita_financiamento IS NULL
+                         OR t.descricao IS NULL OR t.descricao = ''
+                         OR t.cidade IS NULL OR t.cidade = ''
+                         OR t.bairro IS NULL OR t.bairro = ''
+                         OR t.endereco IS NULL OR t.endereco = ''
+                         OR t.uf IS NULL OR t.uf = '')
                 """
                 extras.execute_values(
                     cur, sql, rows,
                     template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text, %s::varchar, %s::varchar, %s::text, %s::varchar)",
                 )
                 total += cur.rowcount
-                conn.commit()
-        logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
-        return total
+        conn.commit()
+    logger.info(f"update_csv_parsed_bulk: {total} linhas atualizadas")
+    return total
