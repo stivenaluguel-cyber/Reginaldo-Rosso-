@@ -58,8 +58,11 @@ jobs:
 
           DUMP_SIZE=$(stat -c%s "$DUMP_FILE")
           echo "Tamanho do dump: ${DUMP_SIZE} bytes"
-          if [ "$DUMP_SIZE" -lt 1048576 ]; then
-            echo "ERRO: dump de imoveis_caixa tem menos de 1MB (${DUMP_SIZE} bytes). Possivel falha no pg_dump."
+          # Limiar calibrado ao tamanho real da tabela imoveis_caixa (~1000
+          # linhas, dump custom comprimido ~230KB). 10KB e um piso seguro
+          # para pegar dump vazio/truncado sem falsos positivos.
+          if [ "$DUMP_SIZE" -lt 10240 ]; then
+            echo "ERRO: dump de imoveis_caixa tem menos de 10KB (${DUMP_SIZE} bytes). Possivel falha no pg_dump (tabela vazia ou truncada)."
             exit 1
           fi
 
