@@ -15,12 +15,17 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
-      - name: Instalar cliente PostgreSQL atualizado (PGDG)
+      - name: Instalar cliente PostgreSQL atualizado (PGDG, versao mais nova disponivel)
         run: |
           sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
           sudo apt-get update
-          sudo apt-get install -y postgresql-client-16
+          CANDIDATO=$(apt-cache search '^postgresql-client-[0-9]+$' | awk '{print $1}' | sed 's/postgresql-client-//' | sort -n | tail -1)
+          echo "Versao de cliente mais nova encontrada no PGDG: $CANDIDATO"
+          sudo apt-get install -y "postgresql-client-$CANDIDATO"
+          PGDIR=$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -1)
+          echo "Usando binarios em: $PGDIR"
+          echo "$PGDIR" >> "$GITHUB_PATH"
 
       - name: Definir data do backup
         run: echo "DATA=$(date +%Y%m%d)" >> "$GITHUB_ENV"
@@ -29,6 +34,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          which pg_dump
+          pg_dump --version
           pg_dump "$DATABASE_URL" --table=imoveis_caixa --format=custom --compress=9 --file="imoveis_caixa_${DATA}.dump"
           ls -lh "imoveis_caixa_${DATA}.dump"
 
