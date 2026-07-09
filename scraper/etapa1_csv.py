@@ -175,7 +175,7 @@ def _parse_csv(conteudo, estado):
                         dtype=str,
                     )
                     _cols = " ".join(str(c).lower() for c in df_test.columns)
-                if (("imÃ³vel" in _cols) or ("imovel" in _sem_acentos(_cols))) and ("uf" in _cols):
+                    if (("imÃ³vel" in _cols) or ("imovel" in _sem_acentos(_cols))) and ("uf" in _cols):
                         df = df_test
                         break
                 except Exception:
