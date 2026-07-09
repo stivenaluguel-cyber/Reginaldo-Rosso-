@@ -397,6 +397,28 @@ def limpar_suspeita(ids: list):
             if cur.rowcount:
                 logger.info(f"Suspeita removida de {cur.rowcount} imoveis (ativos/voltaram ao CSV).")
 
+def reativar_disponiveis(ids: list) -> int:
+    """Reativa imoveis que reapareceram no CSV oficial da Caixa mas estavam
+    marcados Indisponivel no banco (por remocao indevida ou fechamento
+    anterior). Reaparecer no CSV oficial e um sinal POSITIVO e inequivoco
+    de que o imovel esta ativo, entao volta para Disponivel e a suspeita
+    (se houver) e limpa. Usado pela etapa1 para trazer de volta
+    automaticamente imoveis removidos indevidamente em incidentes."""
+    if not ids:
+        return 0
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE imoveis_caixa SET status='Disponivel', suspeito_desde=NULL, updated_at=NOW() "
+                "WHERE numero_imovel = ANY(%s) AND status != 'Disponivel'",
+                (list(ids),)
+            )
+            n = cur.rowcount
+    if n:
+        logger.info(f"reativar_disponiveis: {n} imoveis reativados (reapareceram no CSV oficial da Caixa)")
+    return n
+
+
 def get_suspeitos(limite: int = 15):
     """Retorna ate `limite` suspeitos (mais recentes primeiro) para
     verificar_suspeitos_ativos confirmar via pagina de detalhe."""
