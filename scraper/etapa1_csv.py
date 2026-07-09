@@ -109,6 +109,19 @@ def _log_conteudo_invalido(conteudo: bytes, estado: str, estrategia: str):
         logger.info(f"etapa1: {estrategia} {estado}: {len(conteudo)} bytes (nao decodificavel)")
 
 
+import unicodedata as _unicodedata
+
+
+def _sem_acentos(s: str) -> str:
+    """Remove acentos/diacriticos (NFKD) para comparacao tolerante a
+    encoding. Cobre os casos: 'imovel' (sem acento), 'imóvel' (latin-1/
+    utf-8 corretamente decodificado) e variantes mistas."""
+    try:
+        return "".join(c for c in _unicodedata.normalize("NFKD", s) if not _unicodedata.combining(c))
+    except Exception:
+        return s
+
+
 def _parse_csv(conteudo, estado):
     """Parse do CSV da Caixa.
     O CSV tem linha 0 de titulo (Lista de Imoveis da Caixa...) e linha 1 com cabecalhos.
@@ -136,7 +149,7 @@ def _parse_csv(conteudo, estado):
         header_idx = None
         for _i, _ln in enumerate(linhas):
             _low = _ln.lower()
-            _tem_imovel = ("imÃ³vel" in _low) or ("imovel" in _low)
+            _tem_imovel = ("imÃ³vel" in _low) or ("imovel" in _sem_acentos(_low))
             if _tem_imovel and ("uf" in _low) and ("cidade" in _low) and _ln.count(";") >= 5:
                 header_idx = _i
                 break
@@ -162,14 +175,19 @@ def _parse_csv(conteudo, estado):
                         dtype=str,
                     )
                     _cols = " ".join(str(c).lower() for c in df_test.columns)
-                    if (("imÃ³vel" in _cols) or ("imovel" in _cols)) and ("uf" in _cols):
+                if (("imÃ³vel" in _cols) or ("imovel" in _sem_acentos(_cols))) and ("uf" in _cols):
                         df = df_test
                         break
                 except Exception:
                     continue
 
         if df is None:
-            logger.warning(f"etapa1: {estado}: nao foi possivel criar DataFrame")
+            preview_bytes = conteudo[:500] if conteudo else b""
+            try:
+                preview_txt = preview_bytes.decode("latin-1", errors="replace")
+            except Exception:
+                preview_txt = repr(preview_bytes)
+            logger.warning(f"etapa1: {estado}: nao foi possivel criar DataFrame. total_bytes={len(conteudo) if conteudo else 0} preview500={preview_txt!r}")
             return []
 
 
@@ -191,7 +209,7 @@ def _parse_csv(conteudo, estado):
             digits_only = [_re_id.sub(r"\D", "", s) for s in sample]
             longcodes = [d for d in digits_only if 6 <= len(d) <= 14]
             score = len(longcodes)
-            if any(k in cl for k in ["imovel", "imov", "n do imovel", "n imovel"]):
+            if any(k in _sem_acentos(cl) for k in ["imovel", "imov", "n do imovel", "n imovel"]):
                 score += 1000
             if any(k in cl for k in ["preco", "valor", "avalia", "desconto", "lance", "financ"]):
                 score -= 500
