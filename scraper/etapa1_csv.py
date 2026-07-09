@@ -615,6 +615,14 @@ async def _executar() -> dict:
     ids_recuperados = ids_banco & ids_csv
     if ids_recuperados:
         db.limpar_suspeita(list(ids_recuperados))
+    # REATIVACAO AUTOMATICA: reaparecer no CSV oficial da Caixa e um sinal
+    # POSITIVO e inequivoco de que o imovel esta ativo. Cobre imoveis
+    # marcados Indisponivel (por remocao indevida em incidentes anteriores
+    # ou fechamento real seguido de nova publicacao) que ids_banco NAO
+    # capturaria (get_ids_by_uf so retorna status='Disponivel'). Sem isso,
+    # os removidos indevidamente nunca voltariam sozinhos.
+    db.reativar_disponiveis(list(ids_csv))
+
 
     if ids_removidos:
         # NAO marca Indisponivel de imediato: alguns imoveis ativos (Venda
