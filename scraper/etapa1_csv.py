@@ -576,16 +576,21 @@ async def _executar() -> dict:
     # Crosscheck banco
     ids_csv = {im["numero_imovel"] for im in todos_imoveis}
     ids_banco = db.get_ids_by_uf(ESTADOS)
-    ids_removidos = ids_banco - ids_csv
-    # SALVAGUARDA: se o CSV veio vazio/minusculo (ex.: HTTP 403 ao baixar),
-    # NAO marcar tudo como indisponivel. Aborta a remocao para nao apagar o site.
-    if len(ids_csv) < max(10, len(ids_banco) // 5):
-        logger.warning(
-            "etapa1: CSV suspeito (total_csv=%d, banco=%d). "
-            "Pulando mark_unavailable para evitar apagar o estoque.",
-            len(ids_csv), len(ids_banco),
-        )
-        ids_removidos = set()
+    # SALVAGUARDA POR UF: um CSV parcial/truncado de UMA UF (ex.: SC caiu 71%)
+    # nao pode ser mascarado pela contagem agregada RS+SC. Cada UF e comparada
+    # contra a ultima contagem conhecida NAQUELA UF; se vier abaixo de 80%,
+    # nao remove NADA daquela UF (so loga), mesmo que a outra UF esteja ok.
+    ids_removidos = set()
+    for _estado in ESTADOS:
+        _ids_csv_uf = {im["numero_imovel"] for im in todos_imoveis if im.get("uf") == _estado}
+        _ids_banco_uf = db.get_ids_by_uf([_estado])
+        if not _ids_banco_uf:
+            continue
+        _limiar = max(10, int(len(_ids_banco_uf) * 0.8))
+        if len(_ids_csv_uf) < _limiar:
+            logger.warning(f"etapa1: CSV suspeito para {_estado} (csv={len(_ids_csv_uf)}, banco={len(_ids_banco_uf)}, limiar_80pct={_limiar}). Pulando mark_unavailable para esta UF.")
+            continue
+        ids_removidos |= (_ids_banco_uf - _ids_csv_uf)
     ids_novos = ids_csv - ids_banco
 
     # Imoveis que voltaram a aparecer no CSV: limpa qualquer suspeita antiga.
