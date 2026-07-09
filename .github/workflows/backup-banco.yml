@@ -1,0 +1,86 @@
+name: Backup Semanal do Banco
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: backup-banco
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Backup Neon (imoveis_caixa) + Supabase (alertas_leilao)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Instalar cliente PostgreSQL atualizado (PGDG)
+        run: |
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Definir data do backup
+        run: echo "DATA=$(date +%Y%m%d)" >> "$GITHUB_ENV"
+
+      - name: Dump da tabela imoveis_caixa (Neon, formato custom comprimido)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          pg_dump "$DATABASE_URL" --table=imoveis_caixa --format=custom --compress=9 --file="imoveis_caixa_${DATA}.dump"
+          ls -lh "imoveis_caixa_${DATA}.dump"
+
+      - name: Export JSON dos leads (Supabase alertas_leilao via REST)
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          curl -sS "https://xpkznaqgctfkoonqpcye.supabase.co/rest/v1/alertas_leilao?select=*" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+            -o "alertas_leilao_${DATA}.json"
+          ls -lh "alertas_leilao_${DATA}.json"
+
+      - name: Verificar integridade do backup (falha o workflow se algo estiver errado)
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          DUMP_FILE="imoveis_caixa_${DATA}.dump"
+          JSON_FILE="alertas_leilao_${DATA}.json"
+
+          DUMP_SIZE=$(stat -c%s "$DUMP_FILE")
+          echo "Tamanho do dump: ${DUMP_SIZE} bytes"
+          if [ "$DUMP_SIZE" -lt 1048576 ]; then
+            echo "ERRO: dump de imoveis_caixa tem menos de 1MB (${DUMP_SIZE} bytes). Possivel falha no pg_dump."
+            exit 1
+          fi
+
+          COUNT_JSON=$(python3 -c "import json; d=json.load(open('${JSON_FILE}')); print(len(d) if isinstance(d, list) else -1)")
+          echo "Registros exportados no JSON: ${COUNT_JSON}"
+          if [ "$COUNT_JSON" -lt 0 ]; then
+            echo "ERRO: resposta do Supabase nao e uma lista JSON valida (possivel erro de autenticacao)."
+            cat "$JSON_FILE"
+            exit 1
+          fi
+
+          REAL_COUNT=$(curl -sS -o /dev/null -D - "https://xpkznaqgctfkoonqpcye.supabase.co/rest/v1/alertas_leilao?select=id" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+            -H "Prefer: count=exact" | grep -i '^content-range' | sed 's#.*/##' | tr -d '\r')
+          echo "Total real na tabela alertas_leilao (Content-Range): ${REAL_COUNT}"
+
+          if [ "$COUNT_JSON" -eq 0 ] && [ -n "$REAL_COUNT" ] && [ "$REAL_COUNT" != "0" ]; then
+            echo "ERRO: JSON de leads exportado vazio, mas a tabela tem ${REAL_COUNT} registros."
+            exit 1
+          fi
+
+      - name: Enviar artifacts (retencao 90 dias, NAO commitado no repo)
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-banco-${{ github.run_id }}
+          path: |
+            imoveis_caixa_*.dump
+            alertas_leilao_*.json
+          retention-days: 90
+          if-no-files-found: error
