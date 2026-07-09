@@ -65,6 +65,14 @@ SINAIS_ENCERRADO = ("encerrad", "nao esta disponivel", "nÃ£o estÃ¡ disponÃ�
 # Se aparecerem, o resultado e sempre inconclusivo, nunca "encerrado".
 SINAIS_PAGINA_GENERICA = ("radware", "bot manager", "captcha")
 
+# Marcadores que confirmam que o texto raspado E de fato a pagina de detalhe
+# do imovel (nao a home/menu generico do site da Caixa, um erro, ou um
+# redirecionamento). Exigido como sinal POSITIVO antes de aceitar qualquer
+# classificacao de "encerrado" -- nunca basta a AUSENCIA de sinal de ativo.
+SINAIS_PAGINA_IMOVEL = ("numero do imovel", "detalhe do imovel", "modalidade de venda",
+"valor minimo de venda", "venda online", "tempo restante",
+"descricao do imovel", "comarca")
+
 
 def _norm(t):
     return (t or "").lower()
@@ -90,6 +98,8 @@ def _classificar(dados):
     if not txt:
         return "inconclusivo"
     if any(s in txt for s in SINAIS_PAGINA_GENERICA):
+        return "inconclusivo"
+    if not any(s in txt for s in SINAIS_PAGINA_IMOVEL):
         return "inconclusivo"
     if any(s in txt for s in SINAIS_ENCERRADO):
         return "encerrado"
