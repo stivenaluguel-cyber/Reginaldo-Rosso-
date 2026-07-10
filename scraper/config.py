@@ -43,3 +43,13 @@ USER_AGENT = (
 )
 LOCALE   = "pt-BR"
 TIMEZONE = "America/Sao_Paulo"
+
+
+# -- LGPD: fotos-documento -------------------------------------------
+# IDs de imoveis cujas fotos sao prints de documentos (matriculas, fichas
+# com dados pessoais de ex-mutuarios). Espelha EXCLUIR_FOTOS em
+# gerar-imoveis.js e EXCLUIR_FOTOS_HTML em imoveis.html - sincronize
+# manualmente os 3 lugares ao adicionar novos casos.
+EXCLUIR_FOTOS_LGPD = {
+    "10202963",  # Dom Pedrito - Getulio Vargas - print exibe nome de pessoa fisica
+}
