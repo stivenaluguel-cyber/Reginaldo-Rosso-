@@ -34,6 +34,7 @@ data_fim VARCHAR(20),
 ocupacao TEXT,
 texto_detalhe_bruto TEXT,
 matricula_s3_url TEXT,
+fotos_urls JSONB,
 scraped_at TIMESTAMP WITH TIME ZONE,
 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -236,6 +237,7 @@ def init_db():
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS texto_detalhe_bruto TEXT;",
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS data_fim TEXT;",
         "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS suspeito_desde TIMESTAMP;",
+        "ALTER TABLE imoveis_caixa ADD COLUMN IF NOT EXISTS fotos_urls JSONB;",
         MIGRATE_SQL,
         MIGRATE_ALERTAS_SQL,
         CREATE_HISTORICO_SQL,
@@ -282,7 +284,7 @@ def get_pendentes_enriquecimento(ufs, limit=150) -> list:
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
                 " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
-                " OR debito_condominio IS NULL) "
+                " OR debito_condominio IS NULL OR fotos_urls IS NULL) "
                 "ORDER BY (created_at::date = CURRENT_DATE) DESC, (scraped_at IS NOT NULL), created_at "
                 "LIMIT %s",
                 (ufs, limit),
@@ -306,7 +308,7 @@ def get_pendentes_com_uf(ufs, limit=150) -> list:
                 "WHERE status = 'Disponivel' AND uf = ANY(%s) "
                 "AND (scraped_at IS NULL OR descricao IS NULL OR tipo_real IS NULL "
                 " OR aceita_fgts IS NULL OR debito_tributos IS NULL "
-                " OR debito_condominio IS NULL) "
+                " OR debito_condominio IS NULL OR fotos_urls IS NULL) "
                 "ORDER BY (created_at::date = CURRENT_DATE) DESC, (scraped_at IS NOT NULL), created_at "
                 "LIMIT %s",
                 (ufs, limit),
@@ -439,9 +441,9 @@ def upsert_imovel(data: dict):
         'debito_tributos', 'debito_condominio',
         'aceita_fgts', 'fgts', 'aceita_financiamento',
         'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
-        'matricula_s3_url', 'scraped_at',
+        'matricula_s3_url', 'fotos_urls', 'scraped_at',
     ]
-    values = [data.get(c) for c in cols]
+    values = [psycopg2.extras.Json(data.get(c)) if c == 'fotos_urls' and data.get(c) is not None else data.get(c) for c in cols]
     placeholders = ', '.join(['%s'] * len(cols))
     # Preserva campos CSV existentes se EXCLUDED for NULL
     preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
@@ -476,7 +478,7 @@ def upsert_imoveis_bulk(lista, batch_size=500):
         'debito_tributos', 'debito_condominio',
         'aceita_fgts', 'fgts', 'aceita_financiamento',
         'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
-        'matricula_s3_url', 'scraped_at',
+        'matricula_s3_url', 'fotos_urls', 'scraped_at',
     ]
     preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'tipo_real'}
     update_set = ', '.join(
@@ -496,7 +498,7 @@ def upsert_imoveis_bulk(lista, batch_size=500):
         with conn.cursor() as cur:
             for i in range(0, len(lista), batch_size):
                 batch = lista[i:i + batch_size]
-                valores = [tuple(d.get(c) for c in cols) for d in batch]
+                valores = [tuple(psycopg2.extras.Json(d.get(c)) if c == 'fotos_urls' and d.get(c) is not None else d.get(c) for c in cols) for d in batch]
                 psycopg2.extras.execute_values(cur, sql, valores, page_size=batch_size)
                 total += len(batch)
     logger.info(f"upsert_imoveis_bulk: {total} imoveis processados em lote")
