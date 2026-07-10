@@ -219,3 +219,18 @@ body{overflow-x:hidden;max-width:100vw}
   .prazo-short{display:inline}
   .cta .btn{flex:1 1 100%}
 }
+
+/* ===== Carrossel de fotos (galeria real da Caixa, 2+ fotos) ===== */
+.ph--carrossel{cursor:grab}
+.ph-track{position:absolute;inset:0}
+.ph-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.06);opacity:0;transition:opacity .35s ease;pointer-events:none}
+.ph-slide.is-active{opacity:1;pointer-events:auto}
+.ph-arrow{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(23,38,56,.55);border:0;color:#fff;display:grid;place-items:center;cursor:pointer;z-index:3;transition:background .15s}
+.ph-arrow:hover{background:rgba(23,38,56,.85)}
+.ph-arrow--prev{left:10px}
+.ph-arrow--next{right:10px}
+.ph-thumbs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.ph-thumb{width:64px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;opacity:.55;border:2px solid transparent;transition:opacity .15s,border-color .15s;flex-shrink:0}
+.ph-thumb:hover{opacity:.85}
+.ph-thumb.is-active{opacity:1;border-color:var(--gold)}
+@media(max-width:480px){.ph-arrow{width:32px;height:32px}.ph-thumb{width:52px;height:40px}}
