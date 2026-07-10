@@ -35,6 +35,7 @@ except Exception:
 from config import (
     URL_BASE_DETALHE, USER_AGENT, LOCALE, TIMEZONE,
     HEADLESS, TIMEOUT_MS, MAX_RETRIES, CAIXA_BASE_URL,
+    EXCLUIR_FOTOS_LGPD,
 )
 from captcha import solve_captcha, inject_captcha_token
 from s3_uploader import upload_bytes
@@ -72,6 +73,46 @@ def _sanitizar_descricao(texto):
             t = t[:idx].strip(" .,;:-")
             tl = t.lower()
     return t[:1500]  # limite seguro
+
+# ---------------------------------------------------------------------------
+# Galeria de fotos: extrai do DOM ja carregado (zero requests extras).
+# ---------------------------------------------------------------------------
+_PADRAO_FOTO_DOCUMENTO = re.compile(
+    r"matricul|edital|certidao|documento|contrato|averbac|ficha",
+    re.IGNORECASE,
+)
+
+async def _extrair_fotos_galeria(page, numero_imovel):
+    """Le as fotos ja renderizadas na pagina de detalhe (div.thumbnails, com
+    fallback para div.preview se a galeria nao tiver carregado). Nao faz
+    nenhum request extra: so consulta o DOM que o Playwright ja carregou.
+    Aplica: (1) bloqueio total LGPD via EXCLUIR_FOTOS_LGPD (mesmos IDs de
+    EXCLUIR_FOTOS em gerar-imoveis.js/imoveis.html); (2) heuristica por
+    src/alt para pular fotos que parecam documento/matricula."""
+    if str(numero_imovel) in EXCLUIR_FOTOS_LGPD:
+        return []
+    try:
+        brutos = await page.eval_on_selector_all(
+            "div.thumbnails img, div.preview img",
+            "els => els.map(e => ({src: e.src, alt: e.alt || ''}))",
+        )
+    except Exception as e:
+        logger.debug(f"[fotos {numero_imovel}] erro extraindo galeria: {e}")
+        return []
+    vistos = set()
+    fotos = []
+    for item in brutos or []:
+        src = (item or {}).get("src") or ""
+        alt = (item or {}).get("alt") or ""
+        if not src or src in vistos:
+            continue
+        nome_arquivo = src.rsplit("/", 1)[-1]
+        if _PADRAO_FOTO_DOCUMENTO.search(nome_arquivo) or _PADRAO_FOTO_DOCUMENTO.search(alt):
+            logger.info(f"[fotos {numero_imovel}] pulando foto-documento: {nome_arquivo}")
+            continue
+        vistos.add(src)
+        fotos.append(src)
+    return fotos
 
 # ---------------------------------------------------------------------------
 # Utilitarios de texto
@@ -509,6 +550,9 @@ async def _extrair_dados_playwright(page, numero_imovel):
         data_fim = _parse_data_fim(full_text)
         if data_fim:
             dados["data_fim"] = data_fim
+
+        # === Galeria de fotos (zero requests extras,  le o DOM ja carregado) ===
+        dados["fotos_urls"] = await _extrair_fotos_galeria(page, numero_imovel)
 
     except Exception as e:
         logger.warning(f"[diag {numero_imovel}] erro extracao playwright: {e}")
