@@ -19,14 +19,58 @@ const OUT_DIR = path.join(__dirname, "imovel");
 // Hubs de cidade: paginas programaticas /leilao-caixa/UF/slug.html
 // key: slug usado na URL; cidade: nome canonico para comparar com o CSV
 // ============================================================
-const HUB_CIDADES = [
-{ slug: "porto-alegre", cidade: "PORTO ALEGRE", uf: "RS", nome: "Porto Alegre" },
-{ slug: "gravatai", cidade: "GRAVATAI", uf: "RS", nome: "Gravataí" },
-{ slug: "tramandai", cidade: "TRAMANDAI", uf: "RS", nome: "Tramandaí" },
-{ slug: "criciuma", cidade: "CRICIUMA", uf: "SC", nome: "Criciúma" },
-];
-// Mapa rapido: cidade uppercase -> hub (para BreadcrumbList nas paginas de imovel)
-const HUB_MAPA = {};
+// HUB_FIXAS: hubs que NUNCA podem sumir (ja indexados no Google).
+const HUB_FIXAS = [
+  { slug: "porto-alegre", cidade: "PORTO ALEGRE", uf: "RS", nome: "Porto Alegre" },
+  { slug: "gravatai", cidade: "GRAVATAI", uf: "RS", nome: "Gravataí" },
+  { slug: "tramandai", cidade: "TRAMANDAI", uf: "RS", nome: "Tramandaí" },
+  { slug: "criciuma", cidade: "CRICIUMA", uf: "SC", nome: "Criciúma" },
+  ];
+// Nomes acentuados conhecidos (usados no top 10 automatico e para resolver hubs ja existentes em disco).
+const HUB_NOMES_CONHECIDOS = {
+  "PORTO ALEGRE|RS": { slug: "porto-alegre", nome: "Porto Alegre" },
+  "GRAVATAI|RS": { slug: "gravatai", nome: "Gravataí" },
+  "TRAMANDAI|RS": { slug: "tramandai", nome: "Tramandaí" },
+  "PELOTAS|RS": { slug: "pelotas", nome: "Pelotas" },
+  "SAO LEOPOLDO|RS": { slug: "sao-leopoldo", nome: "São Leopoldo" },
+  "CANOAS|RS": { slug: "canoas", nome: "Canoas" },
+  "ALVORADA|RS": { slug: "alvorada", nome: "Alvorada" },
+  "CAXIAS DO SUL|RS": { slug: "caxias-do-sul", nome: "Caxias do Sul" },
+  "NOVO HAMBURGO|RS": { slug: "novo-hamburgo", nome: "Novo Hamburgo" },
+  "SAPUCAIA DO SUL|RS": { slug: "sapucaia-do-sul", nome: "Sapucaia do Sul" },
+  "CACHOEIRINHA|RS": { slug: "cachoeirinha", nome: "Cachoeirinha" },
+  "VIAMAO|RS": { slug: "viamao", nome: "Viamão" },
+  "ESTEIO|RS": { slug: "esteio", nome: "Esteio" },
+  "PASSO FUNDO|RS": { slug: "passo-fundo", nome: "Passo Fundo" },
+  "MONTENEGRO|RS": { slug: "montenegro", nome: "Montenegro" },
+  "SANTA MARIA|RS": { slug: "santa-maria", nome: "Santa Maria" },
+  "SANTA CRUZ DO SUL|RS": { slug: "santa-cruz-do-sul", nome: "Santa Cruz do Sul" },
+  "URUGUAIANA|RS": { slug: "uruguaiana", nome: "Uruguaiana" },
+  "LAJEADO|RS": { slug: "lajeado", nome: "Lajeado" },
+  "BAGE|RS": { slug: "bage", nome: "Bagé" },
+  "CRICIUMA|SC": { slug: "criciuma", nome: "Criciúma" },
+  "JOINVILLE|SC": { slug: "joinville", nome: "Joinville" },
+  "BLUMENAU|SC": { slug: "blumenau", nome: "Blumenau" },
+  "SAO JOSE|SC": { slug: "sao-jose", nome: "São José" },
+  "PALHOCA|SC": { slug: "palhoca", nome: "Palhoça" },
+  "BIGUACU|SC": { slug: "biguacu", nome: "Biguaçu" }
+};
+function hubSlugify(cidadeUpper) {
+  return cidadeUpper.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+}
+function hubTitulo(cidadeUpper) {
+  const conectores = new Set(["de","da","do","das","dos","e"]);
+  return cidadeUpper.toLowerCase().split(" ").map(function(w,i){ return (conectores.has(w) && i>0) ? w : (w.charAt(0).toUpperCase()+w.slice(1)); }).join(" ");
+}
+function hubResolver(cidadeUpper, uf) {
+  const conhecido = HUB_NOMES_CONHECIDOS[cidadeUpper+"|"+uf];
+  if (conhecido) return { slug: conhecido.slug, cidade: cidadeUpper, uf: uf, nome: conhecido.nome };
+  return { slug: hubSlugify(cidadeUpper), cidade: cidadeUpper, uf: uf, nome: hubTitulo(cidadeUpper) };
+}
+// HUB_CIDADES/HUB_MAPA finais sao recalculados mais abaixo, apos carregar os imoveis
+// (top 10 por volume ativo, uniao com HUB_FIXAS e com hubs ja publicados em disco).
+let HUB_CIDADES = HUB_FIXAS.slice();
+let HUB_MAPA = {};
 for (const h of HUB_CIDADES) HUB_MAPA[h.cidade] = h;
 
 // ============================================================
@@ -390,7 +434,7 @@ Valores e situação sujeitos a alteração — confirme sempre no edital e na f
 // ============================================================
 // Hub de cidade: pagina programatica SEO para cada cidade
 // ============================================================
-function gerarHubCidade(hub, imoveis) {
+function gerarHubCidade(hub, imoveis, todosHubs) {
 const { slug, cidade, uf, nome } = hub;
 const wa = "https://wa.me/" + (WHATS[uf] || WHATS.RS) + "?text=" + encodeURIComponent("Olá Reginaldo! Quero ver imóveis da Caixa em " + nome + ".");
 const disponiveis = imoveis.filter(im =>
@@ -408,7 +452,8 @@ const descStr = "Imóveis da Caixa Econômica Federal em leilão e venda direta 
 const hubUrl = BASE + "/leilao-caixa/" + uf.toLowerCase() + "/" + slug + ".html";
 
 const cardsHTML = disponiveis.slice(0, 20).map(im => {
-const c = cap(im.cidade), b = cap(im.bairro || "");
+const outrasCidadesHTML = (todosHubs || []).filter(h => !(h.slug === slug && h.uf === uf)).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(h => `<a href="../${h.uf.toLowerCase()}/${h.slug}.html">${esc(h.nome)}/${h.uf}</a>`).join(" · ");
+  const c = cap(im.cidade), b = cap(im.bairro || "");
 const foto = EXCLUIR_FOTOS.has(String(im.id))
 ? PLACEHOLDER_URL
 : "https://venda-imoveis.caixa.gov.br/fotos/F" + im.id + "21.jpg";
@@ -568,6 +613,7 @@ ${cardsHTML}
 
 <h2>Dúvidas frequentes sobre leilões da Caixa em ${esc(nome)}</h2>
 ${faqHTML}
+${outrasCidadesHTML ? `<div class="hub-outras-cidades" style="margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(0,0,0,.08)"><h2 style="font-size:1.05rem;margin-bottom:.5rem">Leilão Caixa em outras cidades</h2><p style="line-height:2;font-size:.9rem">${outrasCidadesHTML}</p></div>` : ""}
 
 <p class="back"><a href="../../imoveis.html">&larr; Ver todos os imóveis RS &amp; SC</a></p>
 </div>
@@ -1167,6 +1213,47 @@ if(d){ im._det = d; comDetalhe++; }
 }
 console.log("Imoveis: "+imoveis.length+" | com ficha detalhada do banco: "+comDetalhe);
 
+  // ===== Hubs de cidade: recalcula TOP 10 por volume + mantem fixas e ja existentes vivos =====
+  {
+    const disponiveisPorCidade = {};
+    for (const im of imoveis) {
+      if ((im.status||"Disponivel") !== "Disponivel") continue;
+      const cid = (im.cidade||"").toUpperCase().trim();
+      if (!cid) continue;
+      const key = cid + "|" + im.uf;
+      disponiveisPorCidade[key] = (disponiveisPorCidade[key]||0) + 1;
+    }
+    const candidatos = new Map();
+    for (const h of HUB_FIXAS) candidatos.set(h.cidade+"|"+h.uf, h);
+    const top10 = Object.keys(disponiveisPorCidade).sort((a,b)=>disponiveisPorCidade[b]-disponiveisPorCidade[a]).slice(0,10);
+    for (const key of top10) {
+      if (candidatos.has(key)) continue;
+      const partes = key.split("|");
+      candidatos.set(key, hubResolver(partes[0], partes[1]));
+    }
+    for (const ufDir of ["rs","sc"]) {
+      const dir = path.join(__dirname, "leilao-caixa", ufDir);
+      if (!fs.existsSync(dir)) continue;
+      for (const f of fs.readdirSync(dir)) {
+        if (!f.endsWith(".html")) continue;
+        const slugExistente = f.replace(".html","");
+        let jaTem = false;
+        for (const h of candidatos.values()) { if (h.slug === slugExistente && h.uf.toLowerCase() === ufDir) { jaTem = true; break; } }
+        if (jaTem) continue;
+        const ufUpper = ufDir.toUpperCase();
+        let cidadeEncontrada = null;
+        for (const chave in HUB_NOMES_CONHECIDOS) {
+          if (chave.endsWith("|"+ufUpper) && HUB_NOMES_CONHECIDOS[chave].slug === slugExistente) { cidadeEncontrada = chave.split("|")[0]; break; }
+        }
+        if (cidadeEncontrada) candidatos.set(cidadeEncontrada+"|"+ufUpper, hubResolver(cidadeEncontrada, ufUpper));
+      }
+    }
+    HUB_CIDADES = Array.from(candidatos.values());
+    HUB_MAPA = {};
+    for (const h of HUB_CIDADES) HUB_MAPA[h.cidade] = h;
+    console.log("Hubs de cidade: "+HUB_CIDADES.length+" no total ("+HUB_FIXAS.length+" fixas, top 10 por volume e hubs ja publicados em disco).");
+  }
+
 if(!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR,{recursive:true});
 for(const f of fs.readdirSync(OUT_DIR)) if(f.endsWith(".html")) fs.unlinkSync(path.join(OUT_DIR,f));
 let n=0;
@@ -1303,7 +1390,7 @@ console.log("Orfaos convertidos em stubs de redirect: " + orfaosGerados);
 for (const hub of HUB_CIDADES) {
 const hubDir = path.join(__dirname, "leilao-caixa", hub.uf.toLowerCase());
 if (!fs.existsSync(hubDir)) fs.mkdirSync(hubDir, { recursive: true });
-const hubHtml = gerarHubCidade(hub, imoveis);
+const hubHtml = gerarHubCidade(hub, imoveis, HUB_CIDADES);
 fs.writeFileSync(path.join(hubDir, hub.slug + ".html"), hubHtml);
 const disp = imoveis.filter(im => (im.status||"Disponivel")==="Disponivel" && (im.cidade||"").toUpperCase()===hub.cidade).length;
 console.log("Hub gerado: /leilao-caixa/" + hub.uf.toLowerCase() + "/" + hub.slug + ".html (" + disp + " imoveis)");
