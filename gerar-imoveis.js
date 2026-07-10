@@ -158,7 +158,7 @@ const r = await cli.query(
 "modalidade, descricao, area_total, area_privativa, area, " +
 "debito_tributos, debito_condominio, " +
 "aceita_fgts, fgts, aceita_financiamento, tipo_real, quartos, data_fim, ocupacao, " +
-"matricula_s3_url, status, scraped_at " +
+"matricula_s3_url, fotos_urls, status, scraped_at " +
 "FROM imoveis_caixa"
 );
 for(const row of r.rows){ mapa[String(row.numero_imovel).replace(/\D/g,"")] = row; }
@@ -591,6 +591,8 @@ const kicker = (tipoReal ? tipoReal.toUpperCase() : (modalidadeCaps || "IMÓVEL"
 // Foto principal: usa placeholder para imoveis com prints de documentos (LGPD)
 const fotoBase = "https://venda-imoveis.caixa.gov.br/fotos/F"+i.id+"21.jpg";
 const foto = EXCLUIR_FOTOS.has(String(i.id)) ? PLACEHOLDER_URL : fotoBase;
+const galeriaFotos = (!EXCLUIR_FOTOS.has(String(i.id)) && Array.isArray(det.fotos_urls) && det.fotos_urls.length > 1) ? det.fotos_urls : null;
+const fotoOg = (galeriaFotos && galeriaFotos[0]) || foto;
 const url = BASE+"/imovel/"+i.id+".html";
 const cidade = cap(i.cidade), bairro = cap(i.bairro);
 const titulo = tipoExib+" em "+cidade+(bairro?" - "+bairro:"")+"/"+i.uf;
@@ -603,6 +605,35 @@ const comissaoLeiloeiro = tipoLeilao === "venda_direta" ? 0 : 5;
 const roiUrl = "../calculadora.html?tipoLeilao="+tipoLeilao+"&valorLance="+Math.round(i.preco)+"&valorAvaliacao="+Math.round(i.avaliacao)+"&comissaoLeiloeiro="+comissaoLeiloeiro;
 const sp = specs(i.descricao);
 const specsHTML = sp.length? '<div class="specs">'+sp.map(s=>'<span>'+esc(s)+'</span>').join("")+'</div>' : '';
+const colLeftHTML = galeriaFotos ? `<div class="ph ph--carrossel">
+<div class="ph-track">${galeriaFotos.map((f,idx)=>`<img class="ph-slide${idx===0?' is-active':''}" src="${esc(f)}" alt="${esc(titulo)}: foto ${idx+1}" referrerpolicy="no-referrer" loading="${idx===0?'eager':'lazy'}" onerror="this.style.display='none'">`).join("")}</div>
+<button class="ph-arrow ph-arrow--prev" type="button" aria-label="Foto anterior" onclick="phGaleria(-1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+<button class="ph-arrow ph-arrow--next" type="button" aria-label="Próxima foto" onclick="phGaleria(1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+<span class="uf">${esc(i.uf)}</span>
+${i.desconto>0?'<span class="off">'+Math.round(i.desconto)+'% OFF</span>':""}
+</div>
+<div class="ph-thumbs">${galeriaFotos.slice(0,5).map((f,idx)=>`<img class="ph-thumb${idx===0?' is-active':''}" src="${esc(f)}" alt="miniatura ${idx+1}" referrerpolicy="no-referrer" loading="lazy" onclick="phGaleriaIr(${idx})">`).join("")}</div>
+<script>(function(){
+var track=document.querySelector(".ph-track");if(!track)return;
+var slides=track.querySelectorAll(".ph-slide");
+var thumbs=document.querySelectorAll(".ph-thumb");
+var idx=0;
+function ir(n){idx=(n+slides.length)%slides.length;
+for(var a=0;a<slides.length;a++)slides[a].classList.toggle("is-active",a===idx);
+for(var b=0;b<thumbs.length;b++)thumbs[b].classList.toggle("is-active",b===idx);}
+window.phGaleria=function(dir){ir(idx+dir);};
+window.phGaleriaIr=function(n){ir(n);};
+var sx=0;
+track.addEventListener("touchstart",function(e){sx=e.touches[0].clientX;},{passive:true});
+track.addEventListener("touchend",function(e){var dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40){ir(idx+(dx<0?1:-1));}},{passive:true});
+for(var k=0;k<slides.length;k++){(function(im){if(im.complete)return;var done=false;im.addEventListener("load",function(){done=true;});im.addEventListener("error",function(){done=true;});setTimeout(function(){if(!done&&!im.complete){im.style.display="none";}},6000);})(slides[k]);}
+})();</script>` : `<div class="ph">
+<div class="pholder">${esc(i.tipo)}</div>
+<img src="${foto}" alt="${esc(titulo)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+<span class="uf">${esc(i.uf)}</span>
+${i.desconto>0?'<span class="off">'+Math.round(i.desconto)+'% OFF</span>':""}
+</div>
+<script>(function(){var im=document.querySelector('.ph img');if(!im||im.complete)return;var done=false;im.addEventListener('load',function(){done=true;});im.addEventListener('error',function(){done=true;});setTimeout(function(){if(!done&&!im.complete){im.src='';im.style.display='none';}},6000);})();</script>`;
 
 // ---- dados detalhados (banco) com fallbacks seguros ----
 // financiamento: texto > DB > CSV > null
@@ -655,7 +686,7 @@ const ld = {
 "name": titulo,
 "description": metaDesc,
 "url": url,
-"image": foto,
+"image": fotoOg,
 "identifier": String(i.id),
 "datePosted": new Date().toISOString().slice(0,10),
 "address": {
@@ -703,12 +734,12 @@ return `<!doctype html>
 <meta property="og:title" content="${esc(titulo)} - ${brl(i.preco)}">
 <meta property="og:description" content="${esc(descNum)}. Imóvel da Caixa com Reginaldo Rosso.">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${foto}">
+<meta property="og:image" content="${fotoOg}">
 <meta property="og:image" content="${BASE}/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(titulo)} - ${brl(i.preco)}">
 <meta name="twitter:description" content="${esc(descNum)}.">
-<meta name="twitter:image" content="${foto}">
+<meta name="twitter:image" content="${fotoOg}">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
@@ -779,13 +810,7 @@ ${specsHTML}
 </div>
 <main class="det">
 <div class="col-left">
-<div class="ph">
-<div class="pholder">${esc(i.tipo)}</div>
-<img src="${foto}" alt="${esc(titulo)}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
-<span class="uf">${esc(i.uf)}</span>
-${i.desconto>0?'<span class="off">'+Math.round(i.desconto)+'% OFF</span>':""}
-</div>
-<script>(function(){var im=document.querySelector('.ph img');if(!im||im.complete)return;var done=false;im.addEventListener('load',function(){done=true;});im.addEventListener('error',function(){done=true;});setTimeout(function(){if(!done&&!im.complete){im.src='';im.style.display='none';}},6000);})();</script>
+${colLeftHTML}
 
 ${ (function(){
 const hasFim = !!(det.data_fim && det.data_fim.trim());
@@ -977,7 +1002,7 @@ await cli.connect();
 const r = await cli.query(
 "SELECT numero_imovel, uf, cidade, bairro, endereco, preco_avaliacao, preco_minimo, " +
 "modalidade, descricao, tipo_real, area_total, area_privativa, debito_tributos, debito_condominio, " +
-"aceita_fgts, aceita_financiamento, quartos, data_fim, ocupacao, matricula_s3_url, status, scraped_at, created_at " +
+"aceita_fgts, aceita_financiamento, quartos, data_fim, ocupacao, matricula_s3_url, fotos_urls, status, scraped_at, created_at " +
 "FROM imoveis_caixa " +
 "WHERE status IN ('Disponivel','Indisponivel') AND uf IN ('RS','SC') " +
 "AND cidade IS NOT NULL " +
@@ -1220,6 +1245,7 @@ financiamento: im.financiamento != null ? im.financiamento : null,
 debito_tributos: im.debito_tributos || (im._det ? (im._det.debito_tributos || null) : null),
 debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null),
 excluir_foto: EXCLUIR_FOTOS.has(String(im.id)),
+fotos: (im._det && Array.isArray(im._det.fotos_urls) && !EXCLUIR_FOTOS.has(String(im.id))) ? im._det.fotos_urls : [],
 fgts: im._det ? (im._det.aceita_fgts != null ? im._det.aceita_fgts : null) : null,
 area: (im._det && (im._det.area || im._det.area_privativa || im._det.area_total)) || parseTipoAreaFromDesc(im.descricao).area || null,
 quartos: im._det ? (im._det.quartos != null ? im._det.quartos : null) : null,
