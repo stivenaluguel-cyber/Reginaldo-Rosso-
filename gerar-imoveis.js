@@ -450,9 +450,9 @@ const titleStr = n > 0
 : ("Leilão Caixa " + nome + ": imóveis da Caixa com assessoria credenciada | Reginaldo Rosso");
 const descStr = "Imóveis da Caixa Econômica Federal em leilão e venda direta em " + nome + "/" + uf + ". Reginaldo Rosso, corretor credenciado CRECI.";
 const hubUrl = BASE + "/leilao-caixa/" + uf.toLowerCase() + "/" + slug + ".html";
+  const outrasCidadesHTML = (todosHubs || []).filter(h => !(h.slug === slug && h.uf === uf)).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(h => `<a href="../${h.uf.toLowerCase()}/${h.slug}.html">${esc(h.nome)}/${h.uf}</a>`).join(" · ");
 
 const cardsHTML = disponiveis.slice(0, 20).map(im => {
-const outrasCidadesHTML = (todosHubs || []).filter(h => !(h.slug === slug && h.uf === uf)).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(h => `<a href="../${h.uf.toLowerCase()}/${h.slug}.html">${esc(h.nome)}/${h.uf}</a>`).join(" · ");
   const c = cap(im.cidade), b = cap(im.bairro || "");
 const foto = EXCLUIR_FOTOS.has(String(im.id))
 ? PLACEHOLDER_URL
