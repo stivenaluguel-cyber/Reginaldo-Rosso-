@@ -146,18 +146,18 @@ def _processar_linha(row: dict) -> dict | None:
     update = {"numero_imovel": nr}
     mudou = False
 
-      # --- parse_descricao_csv: apenas area (tipo_real NAO e mais tratado aqui) ---
-      # A descricao no banco pode ser a descricao CSV OU a descricao de detalhe
-      # (texto da Caixa, que comeca com a lista de comodos - classificar tipo_real
-      # a partir desse campo ambiguo foi a causa do bug que gerava tipo_real=Sala
-      # em massa. tipo_real agora e responsabilidade exclusiva da etapa1 (le a
-      # Descricao verdadeira do CSV a cada ciclo - ver update_csv_parsed_bulk em
-      # db.py. area continua extraida aqui pois seu regex nao depende da 1a palavra.
-      if not row.get("area"):
-          csv_parsed = parse_descricao_csv(desc)
-          if csv_parsed.get("area"):
-              update["area"] = csv_parsed["area"]
-              mudou = True
+    # --- parse_descricao_csv: apenas area (tipo_real NAO e mais tratado aqui) ---
+    # A descricao no banco pode ser a descricao CSV OU a descricao de detalhe
+    # (texto da Caixa, que comeca com a lista de comodos - classificar tipo_real
+    # a partir desse campo ambiguo foi a causa do bug que gerava tipo_real=Sala
+    # em massa. tipo_real agora e responsabilidade exclusiva da etapa1 (le a
+    # Descricao verdadeira do CSV a cada ciclo - ver update_csv_parsed_bulk em
+    # db.py. area continua extraida aqui pois seu regex nao depende da 1a palavra.
+    if not row.get("area"):
+        csv_parsed = parse_descricao_csv(desc)
+        if csv_parsed.get("area"):
+            update["area"] = csv_parsed["area"]
+            mudou = True
 
     # --- parse_detalhe: fgts, financiamento, debito_tributos, debito_condominio, quartos ---
     # Roda sempre que descricao contem texto de detalhe (>200 chars = provavelmente detalhe)
@@ -166,8 +166,9 @@ def _processar_linha(row: dict) -> dict | None:
     fonte_detalhe = row.get("texto_detalhe_bruto") or desc
     if fonte_detalhe and len(fonte_detalhe) > 200:
         det = parse_detalhe(fonte_detalhe)
-        if det.get("fgts") is not None and row.get("fgts") is None:
-            update["fgts"] = det["fgts"]
+        if det.get("fgts") is not None and row.get("aceita_fgts") is None:
+            # coluna fgts nao e mais gravada (achado #16) - so aceita_fgts,
+            # que e a unica lida por gerar-imoveis.js.
             update["aceita_fgts"] = det["fgts"]
             mudou = True
         # Financiamento: a pagina de detalhe (texto_detalhe_bruto) e a fonte

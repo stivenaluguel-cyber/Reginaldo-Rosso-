@@ -432,7 +432,9 @@ async def _extrair_dados_playwright(page, numero_imovel):
             )
         )
         dados["aceita_fgts"] = aceita_fgts
-        dados["fgts"] = aceita_fgts  # alias para o frontend
+        # dados["fgts"] removido (achado #16): coluna nunca lida por
+        # gerar-imoveis.js (que so usa aceita_fgts) - gravar as duas era
+        # trabalho a toa. Coluna fgts mantida no schema como legado.
 
         # Heuristica compartilhada com parser_caixa.py e backfill_financiamento.py
         # (financiamento_heuristica.py) - achados #8/#10 da auditoria.

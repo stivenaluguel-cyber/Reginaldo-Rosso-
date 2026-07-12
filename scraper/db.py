@@ -26,7 +26,9 @@ area NUMERIC(12,2),
 debito_tributos VARCHAR(60),
 debito_condominio VARCHAR(80),
 aceita_fgts BOOLEAN,
-fgts BOOLEAN,
+fgts BOOLEAN,  -- LEGADO (achado #16): nao gravada mais desde a unificacao com
+               -- aceita_fgts (unica lida por gerar-imoveis.js); coluna mantida
+               -- sem DROP para nao quebrar leituras/exports existentes.
 aceita_financiamento BOOLEAN,
 tipo_real VARCHAR(50),
 quartos SMALLINT,
@@ -439,7 +441,7 @@ def upsert_imovel(data: dict):
         'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
         'area_total', 'area_privativa', 'area',
         'debito_tributos', 'debito_condominio',
-        'aceita_fgts', 'fgts', 'aceita_financiamento',
+        'aceita_fgts', 'aceita_financiamento',
         'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
         'matricula_s3_url', 'fotos_urls', 'scraped_at',
     ]
@@ -476,7 +478,7 @@ def upsert_imoveis_bulk(lista, batch_size=500):
         'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao',
         'area_total', 'area_privativa', 'area',
         'debito_tributos', 'debito_condominio',
-        'aceita_fgts', 'fgts', 'aceita_financiamento',
+        'aceita_fgts', 'aceita_financiamento',
         'tipo_real', 'quartos', 'data_fim', 'ocupacao', 'texto_detalhe_bruto',
         'matricula_s3_url', 'fotos_urls', 'scraped_at',
     ]
