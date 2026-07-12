@@ -670,6 +670,12 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
     url = URL_BASE_DETALHE + str(numero_imovel)
 
     for attempt in range(MAX_RETRIES):
+        if RATE_LIMIT_ATIVO:
+            logger.warning(
+                f"[det {numero_imovel}] RATE_LIMIT_ATIVO ja ativo - abortando sem nova tentativa "
+                f"(tentativa {attempt + 1}/{MAX_RETRIES} nao executada)"
+            )
+            break
         context = None
         should_close = False
         pw_instance = None
@@ -722,6 +728,15 @@ async def scrape_imovel(numero_imovel, uf=None, browser=None):
                     pass
 
             dados_pw = await _extrair_dados_playwright(page, numero_imovel)
+            if dados_pw is None:
+                # Bloqueio anti-bot (WAF) detectado dentro de
+                # _extrair_dados_playwright; RATE_LIMIT_ATIVO ja foi setado
+                # la. Aborta esta tentativa sem tentar iterar None.
+                try:
+                    await context.close()
+                except Exception:
+                    pass
+                return None
             dados.update({k: v for k, v in dados_pw.items() if v is not None})
 
             if not dados.get("matricula_s3_url"):

@@ -34,7 +34,7 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 from config import MAX_WORKERS
 from etapa1_csv import _executar as etapa1_executar
-from etapa2_scraper import scrape_imovel, baixar_matriculas_em_massa, RATE_LIMIT_ATIVO
+from etapa2_scraper import scrape_imovel, baixar_matriculas_em_massa
 from db import (upsert_imovel, upsert_imoveis_bulk, get_pendentes_com_uf,
                 get_uf_por_ids, get_pendentes_matricula_com_uf,
                 get_ids_by_uf, mark_unavailable, marcar_suspeitos, limpar_suspeita)
