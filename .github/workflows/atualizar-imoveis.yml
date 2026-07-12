@@ -1,8 +1,12 @@
 name: Atualizar imóveis Caixa
 
 on:
-  schedule:
-    - cron: "0 9 * * *"   # 09:00 UTC = 06:00 (Brasília)
+  # Cron diario desativado (achado #9 da auditoria): esse pipeline legado
+  # sobrescrevia imoveis-rs.json/imoveis-sc.json/Lista_imoveis_*.csv com dados
+  # crus (sem enriquecimento do banco, taxonomia de tipo propria e divergente)
+  # todo dia as 09:00 UTC, disputando os mesmos arquivos com gerar-imoveis.js/
+  # scraper Python. Mantido so como disparo manual, sem apagar o arquivo nem
+  # o historico de runs.
   workflow_dispatch:
 
 permissions:
