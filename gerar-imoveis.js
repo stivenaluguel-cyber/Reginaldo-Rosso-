@@ -1341,9 +1341,12 @@ id: im.id, uf: im.uf, cidade: im.cidade, bairro: im.bairro,
 endereco: im.endereco, preco: im.preco, avaliacao: im.avaliacao,
 desconto: im.desconto, descricao: sanitizarDescricao(im.descricao),
 modalidade: im.modalidade, tipo: (im._det && im._det.tipo_real) || im.tipo, link: im.link,
-// financiamento: usa a mesma hierarquia de resolucao para o JSON
+// financiamento: usa a MESMA hierarquia de resolverFinanciamento() (texto da
+// descricao > banco > CSV > null) usada na pagina individual do imovel -
+// antes usava so o valor bruto do CSV/banco, podendo divergir do que a
+// ficha (/imovel/{id}.html) mostrava para o mesmo imovel (achado #8/#10).
 // null = sem dados (frontend deve tratar como desconhecido, nao "nao aceita")
-financiamento: im.financiamento != null ? im.financiamento : null,
+financiamento: (function(){ const r=resolverFinanciamento(im._det, im.financiamento!=null?im.financiamento:null, im.descricao); return r==="Sim"?true:r==="Não"?false:null; })(),
 debito_tributos: im.debito_tributos || (im._det ? (im._det.debito_tributos || null) : null),
 debito_condominio: im.debito_condominio || (im._det ? (im._det.debito_condominio || null) : null),
 excluir_foto: EXCLUIR_FOTOS.has(String(im.id)),

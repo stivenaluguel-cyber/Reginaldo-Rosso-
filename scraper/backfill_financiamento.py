@@ -8,7 +8,8 @@ texto_detalhe_bruto armazenado, SEM tocar na Caixa. A pagina de detalhe
 "formas de pagamento aceitas" cita financiamento e nao ha bloqueio explicito
 (a vista / recursos proprios), consideramos aceita_financiamento = True.
 
-Espelha exatamente a heuristica de etapa2_scraper.py (linhas ~445-466),
+Usa a heuristica compartilhada de financiamento_heuristica.py (mesma usada
+por parser_caixa.py e etapa2_scraper.py - ver achados #8/#10 da auditoria),
 para que o backfill produza o mesmo resultado que uma re-raspagem produziria.
 
 Uso:
@@ -16,40 +17,9 @@ Uso:
     python backfill_financiamento.py --dry-run  # so relata, nao grava
 """
 import sys
-import re
-import unicodedata
 
 from db import get_connection
-
-
-def _strip_accents(t: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFKD", t or "")
-        if not unicodedata.combining(c)
-    )
-
-
-def _norm(t: str) -> str:
-    return re.sub(r"\s+", " ", _strip_accents(t or "").lower()).strip()
-
-
-def extrair_financiamento(texto_bruto: str):
-    """Retorna True/False a partir do texto de detalhe, ou None se vazio."""
-    if not texto_bruto:
-        return None
-    nt = _norm(texto_bruto)
-    aceita_fin = (
-        "aceita financiamento" in nt or "financiamento habitacional" in nt or (
-            "financiamento" in nt
-            and "nao aceita financiamento" not in nt
-            and "nao permite financiamento" not in nt
-            and "vedado o financiamento" not in nt
-            and "nao e permitido financiamento" not in nt
-            and "exclusivamente a vista" not in nt
-            and "somente recursos proprios" not in nt
-        )
-    )
-    return bool(aceita_fin)
+from financiamento_heuristica import eh_financiavel as extrair_financiamento
 
 
 def main():

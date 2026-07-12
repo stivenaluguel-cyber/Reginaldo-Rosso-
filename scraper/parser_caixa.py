@@ -13,6 +13,8 @@ com ou sem acentuacao dependendo do encoding do CSV).
 import re
 import unicodedata
 
+from financiamento_heuristica import eh_financiavel
+
 
 # ---------------------------------------------------------------------------
 # Helpers internos
@@ -185,21 +187,15 @@ def parse_detalhe(texto: str) -> dict:
             result["fgts"] = False
 
     # ---- FINANCIAMENTO ----
+    # Heuristica compartilhada com etapa2_scraper.py e backfill_financiamento.py
+    # (financiamento_heuristica.py) - antes esta lista de negacoes divergia das
+    # outras duas (achados #8/#10 da auditoria). Gate (if acima) preservado:
+    # so classifica quando o texto de fato menciona financiamento/formas de
+    # pagamento; texto que nao toca no assunto continua sem a chave setada.
     if "financiamento" in t_norm or "formas de pagamento" in t_norm:
-        nao_fin = any(neg in t_norm for neg in [
-            "nao aceita financiamento", "sem financiamento",
-            "nao e aceito financiamento", "nao permite financiamento",
-        ])
-        sim_fin = any(pos in t_norm for pos in [
-            "aceita financiamento", "financiamento habitacional",
-            "financiamento bancario", "permite financiamento",
-        ])
-        if nao_fin:
-            result["financiamento"] = False
-        elif sim_fin:
-            result["financiamento"] = True
-        elif "formas de pagamento" in t_norm:
-            result["financiamento"] = False
+        fin = eh_financiavel(texto)
+        if fin is not None:
+            result["financiamento"] = fin
 
     # ---- DEBITO TRIBUTOS ----
     deb_t = _extrair_secao(t_norm, "tributo", "iptu")

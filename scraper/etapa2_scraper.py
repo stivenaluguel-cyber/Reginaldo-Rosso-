@@ -40,6 +40,7 @@ from config import (
 from captcha import solve_captcha, inject_captcha_token
 from s3_uploader import upload_bytes
 from db import upsert_imovel, set_matricula_url  # noqa: F401
+from financiamento_heuristica import eh_financiavel
 
 logger = logging.getLogger(__name__)
 
@@ -519,16 +520,9 @@ async def _extrair_dados_playwright(page, numero_imovel):
         dados["aceita_fgts"] = aceita_fgts
         dados["fgts"] = aceita_fgts  # alias para o frontend
 
-        aceita_fin = (
-            "aceita financiamento" in nt or (
-                "financiamento" in nt
-                and "nao aceita financiamento" not in nt
-                and "nao permite financiamento" not in nt
-                and "exclusivamente a vista" not in nt
-                and "somente recursos proprios" not in nt
-            )
-        )
-        dados["aceita_financiamento"] = aceita_fin
+        # Heuristica compartilhada com parser_caixa.py e backfill_financiamento.py
+        # (financiamento_heuristica.py) - achados #8/#10 da auditoria.
+        dados["aceita_financiamento"] = eh_financiavel(full_text) or False
 
         # === Descricao (sanitizada) ===
         desc_raw = _find_value(full_text, "Descricao", "Descrição", "descricao", "descricao do imovel") or ""
