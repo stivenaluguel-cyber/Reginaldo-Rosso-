@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net https://www.googletagmanager.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://venda-imoveis.caixa.gov.br https://*.facebook.com https://unpkg.com https://*.tile.openstreetmap.org; connect-src 'self' https://*.facebook.com https://*.facebook.net https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.doubleclick.net https://*.googleadservices.com https://api.web3forms.com https://inscrever-alerta.reginaldo-rosso.workers.dev https://xpkznaqgctfkoonqpcye.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net https://www.googletagmanager.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://venda-imoveis.caixa.gov.br https://*.facebook.com https://unpkg.com https://*.tile.openstreetmap.org; connect-src 'self' https://*.facebook.com https://*.facebook.net https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.doubleclick.net https://*.googleadservices.com https://api.web3forms.com https://xpkznaqgctfkoonqpcye.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta name="description" content="Cancele alertas de leilão de imóveis da Caixa cadastrados no site do Reginaldo Rosso de forma rápida e simples.">
@@ -74,7 +74,8 @@ footer{margin-top:2rem;font-size:.75rem;color:#9ca3af;text-align:center}
 
 <script>
 (function() {
-  var WORKER_URL = "https://inscrever-alerta.reginaldo-rosso.workers.dev";
+  var SUPABASE_URL = "https://xpkznaqgctfkoonqpcye.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3puYXFnY3Rma29vbnFwY3llIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI0NzAsImV4cCI6MjA5Nzg3ODQ3MH0.hQND_aAzZNi2Z_-uW9FjEm_zVKnofgzFyeLIgdrN2lU";
 
   function show(id) {
     var states = document.querySelectorAll('.state');
@@ -94,18 +95,27 @@ footer{margin-top:2rem;font-size:.75rem;color:#9ca3af;text-align:center}
     return;
   }
 
-  // Chamar o Worker para cancelar
-  fetch(WORKER_URL + '/api/cancelar-alerta', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: token })
+  // Cancela direto via Supabase REST (mesmo padrao do widget de inscricao),
+  // sem depender do Worker do Cloudflare (nunca foi implantado).
+  fetch(SUPABASE_URL + '/rest/v1/alertas_leilao?unsubscribe_token=eq.' + encodeURIComponent(token), {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify({ ativo: false })
   })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    if (data.ok) {
+  .then(function(res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  })
+  .then(function(rows) {
+    if (Array.isArray(rows) && rows.length > 0) {
       show('st-ok');
     } else {
-      document.getElementById('err-msg').textContent = data.error || 'Erro desconhecido.';
+      document.getElementById('err-msg').textContent = 'Link inválido ou já utilizado.';
       show('st-err');
     }
   })
