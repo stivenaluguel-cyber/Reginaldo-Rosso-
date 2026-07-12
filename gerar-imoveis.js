@@ -448,7 +448,9 @@ const maxDesconto = n > 0
 const titleStr = n > 0
 ? ("Leilão Caixa " + nome + ": " + n + " imóve" + (n === 1 ? "l" : "is") + (maxDesconto > 0 ? " até " + Math.round(maxDesconto) + "% abaixo da avaliação" : "") + " | Reginaldo Rosso")
 : ("Leilão Caixa " + nome + ": imóveis da Caixa com assessoria credenciada | Reginaldo Rosso");
-const descStr = "Imóveis da Caixa Econômica Federal em leilão e venda direta em " + nome + "/" + uf + ". Reginaldo Rosso, corretor credenciado CRECI.";
+const descStr = n > 0
+? ("Confira " + n + " imóve" + (n === 1 ? "l" : "is") + " da Caixa em " + nome + "/" + uf + (maxDesconto > 0 ? ", com deságio de até " + Math.round(maxDesconto) + "% sobre a avaliação" : "") + ". Corretor credenciado CRECI, assessoria gratuita na arrematação.")
+: ("Imóveis da Caixa Econômica Federal em leilão e venda direta em " + nome + "/" + uf + ". Reginaldo Rosso, corretor credenciado CRECI.");
 const hubUrl = BASE + "/leilao-caixa/" + uf.toLowerCase() + "/" + slug + ".html";
   const outrasCidadesHTML = (todosHubs || []).filter(h => !(h.slug === slug && h.uf === uf)).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).map(h => `<a href="../${h.uf.toLowerCase()}/${h.slug}.html">${esc(h.nome)}/${h.uf}</a>`).join(" · ");
 
