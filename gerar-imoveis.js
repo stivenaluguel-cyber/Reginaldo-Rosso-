@@ -367,7 +367,7 @@ return `<!doctype html>
 <meta name="robots" content="noindex,follow">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../imovel.css">
-<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 <style>
 .enc-banner{background:#7f1d1d;color:#fff;padding:1rem 1.5rem;border-radius:.5rem;margin-bottom:1.5rem;font-size:1.05rem;font-weight:700;text-align:center}
 .similares{margin-top:2rem}.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin-top:1rem}
@@ -517,9 +517,9 @@ return `<!doctype html>
 <link rel="manifest" href="/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../imovel.css">
-<script type="application/ld+json">${JSON.stringify(ldItemList)}</script>
-<script type="application/ld+json">${JSON.stringify(ldBreadcrumb)}</script>
-<script type="application/ld+json">${JSON.stringify(ldFaq)}</script>
+<script type="application/ld+json">${JSON.stringify(ldItemList).replace(/</g, '\\u003c')}</script>
+<script type="application/ld+json">${JSON.stringify(ldBreadcrumb).replace(/</g, '\\u003c')}</script>
+<script type="application/ld+json">${JSON.stringify(ldFaq).replace(/</g, '\\u003c')}</script>
 <style>
 .hub-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:2.5rem 1rem 2rem;text-align:center}
 .hub-hero h1{font-size:clamp(1.4rem,4vw,2rem);font-weight:800;margin:0 0 .5rem;color:#fff}
@@ -823,8 +823,8 @@ return `<!doctype html>
 .price-savings--compact{font-size:1.0625rem}
 }
 </style>
-<script type="application/ld+json">${JSON.stringify(ld)}</script>
-<script type="application/ld+json">${JSON.stringify(ldBreadcrumb)}</script>
+<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
+<script type="application/ld+json">${JSON.stringify(ldBreadcrumb).replace(/</g, '\\u003c')}</script>
 </head>
 <body>
 <header><div class="topbar">
