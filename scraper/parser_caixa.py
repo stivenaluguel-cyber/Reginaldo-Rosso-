@@ -14,6 +14,7 @@ import re
 import unicodedata
 
 from financiamento_heuristica import eh_financiavel
+from data_fim_heuristica import parse_data_fim as _parse_data_fim
 
 
 # ---------------------------------------------------------------------------
@@ -267,31 +268,10 @@ def _parse_debito(secao: str) -> str | None:
     return None
 
 
-def _parse_data_fim(texto: str) -> str | None:
-    """Extrai a data-limite (dd/mm/yyyy) do leilao/venda a partir do texto bruto.
-    Prioriza rotulos conhecidos; fallback: primeira data futura encontrada."""
-    if not texto:
-        return None
-    import re as _re
-    from datetime import datetime as _dt, date as _date
-    date_pat = r"(\d{2}/\d{2}/\d{4})"
-    rotulos = [
-        r"(?:data\s+(?:de\s+)?(?:encerramento|fim|vencimento|limite)|encerra\s+em|valido\s+ate)[:\s]+",
-        r"(?:1[o\u00ba]?\s*leil[a\u00e3]o|2[o\u00ba]?\s*leil[a\u00e3]o|venda\s+online)[^\n]*?-\s*",
-    ]
-    for rot in rotulos:
-        m = _re.search(rot + date_pat, texto, _re.IGNORECASE)
-        if m:
-            return m.group(m.lastindex)
-    datas = _re.findall(date_pat, texto)
-    hoje = _date.today()
-    for d in datas:
-        try:
-            if _dt.strptime(d, "%d/%m/%Y").date() >= hoje:
-                return d
-        except Exception:
-            pass
-    return None
+# _parse_data_fim: delegada para data_fim_heuristica.parse_data_fim (topo do
+# arquivo) - antes esta versao retornava so "dd/mm/yyyy", sem HORA_PADRAO,
+# podendo reintroduzir o bug do alerta "1h antes" disparando a meia-noite
+# (ja corrigido em etapa2_scraper.py). Ver achado #11 da auditoria.
 
 
 def _parse_quartos(t_norm: str) -> int | None:

@@ -41,6 +41,7 @@ from captcha import solve_captcha, inject_captcha_token
 from s3_uploader import upload_bytes
 from db import upsert_imovel, set_matricula_url  # noqa: F401
 from financiamento_heuristica import eh_financiavel
+from data_fim_heuristica import parse_data_fim
 
 logger = logging.getLogger(__name__)
 
@@ -275,55 +276,11 @@ def _parse_quartos(full_text):
                 return n
     return None
 
-def _parse_data_fim(full_text):
-    """Extrai data-limite do leilao/venda como 'dd/mm/yyyy HH:MM'.
-
-    A Caixa mostra a data com hora no detalhe (ex.: '08/07/2026 18:00:00' no
-    contador da Venda Online). Antes so guardavamos a DATA, entao os alertas de
-    e-mail (24h/4h/1h antes) calculavam as horas restantes a partir da meia-noite
-    -- o "1h antes" disparava a meia-noite em vez das 17h. Agora extraimos a HORA
-    quando disponivel e, quando ausente, assumimos 18:00 (padrao da venda online
-    da Caixa). O formato 'dd/mm/yyyy HH:MM' continua compativel com os consumidores
-    existentes (parseDateBR no gerar-imoveis.js ignora o sufixo de hora)."""
-    t = full_text or ""
-    HORA_PADRAO = "18:00"  # padrao da venda online da Caixa (documentado)
-
-    def _com_hora(data_str, resto):
-        # tenta achar HH:MM(:SS) logo apos a data; senao usa o padrao
-        m = re.search(r"^\s*(\d{1,2}):(\d{2})", resto or "")
-        if m:
-            hh, mm = int(m.group(1)), int(m.group(2))
-            if 0 <= hh <= 23 and 0 <= mm <= 59:
-                return f"{data_str} {hh:02d}:{mm:02d}"
-        return f"{data_str} {HORA_PADRAO}"
-
-    date_pattern = r"(\d{2}/\d{2}/\d{4})"
-    # Busca por rotulos comuns da Caixa (com hora opcional logo apos a data)
-    rotulos = [
-        r"(?:data\s+de\s+(?:encerramento|fim|vencimento|limite)|encerra\s+em|valido\s+ate)[:\s]+",
-        r"(?:primeiro\s+leil[aã]o|segundo\s+leil[aã]o|venda\s+online)[^\n]*?-\s*",
-    ]
-    for rot in rotulos:
-        m = re.search(rot + date_pattern, t, re.IGNORECASE)
-        if m:
-            data = m.group(m.lastindex)
-            resto = t[m.end():m.end() + 12]
-            return _com_hora(data, resto)
-
-    # Fallback: qualquer data futura no texto (prioriza datas futuras),
-    # capturando a hora imediatamente a seguir quando houver.
-    from datetime import date
-    hoje = date.today()
-    for m in re.finditer(date_pattern, t):
-        d = m.group(1)
-        try:
-            dt = datetime.strptime(d, "%d/%m/%Y").date()
-            if dt >= hoje:
-                resto = t[m.end():m.end() + 12]
-                return _com_hora(d, resto)
-        except Exception:
-            pass
-    return None
+# _parse_data_fim: delegada para data_fim_heuristica.parse_data_fim (import
+# no topo do arquivo) - mesma funcao agora usada por parser_caixa.py, para
+# que backfill_parser.py nao reintroduza silenciosamente o bug do alerta
+# "1h antes" disparando a meia-noite (sem HORA_PADRAO). Ver achado #11.
+_parse_data_fim = parse_data_fim
 
 # ---------------------------------------------------------------------------
 # 1. URL DETERMINISTICA - baixa PDF direto sem Playwright
