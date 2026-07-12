@@ -751,7 +751,7 @@ ${badgeFlagHTML(i)}
     if(i.comarca) kv.push(`<div>Comarca<b style="font-size:.9rem">${esc(i.comarca)}</b></div>`);
     if(i.leilao1) kv.push(`<div>1ª Praça<b style="font-size:.95rem">${BRL(i.leilao1)}</b></div>`);
     if(i.leilao2) kv.push(`<div>2ª Praça<b style="font-size:.95rem">${BRL(i.leilao2)}</b></div>`);
-    [["Financiamento",i.financiamento],["Usa FGTS",i.fgts],["Parcelamento",i.parcelamento]].forEach(([rot,val])=>{const s=simNao(val);if(s)kv.push(`<div>${rot}<b>${s}</b></div>`);});
+    [["Financiamento",i.financiamento],["Usa FGTS",i.fgts]].forEach(([rot,val])=>{const s=simNao(val);if(s)kv.push(`<div>${rot}<b>${s}</b></div>`);});
 
     const nomeC=nomeCondominio(i.descricao);
     const cond=aposRotulo(i.descricao,"Condom[íi]nio",["Tributos","Despesas","Situa","Coment","Inscri"]);
