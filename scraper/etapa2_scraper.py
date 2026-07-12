@@ -165,30 +165,6 @@ def _parse_area(full_text, *labels):
     m = re.search(r"([\d.]+,[\d]+|\d+[.,]?\d*)", raw)
     return _parse_money(m.group(1)) if m else None
 
-def _parse_debito_tributos(texto):
-    t = _norm(texto)
-    if not t:
-        return None
-    if "10%" in t and ("caixa paga" in t or "paga integralmente" in t):
-        return "Caixa paga acima de 10%"
-    if "responsabilidade do comprador" in t or "arrematante paga" in t or "10%" in t:
-        return "Arrematante Paga"
-    if "paga integralmente" in t or "caixa paga" in t:
-        return "Caixa Paga"
-    return "Arrematante Paga"
-
-def _parse_debito_condominio(texto):
-    t = _norm(texto)
-    if not t:
-        return None
-    if "10%" in t and ("caixa paga" in t or "paga integralmente" in t):
-        return "Caixa paga acima de 10%"
-    if "responsabilidade do comprador" in t or "arrematante paga" in t or "10%" in t:
-        return "Arrematante Paga"
-    if "paga integralmente" in t or "caixa paga" in t:
-        return "Caixa Paga"
-    return "Arrematante Paga"
-
 def _extrair_secao_regras(full_text):
     """Retorna a secao normalizada de "regras para pagamento das despesas"."""
     nt = _norm(full_text)
@@ -241,25 +217,6 @@ def _parse_ocupacao(full_text):
     if "ocupado" in t or "imovel ocupado" in t:
         return "Ocupado"
     return None
-
-def _parse_tipo(full_text, descricao_csv=""):
-    """Detecta tipo real do imovel a partir do texto da pagina ou descricao CSV."""
-    textos = [full_text or "", descricao_csv or ""]
-    for texto in textos:
-        t = _norm(texto)
-        if "apartamento" in t:
-            return "Apartamento"
-        if "sobrado" in t:
-            return "Sobrado"
-        if "casa" in t:
-            return "Casa"
-        if "terreno" in t or "lote" in t or "gleba" in t:
-            return "Terreno"
-        if "loja" in t or "sala comercial" in t or "galpao" in t or "predio" in t:
-            return "Imovel Comercial"
-        if "rural" in t or "chacara" in t or "sitio" in t or "fazenda" in t:
-            return "Imovel Rural"
-    return None  # Nao identificado - mantem o que ja tinha
 
 def _parse_quartos(full_text):
     """Extrai numero de quartos/dormitorios do texto."""
@@ -490,7 +447,7 @@ async def _extrair_dados_playwright(page, numero_imovel):
                 desc_raw = full_text[idx_titulo:idx_titulo + 1000]
         dados["descricao"] = _sanitizar_descricao(desc_raw)
 
-        # Tipo real: NAO reclassifica aqui - o CSV (etapa1/parse_descricao_csv) e a fonte autoritativa e nunca deve ser sobrescrito pelo texto da pagina de detalhe (lista de comodos tipo "sala, 2 quartos..." fazia tipo_real virar "Sala"). _parse_tipo() continua definida acima so para referencia/diagnostico.
+        # Tipo real: NAO reclassifica aqui - o CSV (etapa1/parse_descricao_csv) e a fonte autoritativa e nunca deve ser sobrescrito pelo texto da pagina de detalhe (lista de comodos tipo "sala, 2 quartos..." fazia tipo_real virar "Sala").
 
         # === Quartos ===
         quartos = _parse_quartos(full_text)
