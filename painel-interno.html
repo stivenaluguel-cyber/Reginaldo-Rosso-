@@ -53,9 +53,32 @@ tbody td a:hover{color:var(--gold)}
 .contagem b{color:var(--ink)}
 footer{background:var(--navy-d);color:#9fb0c0;padding:26px 0;font-size:.8rem;line-height:1.7;text-align:center}
 @media(max-width:880px){.resumo{grid-template-columns:repeat(2,1fr)}}
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+#gate .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:32px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.12)}
+#gate h1{font-size:1.05rem;margin-bottom:6px}
+#gate p{color:var(--muted);font-size:.82rem;margin-bottom:18px}
+#gate input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:.92rem;margin-bottom:10px;outline:none;box-sizing:border-box}
+#gate input:focus{border-color:var(--gold)}
+#gate button{width:100%;padding:11px;border:0;border-radius:8px;background:var(--navy);color:#fff;font-family:inherit;font-weight:700;cursor:pointer}
+#gate button:hover{background:var(--navy2)}
+#gate .err{color:#b91c1c;font-size:.8rem;margin-top:10px;display:none}
+#conteudo{display:none}
 </style>
 </head>
-<body><header>
+<body>
+<div id="gate">
+  <div class="box">
+    <h1>Painel Interno</h1>
+    <p>Acesso restrito. Digite a senha para continuar.</p>
+    <form id="gate-form">
+      <input id="gate-pass" type="password" placeholder="Senha" autocomplete="current-password" autofocus>
+      <button type="submit">Entrar</button>
+      <div class="err" id="gate-err">Senha incorreta.</div>
+    </form>
+  </div>
+</div>
+<div id="conteudo">
+<header>
 <div class="wrap">
 <div class="titulo"><b>Painel Interno</b><small>Reginaldo Rosso · Uso do corretor</small></div>
 <span class="badge-priv">Não indexado</span>
@@ -108,7 +131,40 @@ footer{background:var(--navy-d);color:#9fb0c0;padding:26px 0;font-size:.8rem;lin
 </div>
 
 <footer id="rodape">Carregando…</footer>
+</div>
 
+<script>
+// Gate de acesso: nada do painel (nem o fetch de painel-dados.json) roda
+// antes de bater a senha. Mitigacao client-side apenas - GitHub Pages nao
+// tem auth de servidor; dados estaticos continuam baixaveis por quem
+// souber a URL exata do JSON. Ver relatorio de auditoria para a
+// recomendacao de medio prazo (Cloudflare Access).
+var PASSWORD_HASH = "d00cd5355f9286e56192db5d8fcf46a9a93cd6e54b6ffa2f53859b2ba7983ab3";
+async function sha256Hex(texto){
+  var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,"0"); }).join("");
+}
+function liberarPainel(){
+  document.getElementById("gate").style.display = "none";
+  document.getElementById("conteudo").style.display = "block";
+  carregar();
+}
+if(sessionStorage.getItem("painelAuth") === PASSWORD_HASH){
+  liberarPainel();
+} else {
+  document.getElementById("gate-form").addEventListener("submit", async function(e){
+    e.preventDefault();
+    var val = document.getElementById("gate-pass").value;
+    var hash = await sha256Hex(val);
+    if(hash === PASSWORD_HASH){
+      sessionStorage.setItem("painelAuth", hash);
+      liberarPainel();
+    } else {
+      document.getElementById("gate-err").style.display = "block";
+    }
+  });
+}
+</script>
 <script>var BRL = function(v){
   if(v==null || isNaN(v)) return "—";
   return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
@@ -314,7 +370,6 @@ function carregar(){
     document.getElementById("rodape").textContent = "Uso interno — não indexado.";
   });
 }
-carregar();
 </script>
 </body>
 </html>
