@@ -95,29 +95,26 @@ footer{margin-top:2rem;font-size:.75rem;color:#9ca3af;text-align:center}
     return;
   }
 
-  // Cancela direto via Supabase REST (mesmo padrao do widget de inscricao),
-  // sem depender do Worker do Cloudflare (nunca foi implantado).
-  fetch(SUPABASE_URL + '/rest/v1/alertas_leilao?unsubscribe_token=eq.' + encodeURIComponent(token), {
-    method: 'PATCH',
+  // Cancela via RPC (SECURITY DEFINER, EXECUTE restrito a anon) - a role
+  // anon nao tem GRANT UPDATE direto na tabela, so pode chamar a funcao.
+  fetch(SUPABASE_URL + '/rest/v1/rpc/cancel_alert', {
+    method: 'POST',
     headers: {
       'apikey': SUPABASE_ANON_KEY,
       'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ ativo: false })
+    body: JSON.stringify({ p_token: token })
   })
   .then(function(res) {
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
-  })
-  .then(function(rows) {
-    if (Array.isArray(rows) && rows.length > 0) {
+    if (res.status === 204) {
       show('st-ok');
-    } else {
-      document.getElementById('err-msg').textContent = 'Link inválido ou já utilizado.';
-      show('st-err');
+      return;
     }
+    return res.json().catch(function() { return {}; }).then(function(data) {
+      document.getElementById('err-msg').textContent = data.message || ('Erro (' + res.status + ').');
+      show('st-err');
+    });
   })
   .catch(function(err) {
     document.getElementById('err-msg').textContent = 'Erro de rede: ' + err.message;
