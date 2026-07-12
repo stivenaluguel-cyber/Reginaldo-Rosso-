@@ -1,0 +1,10 @@
+# Segredos
+scraper/.env
+
+# Python
+__pycache__/
+*.pyc
+scraper/logs/*.log
+
+# Node
+node_modules/
