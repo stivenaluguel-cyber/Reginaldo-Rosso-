@@ -250,40 +250,49 @@ def _parse_csv(conteudo, estado):
         CAMPOS_FLOAT = {"preco_avaliacao", "preco_minimo"}
         contador = 0
 
-        for _, row in df.iterrows():
-            id_val = str(row.get(id_col, "")).strip()
-            # Ignorar linhas sem ID numerico
-            if not id_val or id_val.lower() in ("nan", "none", "") or not any(c.isdigit() for c in id_val):
+        for _row_idx, row in df.iterrows():
+            # try/except POR LINHA (achado #14): uma linha corrompida so pula
+            # ela mesma - antes uma excecao aqui descartava silenciosamente
+            # todas as linhas seguintes do estado (o try/except externo cobria
+            # o loop inteiro), reduzindo artificialmente ids_csv e podendo
+            # marcar imoveis reais como suspeito_encerrado.
+            try:
+                id_val = str(row.get(id_col, "")).strip()
+                # Ignorar linhas sem ID numerico
+                if not id_val or id_val.lower() in ("nan", "none", "") or not any(c.isdigit() for c in id_val):
+                    continue
+                imovel = {"numero_imovel": id_val, "uf": estado, "status": "Disponivel"}
+                for campo, col in col_map.items():
+                    if col is None or campo == "numero_imovel":
+                        continue
+                    val = str(row.get(col, "")).strip()
+                    if not val or val.lower() in ("nan", "none", ""):
+                        continue
+                    if campo in CAMPOS_FLOAT:
+                        val_clean = val.replace("R$", "").replace(".", "").replace(",", ".").strip()
+                        try:
+                            imovel[campo] = float(val_clean)
+                        except ValueError:
+                            pass
+                    else:
+                        imovel[campo] = val
+                # --- Parser CSV: tipo_real, area, financiamento ---
+                desc_csv = imovel.get("descricao") or ""
+                csv_parsed = parse_descricao_csv(desc_csv)
+                if csv_parsed.get("tipo_real"):
+                    imovel["tipo_real"] = csv_parsed["tipo_real"]
+                if csv_parsed.get("area"):
+                    imovel["area"] = csv_parsed["area"]
+                # Financiamento da coluna booleana do CSV (mais confiavel)
+                fin_raw = str(row.get(col_map.get("financiamento_csv") or "", "") or "").strip()
+                fin_bool = parse_financiamento_csv(fin_raw)
+                if fin_bool is not None:
+                    imovel["aceita_financiamento"] = fin_bool
+                imoveis.append(imovel)
+                contador += 1
+            except Exception as _row_e:
+                logger.warning(f"etapa1: {estado}: linha {_row_idx} ignorada: {_row_e}")
                 continue
-            imovel = {"numero_imovel": id_val, "uf": estado, "status": "Disponivel"}
-            for campo, col in col_map.items():
-                if col is None or campo == "numero_imovel":
-                    continue
-                val = str(row.get(col, "")).strip()
-                if not val or val.lower() in ("nan", "none", ""):
-                    continue
-                if campo in CAMPOS_FLOAT:
-                    val_clean = val.replace("R$", "").replace(".", "").replace(",", ".").strip()
-                    try:
-                        imovel[campo] = float(val_clean)
-                    except ValueError:
-                        pass
-                else:
-                    imovel[campo] = val
-            # --- Parser CSV: tipo_real, area, financiamento ---
-            desc_csv = imovel.get("descricao") or ""
-            csv_parsed = parse_descricao_csv(desc_csv)
-            if csv_parsed.get("tipo_real"):
-                imovel["tipo_real"] = csv_parsed["tipo_real"]
-            if csv_parsed.get("area"):
-                imovel["area"] = csv_parsed["area"]
-            # Financiamento da coluna booleana do CSV (mais confiavel)
-            fin_raw = str(row.get(col_map.get("financiamento_csv") or "", "") or "").strip()
-            fin_bool = parse_financiamento_csv(fin_raw)
-            if fin_bool is not None:
-                imovel["aceita_financiamento"] = fin_bool
-            imoveis.append(imovel)
-            contador += 1
 
         logger.info(f"etapa1: CSV {estado}: {contador} imoveis parseados de {len(df)} linhas")
     except Exception as e:
