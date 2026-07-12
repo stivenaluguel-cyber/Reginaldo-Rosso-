@@ -388,6 +388,7 @@ const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComp
 <script>
   const BRL = v => v==null ? "—" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
   const norm = s => (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   const PER_PAGE = 24;
 
   let ALL=[], view=[], shown=0;
@@ -653,9 +654,9 @@ if(isNovo(i)) return '<span class="bflag">NOVO</span>';
 return "";
 }
 function labelTipo(i){
-      if(i && i.tipo_real && String(i.tipo_real).trim()) return String(i.tipo_real).trim().toUpperCase();
-      if(i && i.tipo && String(i.tipo).trim() && !/^im[oó]vel$/i.test(String(i.tipo).trim())) return String(i.tipo).trim().toUpperCase();
-      if(i && i.modalidade && String(i.modalidade).trim()) return String(i.modalidade).trim().toUpperCase();
+      if(i && i.tipo_real && String(i.tipo_real).trim()) return esc(String(i.tipo_real).trim().toUpperCase());
+      if(i && i.tipo && String(i.tipo).trim() && !/^im[oó]vel$/i.test(String(i.tipo).trim())) return esc(String(i.tipo).trim().toUpperCase());
+      if(i && i.modalidade && String(i.modalidade).trim()) return esc(String(i.modalidade).trim().toUpperCase());
       return "IMÓVEL";
     }
     function specsHTML(i){const a=specsDe(i);if(!a.length)return "";return a.map(([k,t])=>`<span>${SPEC_IC[k]||""}${t}</span>`).join("");}
@@ -673,7 +674,7 @@ function labelTipo(i){
         ${img}
         <div class="grad"></div>
         <div class="badges">${urgenciaHTML(i)}
-          <span class="uf">${i.uf}</span>
+          <span class="uf">${esc(i.uf)}</span>
 ${badgeFlagHTML(i)}
           ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
           ${i.financiamento===true?'<span class="fin-badge">🏦 Financia</span>':""}
@@ -682,8 +683,8 @@ ${badgeFlagHTML(i)}
           <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.4 8.6 1.7 5 5 5c2 0 3.2 1.2 4 2.3C9.8 6.2 11 5 13 5c3.3 0 4.6 3.6 3 6.8C18.5 16.4 12 21 12 21z"/></svg>
         </button>
         <div class="cinfo">
-          <div class="ccity">${i.cidade||""}</div>
-          ${i.bairro?`<div class="cbairro">${i.bairro}</div>`:""}
+          <div class="ccity">${esc(i.cidade)}</div>
+          ${i.bairro?`<div class="cbairro">${esc(i.bairro)}</div>`:""}
         </div>
         <div class="cbot">
           <div class="ctype">${labelTipo(i)}</div>
@@ -721,7 +722,7 @@ ${badgeFlagHTML(i)}
     if(k.includes("1")&&(k.includes("praca")||k.includes("leilao"))) return "1ª Praça (Leilão)";
     if(k.includes("online")) return "Venda Online";
     if(k.includes("leilao")) return "Leilão (SFI)";
-    return m;
+    return esc(m);
   }
   function aposRotulo(desc,rotulo,fins){
     if(!desc) return ""; const i=desc.search(new RegExp(rotulo+"\\s*:","i")); if(i<0) return "";
@@ -746,8 +747,8 @@ ${badgeFlagHTML(i)}
       `<div>Desconto<b>${i.desconto?Math.round(i.desconto)+"%":"—"}</b></div>`,
       `<div>Modalidade<b style="font-size:.9rem">${modalidadeLabel(i.modalidade)}</b></div>`,
     ];
-    if(i.matricula) kv.push(`<div>Matrícula<b>${i.matricula}</b></div>`);
-    if(i.comarca) kv.push(`<div>Comarca<b style="font-size:.9rem">${i.comarca}</b></div>`);
+    if(i.matricula) kv.push(`<div>Matrícula<b>${esc(i.matricula)}</b></div>`);
+    if(i.comarca) kv.push(`<div>Comarca<b style="font-size:.9rem">${esc(i.comarca)}</b></div>`);
     if(i.leilao1) kv.push(`<div>1ª Praça<b style="font-size:.95rem">${BRL(i.leilao1)}</b></div>`);
     if(i.leilao2) kv.push(`<div>2ª Praça<b style="font-size:.95rem">${BRL(i.leilao2)}</b></div>`);
     [["Financiamento",i.financiamento],["Usa FGTS",i.fgts],["Parcelamento",i.parcelamento]].forEach(([rot,val])=>{const s=simNao(val);if(s)kv.push(`<div>${rot}<b>${s}</b></div>`);});
@@ -762,14 +763,14 @@ ${badgeFlagHTML(i)}
         <button class="sheet__x" id="mx" aria-label="Fechar">×</button>
       </div>
       <div class="sheet__body">
-        <span class="ctype" style="color:var(--accent);font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase">${i.tipo||"Imóvel"} · ${i.uf}</span>
-        <h2>${i.cidade}${i.bairro?" · "+i.bairro:""}</h2>
-        <div class="sheet__addr">${i.endereco||""}</div>
+        <span class="ctype" style="color:var(--accent);font-weight:800;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase">${i.tipo?esc(i.tipo):"Imóvel"} · ${esc(i.uf)}</span>
+        <h2>${esc(i.cidade)}${i.bairro?" · "+esc(i.bairro):""}</h2>
+        <div class="sheet__addr">${esc(i.endereco)}</div>
         <div class="kv">${kv.join("")}</div>
-        ${nomeC?`<div class="binfo"><b>Condomínio:</b> ${nomeC}</div>`:""}
-        ${cond?`<div class="binfo"><b>Despesas de condomínio:</b> ${cond}</div>`:""}
-        ${trib?`<div class="binfo"><b>Tributos (IPTU):</b> ${trib}</div>`:""}
-        ${i.descricao?`<div class="sheet__desc"><b style="color:var(--ink)">Descrição:</b> ${i.descricao}</div>`:""}
+        ${nomeC?`<div class="binfo"><b>Condomínio:</b> ${esc(nomeC)}</div>`:""}
+        ${cond?`<div class="binfo"><b>Despesas de condomínio:</b> ${esc(cond)}</div>`:""}
+        ${trib?`<div class="binfo"><b>Tributos (IPTU):</b> ${esc(trib)}</div>`:""}
+        ${i.descricao?`<div class="sheet__desc"><b style="color:var(--ink)">Descrição:</b> ${esc(i.descricao)}</div>`:""}
         <div class="sheet__cta">
           <a class="btn btn--wa" href="${wa}" target="_blank" rel="noopener">📲 Tenho interesse — falar no WhatsApp</a>
           <a class="btn btn--ghost" href="${i.link||(BASE_CAIXA+i.id)}" target="_blank" rel="noopener">📄 Ver ficha oficial na Caixa</a>

@@ -236,6 +236,7 @@ Dados obtidos da base pública da CAIXA Econômica Federal, atualizados diariame
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 document.getElementById('burger').addEventListener('click',function(){document.getElementById('mobile').classList.toggle('open');});
 document.querySelectorAll('#mobile a').forEach(function(a){a.addEventListener('click',function(){document.getElementById('mobile').classList.remove('open');});});
 
@@ -352,8 +353,9 @@ function addMarcador(p){
 if(!MAP) return;
 const m=L.circleMarker([p.lat,p.lng],{radius:raio(p.n),color:"#1f324c",weight:2,fillColor:"#c6a052",fillOpacity:.85});
 const cidade=p.cidade.charAt(0)+p.cidade.slice(1).toLowerCase();
+const cidadeEsc=esc(cidade);
 const link="imoveis.html#cidade="+encodeURIComponent(p.cidade);
-m.bindPopup('<div class="pop"><b>'+cidade+' · '+p.uf+'</b><br>'+p.n+(p.n===1?' imóvel':' imóveis')+' disponível'+(p.n===1?'':'eis')+' com os filtros atuais<br><a href="'+link+'">Ver os '+p.n+' imóveis de '+cidade+'</a></div>');
+m.bindPopup('<div class="pop"><b>'+cidadeEsc+' · '+esc(p.uf)+'</b><br>'+p.n+(p.n===1?' imóvel':' imóveis')+' disponível'+(p.n===1?'':'eis')+' com os filtros atuais<br><a href="'+link+'">Ver os '+p.n+' imóveis de '+cidadeEsc+'</a></div>');
 if(p.n>=8) m.bindTooltip(String(p.n),{permanent:true,direction:"center",className:"tip"});
 m.addTo(LAYER);
 }
