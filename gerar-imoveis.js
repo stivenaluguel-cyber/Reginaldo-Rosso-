@@ -126,11 +126,33 @@ const n=parseFloat(t); return isNaN(n)?0:n; }
 function brl(n){ return "R$ "+Math.round(n).toLocaleString("pt-BR"); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function cap(s){ s=String(s||"").toLowerCase(); const _part=new Set(["do","da","de","dos","das","e","em","no","na","nos","nas"]); return s.replace(/(^|[\s\-\/])(\w+)/g,(m,a,b)=>a+(_part.has(b)&&a?b:b.charAt(0).toUpperCase()+b.slice(1))); }
-function tipoDe(desc){ const d=(desc||"").toLowerCase();
-if(/apartamento/.test(d))return "Apartamento"; if(/sobrado/.test(d))return "Sobrado";
-if(/casa/.test(d))return "Casa"; if(/terreno|lote|gleba/.test(d))return "Terreno";
-if(/loja|sala comercial|comercial|predio|galpao/.test(d))return "Imóvel comercial";
-if(/rural|chacara|chacara|sitio|sitio|fazenda/.test(d))return "Imóvel rural"; return "Imóvel"; }
+// Classificador de tipo unico, usado tanto por tipoDe() (campo `tipo`, CSV-only
+// e fallback de imovelParaJson) quanto por parseTipoAreaFromDesc() (campo
+// `tipo_real`). Antes eram duas listas de palavras-chave divergentes -
+// consolidado aqui (achado #9 da auditoria) para as duas nunca mais discordarem
+// sobre o mesmo texto de descricao. Taxonomia espelha parser_caixa.py::_TIPOS_CSV
+// (Python), que e a fonte primaria quando o banco esta disponivel.
+const _TIPOS_DESC = [
+['apartamento','Apartamento'],['kitinete','Kitinete'],['cobertura','Cobertura'],
+['sobrado','Sobrado'],['casa','Casa'],['terreno','Terreno'],['lote','Terreno'],
+['gleba','Gleba'],['galpao','Galpao'],['predio','Predio'],['loja','Loja'],
+['sala','Sala'],['imovel comercial','Imovel Comercial'],['comercial','Imovel Comercial'],
+['rural','Imovel Rural'],['chacara','Chacara'],['sitio','Sitio'],['fazenda','Fazenda'],
+];
+function _normDesc(t) {
+return String(t || '').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+}
+function classificarTipoDesc(desc) {
+if (!desc || !String(desc).trim()) return null;
+const t = String(desc).trim();
+const primeira = (t.includes(',') ? t.split(',')[0] : t);
+const pn = _normDesc(primeira);
+for (const [kw, label] of _TIPOS_DESC) { if (pn.includes(kw)) return label; }
+const tn0 = _normDesc(t);
+for (const [kw, label] of _TIPOS_DESC) { if (tn0.includes(kw)) return label; }
+return null;
+}
+function tipoDe(desc){ return classificarTipoDesc(desc) || "Imovel"; }
 function specs(desc){ const d=desc||""; const out=[];
 let m=d.match(/([\d.,]+)\s*de [aa]rea privativa/i)||d.match(/([\d.,]+)\s*de [aa]rea total/i);
 if(m){const a=Math.round(num(m[1])); if(a>0)out.push(a+" m2");}
@@ -1297,25 +1319,13 @@ sm += "</urlset>\n";
 fs.writeFileSync(path.join(__dirname,"sitemap.xml"), sm);
 
 // === Gera JSONs consumidos por imoveis.html ===
-// Fallback: extrai tipo_real e area da descricao CSV quando o banco (_det) nao tem
-const _TIPOS_DESC = [
-['apartamento','Apartamento'],['kitinete','Kitinete'],['cobertura','Cobertura'],
-['sobrado','Sobrado'],['casa','Casa'],['terreno','Terreno'],['lote','Terreno'],
-['gleba','Gleba'],['galpao','Galpao'],['predio','Predio'],['loja','Loja'],
-['sala','Sala'],['imovel comercial','Imovel Comercial'],['comercial','Imovel Comercial'],
-['rural','Imovel Rural'],['chacara','Chacara'],['sitio','Sitio'],['fazenda','Fazenda'],
-];
-function _normDesc(t) {
-return String(t || '').trim().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-}
+// Fallback: extrai tipo_real e area da descricao CSV quando o banco (_det) nao tem.
+// Classificacao de tipo agora vem de classificarTipoDesc() (definida no topo do
+// arquivo, junto de tipoDe()) - ver achado #9 da auditoria.
 function parseTipoAreaFromDesc(desc) {
-const out = { tipo_real: null, area: null };
+const out = { tipo_real: classificarTipoDesc(desc), area: null };
 if (!desc || !String(desc).trim()) return out;
 const t = String(desc).trim();
-const primeira = (t.includes(',') ? t.split(',')[0] : t);
-const pn = _normDesc(primeira);
-for (const [kw, label] of _TIPOS_DESC) { if (pn.includes(kw)) { out.tipo_real = label; break; } }
-if (!out.tipo_real) { const tn0 = _normDesc(t); for (const [kw, label] of _TIPOS_DESC) { if (tn0.includes(kw)) { out.tipo_real = label; break; } } }
 const tn = _normDesc(t);
 for (const lab of ['privativa', 'total', 'terreno']) {
 const re = new RegExp('([0-9]+[.,]?[0-9]*)\\s+de\\s+area\\s+(?:do\\s+|da\\s+)?' + lab);
