@@ -174,6 +174,23 @@ return /exclusivamente\s+a\s+vista/.test(t)
 || /pagamento\s+(exclusivamente\s+)?a\s+vista/.test(t);
 }
 
+// Deteccao de colunas do CSV da Caixa por palavra-chave (achado #27 da
+// auditoria). Este e o UNICO parser de CSV Caixa ativo em producao neste
+// repo hoje - imoveis.html tinha uma copia quase identica (parseCaixaCSV),
+// mas o caminho que a chamava (carregarCSV) ja foi removido de la ("C2:
+// carregarCSV removida (fallback CSV eliminado)"), deixando so a funcao
+// morta pra tras; nao referenciada aqui de proposito, ver relatorio da
+// auditoria para a recomendacao de remocao.
+// scraper/etapa1_csv.py (Python, find_col_by_kws) faz a MESMA deteccao de
+// forma independente, sem compartilhar codigo (Python/Node nao tem como
+// importar um do outro) - lista de palavras-chave la e equivalente a esta:
+//   uf: uf, estado, sg_uf | cidade: cidade, munic | bairro: bairro
+//   endereco: endereco, logradouro, rua, end
+//   preco: preco, pre, lance, minimo, venda | avaliacao: avalia
+//   modalidade: modalidade, modal | descricao: descricao, descri, tipo
+//   link: link, url, acesso | financiamento: financiamento, financ
+// Se o formato do CSV da Caixa mudar, as DUAS listas (aqui e em
+// etapa1_csv.py::find_col_by_kws) precisam ser atualizadas manualmente.
 function key(s){ return String(s==null?"":s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase(); }
 function parse(file, uf){
 if(!fs.existsSync(file)) return [];
