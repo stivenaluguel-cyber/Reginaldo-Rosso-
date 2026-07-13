@@ -123,7 +123,10 @@ return t.slice(0, 1500);
 function num(s){ if(s==null)return 0; let t=String(s).replace(/[^\d.,-]/g,""); if(!t)return 0;
 const lc=Math.max(t.lastIndexOf(","),t.lastIndexOf(".")); if(lc>=0){const dec=t.slice(lc+1); if(dec.length<=2){t=t.slice(0,lc).replace(/[.,]/g,"")+"."+dec;}else{t=t.replace(/[.,]/g,"");}} else t=t.replace(/[.,]/g,"");
 const n=parseFloat(t); return isNaN(n)?0:n; }
-function brl(n){ return "R$ "+Math.round(n).toLocaleString("pt-BR"); }
+// Preco/avaliacao ausente ou zerado no CSV da Caixa (dado de origem, nao
+// um valor real de venda) nunca deve renderizar como "R$ 0" em title/meta
+// description/OG/CTA - achado da auditoria de SEO (32 imoveis afetados).
+function brl(n){ if(n==null || isNaN(n) || n<=0) return "Consulte o valor"; return "R$ "+Math.round(n).toLocaleString("pt-BR"); }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function cap(s){ s=String(s||"").toLowerCase(); const _part=new Set(["do","da","de","dos","das","e","em","no","na","nos","nas"]); return s.replace(/(^|[\s\-\/])(\w+)/g,(m,a,b)=>a+(_part.has(b)&&a?b:b.charAt(0).toUpperCase()+b.slice(1))); }
 // Classificador de tipo unico, usado tanto por tipoDe() (campo `tipo`, CSV-only
