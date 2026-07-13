@@ -355,7 +355,7 @@ const fichaCaixa = im.link || ("https://venda-imoveis.caixa.gov.br/sistema/detal
 // Similares: ate 3 imoveis ativos da mesma cidade, fallback mesma UF
 const similares = todos
 .filter(s => (s.status||"Disponivel")==="Disponivel" && s.id !== im.id && (s.cidade===im.cidade || s.uf===im.uf))
-.sort((a,b) => (a.cidade===im.cidade?-1:0)-(b.cidade===b.cidade?-1:0))
+.sort((a,b) => (a.cidade===im.cidade?-1:0)-(b.cidade===im.cidade?-1:0))
 .slice(0,3);
 
 const similHTML = similares.length ? `
