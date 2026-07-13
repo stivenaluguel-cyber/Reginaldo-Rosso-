@@ -219,7 +219,33 @@ gtag('config','AW-872430371');
 .fone-menu a{display:flex;align-items:center;gap:8px;padding:9px 16px;color:var(--gold-soft);font-size:.84rem;font-weight:600;transition:.15s;white-space:nowrap}
 .fone-menu a:hover{background:rgba(198,160,82,.12);color:#fff}
 .fone-menu svg{width:13px;height:13px;fill:var(--gold);flex:0 0 13px}
+/* Mesmo problema do header de index.html (achado item 1): nav.menu (8
+   itens) + .fones nao cabiam entre 1081px e ~1470px sem cortar/gerar
+   overflow. Compacta gaps/fonte nessa faixa, mesmo padrao aplicado la. */
+@media(min-width:1081px) and (max-width:1470px){
+  .topbar{gap:10px}
+  .brand .logo{width:32px;height:32px;flex:0 0 32px}
+  .brand .bt small{display:none}
+  nav.menu{gap:6px;margin-left:0}
+  nav.menu a{font-size:.68rem;letter-spacing:.02em}
+  .fones{gap:4px}
+  .fone-btn{padding:3px 7px;font-size:.68rem}
+}
 @media(max-width:1080px){nav.menu,.fones{display:none}.burger{display:flex;margin-left:auto}}
+  /* .fbar de 9 colunas (1.5fr repeat(4,1fr) 1.5fr 1.5fr 1.5fr auto) cortava
+     rotulo/contador (principalmente "Ordenar por") em QUALQUER largura de
+     desktop - o container .wrap tem max-width:1240px fixo (--maxw), entao
+     o grid nunca ganha mais espaco por mais larga que a janela fique. Sem
+     limite superior de proposito: reorganiza em grid de 4 colunas (mais
+     linhas, cada campo com largura legivel) a partir de 881px, sempre
+     (achado item 2). Logica de filtro/contagem em render()/aplicar() NAO
+     tocada - so CSS. */
+  @media(min-width:881px){
+    .fbar{grid-template-columns:repeat(4,1fr);gap:10px 12px}
+    .fbar .field:first-child{grid-column:1/-1}
+    .fbar .clearbtn{align-self:end}
+    .fbar .field select{padding-left:9px;padding-right:9px}
+  }
   @media(max-width:880px){
   .filters{position:static}
   .fbar{grid-template-columns:1fr 1fr;gap:8px}
