@@ -186,6 +186,18 @@
 .fone-menu a{display:flex;align-items:center;gap:8px;padding:9px 16px;color:var(--gold-soft);font-size:.84rem;font-weight:600;transition:.15s;white-space:nowrap}
 .fone-menu a:hover{background:rgba(198,160,82,.12);color:#fff}
 .fone-menu svg{width:13px;height:13px;fill:var(--gold);flex:0 0 13px}
+/* Menu/fones cabiam so acima de ~1550px (nowrap + gaps largos); entre 921px
+   e 1550px o header cabecalho ficava com overflow-x. Compacta gaps/fonte
+   nessa faixa em vez de mostrar o burger cedo demais (achado item 1). */
+@media(min-width:921px) and (max-width:1550px){
+    .topbar{gap:8px;padding:14px 12px}
+    .brand .logo{width:32px;height:32px;flex:0 0 32px}
+    .brand .bt small{display:none}
+    nav.menu{gap:5px;margin-left:0}
+    nav.menu a{font-size:.62rem;letter-spacing:0}
+    .fones{gap:3px}
+    .fone-btn{padding:3px 5px;font-size:.62rem}
+  }
 @media(max-width:920px){
     nav.menu,.fones{display:none}
     .burger{display:flex;margin-left:auto}
