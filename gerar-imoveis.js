@@ -1346,6 +1346,10 @@ const artigos = [
 "/indice-desagio-imoveis-caixa.html",
 "/leilao-caixa-vale-a-pena.html",
 "/quanto-tempo-desocupacao-imovel-caixa.html"
+,
+// lacuna real confirmada na auditoria de SEO (item 3a): nao havia
+// pagina "Sobre o corretor" dedicada.
+"/sobre-o-corretor.html"
 ];
 let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":(u==="/calculadora.html"?"0.7":"0.8"))+"</priority></url>\n";

@@ -12,6 +12,7 @@ O site mantém um portal próprio com centenas de imóveis da Caixa (leilão SFI
 - [Calculadora ROI](https://reginaldorosso.com.br/calculadora.html): simula retorno de investimento em imóveis de leilão
 - [Como funciona](https://reginaldorosso.com.br/como-funciona.html): o processo de arrematação passo a passo
 - [Índice de deságio](https://reginaldorosso.com.br/indice-desagio-imoveis-caixa.html): estatísticas reais e atualizadas de desconto dos imóveis Caixa em RS e SC
+- [Sobre o corretor](https://reginaldorosso.com.br/sobre-o-corretor.html): atuação, credenciamento CRECI e processo de trabalho de Reginaldo Rosso
 
 ## Guias do arrematante
 
