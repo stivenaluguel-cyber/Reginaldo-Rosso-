@@ -151,7 +151,7 @@
   .leadform{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:0 14px 40px rgba(31,50,76,.1);text-align:left}
   .lf-row{display:flex;gap:12px;margin-bottom:12px}
   .leadform input,.leadform select,.leadform textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-family:inherit;font-size:.95rem;color:var(--ink);background:#fff;outline:none}
-  .leadform input:focus,.leadform select:focus,.leadform textarea:focus{border-color:var(--gold)}
+  .leadform input:focus,.leadform select:focus,.leadform textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(198,160,82,.25)}
   .leadform textarea{margin-bottom:14px;resize:vertical;min-height:80px}
   .leadform .btn{width:100%;justify-content:center}
   .lf-msg{margin-top:14px;font-size:.92rem;font-weight:600;text-align:center;display:none}
@@ -508,14 +508,18 @@ gtag('config','AW-872430371');
       <p class="lf-or">ou deixe seu contato que eu retorno pra você</p>
       <form class="leadform" id="leadForm">
         <div class="lf-row">
-          <input name="nome" placeholder="Seu nome" required>
-          <input name="telefone" placeholder="WhatsApp / Telefone" required>
+          <label for="lfNome" class="sr-only">Seu nome</label>
+          <input id="lfNome" name="nome" placeholder="Seu nome" required autocomplete="name">
+          <label for="lfTelefone" class="sr-only">WhatsApp / Telefone</label>
+          <input id="lfTelefone" name="telefone" placeholder="WhatsApp / Telefone" required autocomplete="tel">
         </div>
         <div class="lf-row">
-          <input name="email" type="email" placeholder="Seu e-mail (opcional)">
+          <label for="lfEmail" class="sr-only">Seu e-mail (opcional)</label>
+          <input id="lfEmail" name="email" type="email" placeholder="Seu e-mail (opcional)" autocomplete="email">
           <label for="lfEstado" class="sr-only">Estado de interesse</label><select id="lfEstado" name="estado"><option value="">Estado de interesse</option><option>Rio Grande do Sul</option><option>Santa Catarina</option></select>
         </div>
-        <textarea name="mensagem" placeholder="Tem alguma cidade ou imóvel em mente? (opcional)" rows="3"></textarea>
+        <label for="lfMensagem" class="sr-only">Tem alguma cidade ou imóvel em mente? (opcional)</label>
+        <textarea id="lfMensagem" name="mensagem" placeholder="Tem alguma cidade ou imóvel em mente? (opcional)" rows="3"></textarea>
         <input type="hidden" name="access_key" value="efe281ee-c450-4faa-bfe0-dbb185f349ab">
         <input type="hidden" name="subject" value="Novo lead pelo site reginaldorosso.com.br">
         <input type="hidden" name="from_name" value="Site Reginaldo Rosso">

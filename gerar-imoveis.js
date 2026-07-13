@@ -845,7 +845,8 @@ return `<!doctype html>
 .alerta-form{display:flex;flex-direction:column;gap:.6rem}
 .alerta-form input[type=text],.alerta-form input[type=email]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#1e2b3f;outline:none;transition:border-color .2s}
 .alerta-input{min-height:44px;width:100%;box-sizing:border-box}
-.alerta-form input:focus{border-color:#c6a052}
+.alerta-form input:focus{border-color:#c6a052;box-shadow:0 0 0 3px rgba(198,160,82,.25)}
+.alerta-form .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .alerta-form label.check{display:flex;align-items:flex-start;gap:.4rem;font-size:.8rem;color:#4b5563;cursor:pointer;line-height:1.4}
 .alerta-form label.check input{margin-top:3px;flex-shrink:0;accent-color:#c6a052}
 .alerta-btn{background:#1e2b3f;color:#c6a052;border:none;border-radius:7px;padding:.65rem 1rem;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;font-family:inherit}
@@ -912,9 +913,9 @@ hasFim
 ? '<p class="alerta-sub">Receba lembretes por e-mail 24h, 4h e 1h antes do encerramento.</p>'
 : '<div class="alerta-sem-data">\u26A0\uFE0F Ainda n\u00E3o temos a data de encerramento deste leil\u00E3o. Deixe seu e-mail e avisamos assim que sair.</div>',
 '<form class="alerta-form" id="form-' + tid + '" novalidate>',
-'<input class="alerta-input" type="text" name="nome" placeholder="Seu nome" required autocomplete="given-name">',
-'<input class="alerta-input" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">',
-'<input class="alerta-input" type="tel" name="telefone" placeholder="WhatsApp (11) 99999-9999" required autocomplete="tel">',
+'<label class="sr-only" for="' + tid + '-nome">Seu nome</label><input id="' + tid + '-nome" class="alerta-input" type="text" name="nome" placeholder="Seu nome" required autocomplete="name">',
+'<label class="sr-only" for="' + tid + '-email">Seu e-mail</label><input id="' + tid + '-email" class="alerta-input" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">',
+'<label class="sr-only" for="' + tid + '-telefone">WhatsApp</label><input id="' + tid + '-telefone" class="alerta-input" type="tel" name="telefone" placeholder="WhatsApp (11) 99999-9999" required autocomplete="tel">',
 '<label class="alerta-check"><input type="checkbox" required> Aceito receber e-mails sobre este leil\u00E3o. Posso cancelar quando quiser. <a href="../privacidade.html" style="color:inherit;text-decoration:underline">Pol\u00EDtica de Privacidade</a>.</label>',
 '<button class="alerta-btn" type="submit">Ativar alertas</button>',
 '</form>',
