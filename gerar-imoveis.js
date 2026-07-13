@@ -915,7 +915,7 @@ hasFim
 '<input class="alerta-input" type="text" name="nome" placeholder="Seu nome" required autocomplete="given-name">',
 '<input class="alerta-input" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">',
 '<input class="alerta-input" type="tel" name="telefone" placeholder="WhatsApp (11) 99999-9999" required autocomplete="tel">',
-'<label class="alerta-check"><input type="checkbox" required> Aceito receber e-mails sobre este leil\u00E3o. Posso cancelar quando quiser.</label>',
+'<label class="alerta-check"><input type="checkbox" required> Aceito receber e-mails sobre este leil\u00E3o. Posso cancelar quando quiser. <a href="../privacidade.html" style="color:inherit;text-decoration:underline">Pol\u00EDtica de Privacidade</a>.</label>',
 '<button class="alerta-btn" type="submit">Ativar alertas</button>',
 '</form>',
 '<p class="alerta-ok" id="ok-' + tid + '" style="display:none"></p>',
