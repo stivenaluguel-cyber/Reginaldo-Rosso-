@@ -246,15 +246,23 @@ def _parse_debito(secao: str) -> str | None:
     s = secao  # ja normalizado (sem acentos, lower)
 
     # "caixa paga acima de 10%" / "caixa paga valores acima"
-    if ("caixa" in s or "caixa paga") and (
+    # bug corrigido: o 2o operando do or era a string literal "caixa paga"
+    # (sempre truthy, faltava "in s"), entao a condicao virava so o
+    # segundo bloco (10%/limite/acima/...), classificando qualquer secao
+    # de ARREMATANTE que citasse um percentual/limite como "Caixa paga".
+    if "caixa paga" in s and (
         "10%" in s or "limite" in s or "acima" in s or "exceder" in s
         or "ate 10" in s or "ate o limite" in s
     ):
         return "Caixa paga acima de 10%"
 
     # "caixa paga integralmente" / "sob responsabilidade da caixa"
-    if ("caixa paga" in s or "integralmente" in s
-            or "responsabilidade da caixa" in s):
+    # bug corrigido: "integralmente" in s sozinho nao verificava de QUEM
+    # e a responsabilidade - "comprador paga integralmente" tambem batia
+    # aqui. Agora exige o mesmo padrao de deteccao de sujeito (presenca
+    # de "caixa") usado nas outras clausulas da funcao.
+    if ("caixa paga" in s or "responsabilidade da caixa" in s
+            or ("integralmente" in s and "caixa" in s)):
         return "Caixa Paga"
 
     # "arrematante paga" / "sob responsabilidade do comprador"

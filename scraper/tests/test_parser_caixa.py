@@ -9,8 +9,6 @@ Cobre:
     condominio a partir da secao "regras para pagamento das despesas" do
     texto de detalhe.
 """
-import pytest
-
 import parser_caixa
 
 
@@ -81,20 +79,11 @@ def test_parse_debito_caixa_paga_acima_de_10_por_cento():
     assert parser_caixa._parse_debito(secao) == "Caixa paga acima de 10%"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "achado novo (nao corrigido): _parse_debito linha 249 tem "
-        '`(\"caixa\" in s or \"caixa paga\")` - falta \"in s\" no segundo '
-        "operando, entao \"caixa paga\" (string literal nao-vazia) e sempre "
-        "truthy e a condicao colapsa para so checar 10%/limite/acima/exceder, "
-        "ignorando se o texto menciona 'caixa' de fato. Qualquer secao de "
-        "arrematante que cite um percentual/limite (exatamente o caso de "
-        "'paga ate 10%%') cai no branch errado e retorna "
-        "'Caixa paga acima de 10%%' em vez de 'Arrematante paga ate 10%%'. "
-        "Ver RELATORIO FINAL desta bateria de testes."
-    ),
-)
+# Regressao do bug HOTFIX (achado desta bateria de testes): _parse_debito
+# tinha `("caixa" in s or "caixa paga")` - faltava "in s" no segundo
+# operando, entao "caixa paga" (string literal nao-vazia) era sempre
+# truthy e a condicao colapsava para so checar 10%/limite/acima/exceder,
+# ignorando se o texto de fato mencionava "caixa". Fix: `"caixa paga" in s`.
 def test_parse_debito_arrematante_paga_ate_10_por_cento():
     secao = _norm("Condominio: o arrematante paga até 10% do valor, excedente por conta da Caixa")
     assert parser_caixa._parse_debito(secao) == "Arrematante paga ate 10%"
@@ -109,19 +98,12 @@ def test_parse_debito_secao_vazia_retorna_none():
     assert parser_caixa._parse_debito("") is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "achado novo (nao corrigido): _parse_debito linha 256 "
-        '(`\"caixa paga\" in s or \"integralmente\" in s or ...`) marca '
-        "'Caixa Paga' so por conter a palavra 'integralmente' em QUALQUER "
-        "lugar da secao, sem checar de quem e a responsabilidade. Uma "
-        "secao que diz explicitamente 'comprador paga integralmente' "
-        "ainda cai nesse branch (ele vem ANTES do branch de arrematante) "
-        "e retorna 'Caixa Paga' - o oposto do que o texto diz. Ver "
-        "RELATORIO FINAL desta bateria de testes."
-    ),
-)
+# Regressao do bug HOTFIX (achado desta bateria de testes): a clausula
+# `"integralmente" in s` sozinha nao checava de quem era a
+# responsabilidade - "comprador paga integralmente" caia neste branch (que
+# vem ANTES do branch de arrematante) e retornava "Caixa Paga", o oposto
+# do texto. Fix: exige tambem "caixa" in s (mesmo padrao de deteccao de
+# sujeito usado nas outras clausulas da funcao).
 def test_parse_debito_arrematante_paga_integralmente_nao_e_marcado_como_caixa():
     secao = _norm("Condominio: responsabilidade do comprador, que paga integralmente os debitos")
     assert parser_caixa._parse_debito(secao) == "Arrematante Paga"
