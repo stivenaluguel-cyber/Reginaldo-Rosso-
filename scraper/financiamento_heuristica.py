@@ -24,19 +24,32 @@ def _norm(t: str) -> str:
 
 
 def eh_financiavel(texto: str):
-    """Retorna True/False a partir do texto de detalhe/descricao, ou None se vazio."""
+    """Retorna True/False a partir do texto de detalhe/descricao, ou None se vazio.
+
+    Negacao e checada PRIMEIRO e decide sozinha (retorna False de
+    imediato se alguma bater), antes de qualquer checagem afirmativa.
+    Antes, a checagem afirmativa "aceita financiamento" in nt vinha
+    primeiro num or, e dava match como substring dentro da propria
+    negacao ("nao aceita financiamento" contem "aceita financiamento"),
+    classificando negacoes como financiavel=True. Ver achado da bateria
+    de testes (test_financiamento_heuristica.py).
+    """
     if not texto:
         return None
     nt = _norm(texto)
+    negado = (
+        "nao aceita financiamento" in nt
+        or "nao permite financiamento" in nt
+        or "vedado o financiamento" in nt
+        or "nao e permitido financiamento" in nt
+        or "exclusivamente a vista" in nt
+        or "somente recursos proprios" in nt
+    )
+    if negado:
+        return False
     aceita = (
-        "aceita financiamento" in nt or "financiamento habitacional" in nt or (
-            "financiamento" in nt
-            and "nao aceita financiamento" not in nt
-            and "nao permite financiamento" not in nt
-            and "vedado o financiamento" not in nt
-            and "nao e permitido financiamento" not in nt
-            and "exclusivamente a vista" not in nt
-            and "somente recursos proprios" not in nt
-        )
+        "aceita financiamento" in nt
+        or "financiamento habitacional" in nt
+        or "financiamento" in nt
     )
     return bool(aceita)

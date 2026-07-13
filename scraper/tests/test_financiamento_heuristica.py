@@ -13,8 +13,6 @@ Duas camadas de protecao:
   2. Mesmo texto -> mesmo resultado nos 3 pontos de entrada reais (como
      cada modulo de fato invoca a heuristica em producao).
 """
-import pytest
-
 import financiamento_heuristica
 import parser_caixa
 import etapa2_scraper
@@ -95,30 +93,16 @@ def test_os_3_consumidores_produzem_o_resultado_esperado():
 
 
 # ---------------------------------------------------------------------------
-# Achado NOVO (nao corrigido, so descoberto ao escrever este teste): o
-# proprio financiamento_heuristica.eh_financiavel - a fonte unica
-# supostamente ja corrigida nos achados #8/#10 - classifica "nao aceita
-# financiamento" como financiavel=True. Como os 3 consumidores importam
-# a MESMA funcao, o bug e identico e simultaneo nos 3 (nao e uma
-# divergencia ENTRE eles - e um erro de logica compartilhado).
+# Regressao do bug encontrado nesta bateria de testes (HOTFIX aplicado):
+# financiamento_heuristica.eh_financiavel tinha `"aceita financiamento" in
+# nt or ...` como PRIMEIRA clausula do or, antes de qualquer checagem de
+# negacao. Como a substring "aceita financiamento" esta literalmente
+# CONTIDA dentro de "nao aceita financiamento", essa clausula dava match e
+# bloqueava (via or de curto-circuito) a checagem de negacao que so
+# existia na 3a clausula. Fix: negacao agora e checada PRIMEIRO e decide
+# sozinha, antes de qualquer clausula afirmativa.
 # ---------------------------------------------------------------------------
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "achado novo (nao corrigido): financiamento_heuristica.eh_financiavel "
-        'tem `\"aceita financiamento\" in nt or ...` como PRIMEIRA clausula '
-        "do or, antes de qualquer checagem de negacao. Como a substring "
-        "\"aceita financiamento\" esta literalmente CONTIDA dentro de "
-        "\"nao aceita financiamento\", essa primeira clausula da match e "
-        "bloqueia (via or de curto-circuito) a checagem de negacao que so "
-        "existe na 3a clausula. Resultado: um texto que diz explicitamente "
-        "'nao aceita financiamento' - a frase EXATA que esta na lista de "
-        "exclusoes - ainda retorna True (financiavel) nos 3 consumidores, "
-        "pois todos compartilham esta mesma funcao. Ver RELATORIO FINAL "
-        "desta bateria de testes."
-    ),
-)
 def test_negacao_simples_nao_aceita_financiamento_e_classificada_como_falso():
     texto = "Este imovel nao aceita financiamento."
     assert financiamento_heuristica.eh_financiavel(texto) is False
