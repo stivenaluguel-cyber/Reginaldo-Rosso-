@@ -1350,6 +1350,10 @@ const artigos = [
 // lacuna real confirmada na auditoria de SEO (item 3a): nao havia
 // pagina "Sobre o corretor" dedicada.
 "/sobre-o-corretor.html"
+,
+// lacuna real confirmada na auditoria de SEO (item 3b): nao havia
+// conteudo dedicado a como analisar edital e matricula.
+"/como-analisar-edital-matricula-imovel-caixa.html"
 ];
 let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":(u==="/calculadora.html"?"0.7":"0.8"))+"</priority></url>\n";
