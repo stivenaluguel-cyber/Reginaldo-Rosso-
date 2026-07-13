@@ -519,6 +519,13 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
       upsert so roda para IDs novos, o CSV nunca reparava esses NULLs. Aqui
       reaplicamos os campos de localizacao do CSV quando o valor no banco
       estiver NULL/vazio (COALESCE preserva o que ja existe).
+    - preco_minimo, preco_avaliacao, modalidade: MESMO padrao de reparo
+      (achado da auditoria de SEO). Faltavam aqui - upsert so roda para
+      IDs novos, entao um preco/modalidade NULL na ingestao inicial (por
+      qualquer motivo pontual) nunca era reparado por reraspagens
+      seguintes, mesmo com o CSV trazendo o valor correto a cada ciclo.
+      Investigacao confirmou 100% dos casos com CSV atual disponivel:
+      valor sempre presente e parseavel no CSV, so nao chegava ao banco.
     """
     if not lista:
         return 0
@@ -540,6 +547,9 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         item.get("bairro"),
                         item.get("endereco"),
                         item.get("uf"),
+                        item.get("preco_minimo"),
+                        item.get("preco_avaliacao"),
+                        item.get("modalidade"),
                     ))
                 if not rows:
                     continue
@@ -554,8 +564,11 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         bairro = COALESCE(NULLIF(t.bairro, ''), v.bairro),
                         endereco = COALESCE(NULLIF(t.endereco, ''), v.endereco),
                         uf = COALESCE(NULLIF(t.uf, ''), v.uf),
+                        preco_minimo = COALESCE(NULLIF(t.preco_minimo, 0), v.preco_minimo),
+                        preco_avaliacao = COALESCE(NULLIF(t.preco_avaliacao, 0), v.preco_avaliacao),
+                        modalidade = COALESCE(NULLIF(t.modalidade, ''), v.modalidade),
                         updated_at = NOW()
-                    FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao, cidade, bairro, endereco, uf)
+                    FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao, cidade, bairro, endereco, uf, preco_minimo, preco_avaliacao, modalidade)
                     WHERE t.numero_imovel = v.numero_imovel
                     AND (t.tipo_real IS NULL OR t.area IS NULL
                          OR t.aceita_financiamento IS NULL
@@ -563,11 +576,14 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                          OR t.cidade IS NULL OR t.cidade = ''
                          OR t.bairro IS NULL OR t.bairro = ''
                          OR t.endereco IS NULL OR t.endereco = ''
-                         OR t.uf IS NULL OR t.uf = '')
+                         OR t.uf IS NULL OR t.uf = ''
+                         OR t.preco_minimo IS NULL OR t.preco_minimo <= 0
+                         OR t.preco_avaliacao IS NULL OR t.preco_avaliacao <= 0
+                         OR t.modalidade IS NULL OR t.modalidade = '')
                 """
                 extras.execute_values(
                     cur, sql, rows,
-                    template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text, %s::varchar, %s::varchar, %s::text, %s::varchar)",
+                    template="(%s, %s::varchar, %s::numeric, %s::boolean, %s::text, %s::varchar, %s::varchar, %s::text, %s::varchar, %s::numeric, %s::numeric, %s::varchar)",
                 )
                 total += cur.rowcount
         conn.commit()
