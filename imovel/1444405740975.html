@@ -37,7 +37,8 @@
 .alerta-form{display:flex;flex-direction:column;gap:.6rem}
 .alerta-form input[type=text],.alerta-form input[type=email]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#1e2b3f;outline:none;transition:border-color .2s}
 .alerta-input{min-height:44px;width:100%;box-sizing:border-box}
-.alerta-form input:focus{border-color:#c6a052}
+.alerta-form input:focus{border-color:#c6a052;box-shadow:0 0 0 3px rgba(198,160,82,.25)}
+.alerta-form .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .alerta-form label.check{display:flex;align-items:flex-start;gap:.4rem;font-size:.8rem;color:#4b5563;cursor:pointer;line-height:1.4}
 .alerta-form label.check input{margin-top:3px;flex-shrink:0;accent-color:#c6a052}
 .alerta-btn{background:#1e2b3f;color:#c6a052;border:none;border-radius:7px;padding:.65rem 1rem;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;font-family:inherit}
@@ -104,10 +105,10 @@
 <h3 class="alerta-titulo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> Quer ser avisado sobre este leilão?</h3>
 <p class="alerta-sub">Receba lembretes por e-mail 24h, 4h e 1h antes do encerramento.</p>
 <form class="alerta-form" id="form-alerta-1444405740975" novalidate>
-<input class="alerta-input" type="text" name="nome" placeholder="Seu nome" required autocomplete="given-name">
-<input class="alerta-input" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">
-<input class="alerta-input" type="tel" name="telefone" placeholder="WhatsApp (11) 99999-9999" required autocomplete="tel">
-<label class="alerta-check"><input type="checkbox" required> Aceito receber e-mails sobre este leilão. Posso cancelar quando quiser.</label>
+<label class="sr-only" for="alerta-1444405740975-nome">Seu nome</label><input id="alerta-1444405740975-nome" class="alerta-input" type="text" name="nome" placeholder="Seu nome" required autocomplete="name">
+<label class="sr-only" for="alerta-1444405740975-email">Seu e-mail</label><input id="alerta-1444405740975-email" class="alerta-input" type="email" name="email" placeholder="Seu e-mail" required autocomplete="email">
+<label class="sr-only" for="alerta-1444405740975-telefone">WhatsApp</label><input id="alerta-1444405740975-telefone" class="alerta-input" type="tel" name="telefone" placeholder="WhatsApp (11) 99999-9999" required autocomplete="tel">
+<label class="alerta-check"><input type="checkbox" required> Aceito receber e-mails sobre este leilão. Posso cancelar quando quiser. <a href="../privacidade.html" style="color:inherit;text-decoration:underline">Política de Privacidade</a>.</label>
 <button class="alerta-btn" type="submit">Ativar alertas</button>
 </form>
 <p class="alerta-ok" id="ok-alerta-1444405740975" style="display:none"></p>
@@ -198,7 +199,7 @@ er.textContent=m;er.style.display="block";
 Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
 <a class="btn roi-btn" href="../calculadora.html?tipoLeilao=extrajudicial&valorLance=520000&valorAvaliacao=520000&comissaoLeiloeiro=5" style="margin-top:10px;display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI</a>
 </div>
-<p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 13/07/2026, 18:21.</p>
+<p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em 13/07/2026, 18:48.</p>
 </div>
 
 <div class="regras"><h2>Débitos e responsabilidades</h2><div class="regra"><b>Tributos (IPTU):</b> Arrematante paga</div><div class="regra"><b>Condominio:</b> Arrematante paga</div></div>
