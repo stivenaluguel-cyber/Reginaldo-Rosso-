@@ -1335,6 +1335,17 @@ const artigos = [
 "/como-usar-fgts-imovel-caixa.html"
 ,
 "/documentos-para-comprar-imovel-caixa.html"
+,
+// achado da auditoria de SEO: paginas publicadas ha dias mas nunca
+// registradas aqui, entao nunca apareceram no sitemap.xml auto-gerado.
+"/corretor-credenciado-caixa-joinville.html",
+"/corretor-credenciado-caixa-pelotas.html",
+"/custos-para-arrematar-imovel-caixa.html",
+"/diferenca-primeiro-segundo-leilao-caixa.html",
+"/financiamento-imovel-leilao-caixa.html",
+"/indice-desagio-imoveis-caixa.html",
+"/leilao-caixa-vale-a-pena.html",
+"/quanto-tempo-desocupacao-imovel-caixa.html"
 ];
 let sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
 for(const u of fixas) sm += " <url><loc>"+BASE+u+"</loc><lastmod>"+hoje+"</lastmod><changefreq>"+(u==="/imoveis.html"?"daily":"weekly")+"</changefreq><priority>"+(u==="/"?"1.0":(u==="/calculadora.html"?"0.7":"0.8"))+"</priority></url>\n";
