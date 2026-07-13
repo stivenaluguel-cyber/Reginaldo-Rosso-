@@ -1238,6 +1238,11 @@ try { await cli.end(); } catch(_){}
 }
 
 // ===== execucao =====
+// Guard require.main: permite `require("./gerar-imoveis.js")` a partir de
+// testes (tests/gerar-imoveis.test.js) sem disparar a geracao completa do
+// site como efeito colateral do import. Comportamento de `node
+// gerar-imoveis.js` (uso normal em producao/CI) e identico a antes.
+if (require.main === module) {
 (async () => {
 let imoveis = await carregarImoveisDoBanco();
 let comDetalhe = 0;
@@ -1434,3 +1439,8 @@ console.log("Hub gerado: /leilao-caixa/" + hub.uf.toLowerCase() + "/" + hub.slug
 
 console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" encerradas, "+comDetalhe+" com ficha) e sitemap com "+(nDisp+fixas.length)+" URLs.");
 })();
+}
+
+// Exports para testes (tests/gerar-imoveis.test.js) - nao afeta a execucao
+// via `node gerar-imoveis.js` (guardada por require.main acima).
+module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo };
