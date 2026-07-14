@@ -16,7 +16,7 @@ outra) para nao perder cobertura de nenhum dos dois formatos ja vistos no
 texto real da Caixa.
 """
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 HORA_PADRAO = "18:00"  # padrao da venda online da Caixa (documentado)
 
@@ -26,6 +26,48 @@ _ROTULOS = [
     r"(?:1[oº]?\s*leil[aã]o|primeiro\s+leil[aã]o|"
     r"2[oº]?\s*leil[aã]o|segundo\s+leil[aã]o|venda\s+online)[^\n]*?-\s*",
 ]
+
+# Paginas de Venda Online NAO tem data absoluta em lugar nenhum do texto -
+# so o widget de JS ao vivo da propria Caixa ("Tempo restante: X DIAS Y
+# HORAS Z MINUTOS W SEGUNDOS"), confirmado via 27 imoveis reais raspados
+# (0/27 tinham data absoluta parseavel por parse_data_fim, todos com esse
+# mesmo widget). _RE_TEMPO_RESTANTE converte esse contador relativo numa
+# data_fim absoluta ANCORADA no instante em que o texto foi lido (ver
+# parse_tempo_restante) - o contador em si envelhece a cada segundo, mas a
+# data absoluta calculada e fixa.
+_RE_TEMPO_RESTANTE = re.compile(
+    r"tempo\s+restante[:\s]*"
+    r"(?:(\d+)\s*dias?)?\s*"
+    r"(?:(\d+)\s*horas?)?\s*"
+    r"(?:(\d+)\s*minutos?)?\s*"
+    r"(?:(\d+)\s*segundos?)?",
+    re.IGNORECASE,
+)
+
+
+def parse_tempo_restante(texto: str, capturado_em: datetime):
+    """Converte o widget relativo "Tempo restante: X DIAS Y HORAS Z
+    MINUTOS W SEGUNDOS" (Venda Online) numa data_fim absoluta 'dd/mm/yyyy
+    HH:MM', ancorada em capturado_em (deve ser o instante em que `texto`
+    foi lido da pagina - tz-aware, America/Sao_Paulo). Segmentos sao
+    todos opcionais (regex defensiva) - se nao casar nenhum numero,
+    retorna None sem lancar excecao. Arredonda pro minuto mais proximo
+    (segundos de precisao nao importam pro countdown de exibicao).
+    """
+    if not texto or capturado_em is None:
+        return None
+    nt = re.sub(r"[\s\xa0]+", " ", texto)
+    m = _RE_TEMPO_RESTANTE.search(nt)
+    if not m or not any(m.groups()):
+        return None
+    dias, horas, minutos, segundos = (int(g) if g else 0 for g in m.groups())
+    if dias == 0 and horas == 0 and minutos == 0 and segundos == 0:
+        return None
+    alvo = capturado_em + timedelta(days=dias, hours=horas, minutes=minutos, seconds=segundos)
+    if alvo.second >= 30:
+        alvo += timedelta(minutes=1)
+    alvo = alvo.replace(second=0, microsecond=0)
+    return alvo.strftime("%d/%m/%Y %H:%M")
 
 
 def _com_hora(data_str, resto):

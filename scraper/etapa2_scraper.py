@@ -22,6 +22,7 @@ import random
 import re
 import unicodedata
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 import httpx
 from playwright.async_api import async_playwright, TimeoutError as PWTimeout
@@ -41,11 +42,12 @@ from captcha import solve_captcha, inject_captcha_token
 from s3_uploader import upload_bytes
 from db import upsert_imovel, set_matricula_url  # noqa: F401
 from financiamento_heuristica import eh_financiavel
-from data_fim_heuristica import parse_data_fim
+from data_fim_heuristica import parse_data_fim, parse_tempo_restante
 
 logger = logging.getLogger(__name__)
 
 _PDF_EDITAIS = "https://venda-imoveis.caixa.gov.br/editais"
+_TZ_BRT = ZoneInfo("America/Sao_Paulo")
 
 # ---------------------------------------------------------------------------
 # Marcadores de lixo de navegacao para sanitizacao de descricao
@@ -400,6 +402,12 @@ async def _extrair_dados_playwright(page, numero_imovel):
                 full_text = await page.content()
             except Exception:
                 pass
+        # Ancora do widget de contador relativo (Venda Online) - precisa
+        # ser o instante em que o texto foi LIDO, nao um datetime.now()
+        # chamado mais tarde (drift de segundos ja seria irrelevante pro
+        # countdown de exibicao, mas capturar aqui, o mais cedo possivel,
+        # elimina qualquer duvida).
+        capturado_em = datetime.now(_TZ_BRT)
 
         logger.info(
             f"[diag {numero_imovel}] texto={len(full_text)} chars | "
@@ -491,7 +499,12 @@ async def _extrair_dados_playwright(page, numero_imovel):
             dados["quartos"] = quartos
 
         # === Data-fim do leilao/venda ===
-        data_fim = _parse_data_fim(full_text)
+        # Venda Online nao tem data absoluta em lugar nenhum do texto - so
+        # o widget "Tempo restante: X DIAS Y HORAS Z MINUTOS W SEGUNDOS"
+        # (confirmado: 0/27 imoveis reais tinham data absoluta). Fallback
+        # pro contador relativo, convertido em absoluta ancorada em
+        # capturado_em, quando a heuristica de data absoluta nao acha nada.
+        data_fim = _parse_data_fim(full_text) or parse_tempo_restante(full_text, capturado_em)
         if data_fim:
             dados["data_fim"] = data_fim
 
