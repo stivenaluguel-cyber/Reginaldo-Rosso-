@@ -639,6 +639,22 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
 <script>
   document.getElementById('burger').addEventListener('click',function(){document.getElementById('mobile').classList.toggle('open');});
   document.querySelectorAll('#mobile a').forEach(function(a){a.addEventListener('click',function(){document.getElementById('mobile').classList.remove('open');});});
+
+  // ===== Contexto de origem (UTM + pagina) para eventos GA4 - so parametro do evento, nao persiste em banco =====
+  function rrCtx(){
+    var p=new URLSearchParams(location.search);
+    var ctx={page_path:location.pathname};
+    ['utm_source','utm_medium','utm_campaign'].forEach(function(k){var v=p.get(k);if(v)ctx[k]=v;});
+    return ctx;
+  }
+  // ===== Clique em WhatsApp (qualquer link wa.me/api.whatsapp.com da pagina) =====
+  document.addEventListener('click',function(ev){
+    var a=ev.target.closest('a[href*="wa.me/"],a[href*="api.whatsapp.com/"]');
+    if(a&&window.gtag){
+      var ctx=rrCtx(); ctx.link_text=(a.textContent||'').trim().slice(0,100);
+      gtag('event','whatsapp_click',ctx);
+    }
+  },true);
   // busca do hero -> portal
   document.getElementById('bGo').addEventListener('click',function(){
     var p=new URLSearchParams();
@@ -671,7 +687,7 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
         var r=await fetch('https://api.web3forms.com/submit',{method:'POST',body:d,headers:{'Accept':'application/json'}});
         var j=await r.json();
         if(!j.success) throw new Error('falhou');
-        if(window.gtag) gtag('event','generate_lead',{method:'formulario'});
+        if(window.gtag) gtag('event','generate_lead',Object.assign({method:'formulario'},rrCtx()));
         f.reset(); msg.className='lf-msg ok'; msg.textContent='✓ Recebido! Em breve eu entro em contato com você.';
       }catch(e){ msg.className='lf-msg err'; msg.textContent='Não consegui enviar agora — me chame no WhatsApp, por favor.'; }
       btn.disabled=false; btn.textContent=old;
@@ -680,6 +696,15 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
 </script>
 
 <script>
+  // achado: function gtag() estava declarada DENTRO de loadGA() (escopo local,
+  // nunca virava window.gtag) - todo "if(window.gtag)" desta pagina (inclusive
+  // o generate_lead do leadForm) sempre falhava silenciosamente. dataLayer/gtag
+  // agora ficam globais e imediatos (custo zero, so enfileira no array); só o
+  // carregamento do script real do gtag.js continua adiado até 1a interação.
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-S00J9QCC99');
   (function(){
     var loaded=false;
     function loadGA(){
@@ -688,10 +713,6 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
       s.src='https://www.googletagmanager.com/gtag/js?id=G-S00J9QCC99';
       s.async=true;
       document.head.appendChild(s);
-      window.dataLayer=window.dataLayer||[];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js',new Date());
-      gtag('config','G-S00J9QCC99');
     }
     ['scroll','click','touchstart','keydown'].forEach(function(e){window.addEventListener(e,loadGA,{once:true,passive:true});});
     setTimeout(loadGA,3000);
