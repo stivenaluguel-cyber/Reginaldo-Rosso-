@@ -462,20 +462,10 @@ const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComp
     const d=Math.max(s.lastIndexOf("."),s.lastIndexOf(",")); if(d<0){const n=parseFloat(s);return isNaN(n)?null:n;}
     const n=parseFloat(s.slice(0,d).replace(/[.,]/g,"")+"."+s.slice(d+1).replace(/[.,]/g,"")); return isNaN(n)?null:n;
   }
-  const _simNao=v=>{if(v==null)return null;const k=_k(v);if(k.startsWith("sim"))return true;if(k.startsWith("nao"))return false;return null;};
-  function _tipo(d){d=_k(d);const m=[["apartamento","Apartamento"],["casa","Casa"],["terreno","Terreno"],["loja","Loja"],["sala","Sala comercial"],["galpao","Galpão"],["sobrado","Sobrado"],["gleba","Gleba"],["predio","Prédio"],["chacara","Chácara"],["fazenda","Fazenda"],["kitnet","Kitnet"],["lote","Lote"],["imovel","Imóvel"]];for(const[a,b]of m)if(d.includes(a))return b;return "Imóvel";}
-  function parseCaixaCSV(txt){
-    const L=txt.split(/\r?\n/);
-    let hi=L.findIndex(l=>{const k=_k(l);return k.includes("cidade")&&k.includes("preco");});
-    if(hi<0)hi=L.findIndex(l=>_k(l).includes("uf")&&_k(l).includes("cidade"));
-    if(hi<0)return [];
-    const cols=L[hi].split(";").map(_k),ix=n=>cols.findIndex(c=>c.includes(n));
-    const M={id:cols.findIndex(c=>c.includes("imovel"))>=0?cols.findIndex(c=>c.includes("imovel")):0,uf:ix("uf"),cidade:ix("cidade"),bairro:ix("bairro"),endereco:ix("endereco"),preco:cols.findIndex(c=>c.includes("preco")),avaliacao:cols.findIndex(c=>c.includes("avaliacao")),desconto:cols.findIndex(c=>c.includes("desconto")),financiamento:cols.findIndex(c=>c.includes("financiamento")),descricao:ix("descricao"),modalidade:cols.findIndex(c=>c.includes("modalidade")),link:cols.findIndex(c=>c.includes("link"))};
-    const out=[];
-    for(let i=hi+1;i<L.length;i++){const ln=L[i];if(!ln||!ln.includes(";"))continue;const p=ln.split(";"),g=j=>(j>=0&&j<p.length?p[j].trim():"");const id=g(M.id).replace(/\D/g,"");if(!id)continue;const desc=g(M.descricao);out.push({id,uf:g(M.uf),cidade:g(M.cidade),bairro:g(M.bairro),endereco:g(M.endereco),preco:_num(g(M.preco)),avaliacao:_num(g(M.avaliacao)),desconto:_num(g(M.desconto)),financiamento:_simNao(g(M.financiamento)),descricao:desc,modalidade:g(M.modalidade),tipo:_tipo(desc),link:g(M.link)});}
-    return out;
-  }
-  // C2: carregarCSV removida (fallback CSV eliminado)
+  // C2: carregarCSV removida (fallback CSV eliminado) - parseCaixaCSV(),
+  // _simNao() e _tipo() eram usadas so por ela; removidas na mesma limpeza
+  // por nao terem mais nenhuma chamada (achado da auditoria de manutencao,
+  // confirmado por grep antes de remover cada uma).
     async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
 
   function _parseTrib(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('tributo');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if((sec.includes('inferior a 10')||sec.includes('quando o debito for inferior'))&&(sec.includes('superior a 10')||sec.includes('caixa paga integralmente quando')))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
