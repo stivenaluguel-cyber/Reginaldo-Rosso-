@@ -172,6 +172,7 @@ gtag('config','AW-872430371');
   .card .price{font-weight:800;font-size:1.38rem;line-height:1}
   .card .price .old{font-size:.76rem;color:#c3cedb;text-decoration:line-through;font-weight:500;margin-left:8px}
 .card .bflag{background:rgba(23,38,56,.92);color:#c6a052;border-radius:7px;padding:4px 9px;font-size:.72rem;font-weight:800;letter-spacing:.02em}
+.card .bflag--live{background:#c0293b;color:#fff}
 .card .price-old-strike{font-size:.78rem;color:#c3cedb;text-decoration:line-through;font-weight:600;margin-bottom:2px}
 
   .loadmore{display:block;margin:18px auto 40px;background:#fff;border:1px solid var(--line);border-radius:12px;color:var(--navy);font-family:inherit;font-weight:700;font-size:.92rem;padding:14px 28px;cursor:pointer}
@@ -368,6 +369,7 @@ gtag('config','AW-872430371');
       <button class="chip chip-fav" id="chipFav" aria-pressed="false">♥ Favoritos (<span id="favN">0</span>)</button>
 <button class="chip" id="chipBaixaram" data-baixou="1" aria-pressed="false" style="display:none">Baixaram de preço (<span id="nBaixaram">0</span>)</button>
 <button class="chip" id="chipNovos" data-novo="1" aria-pressed="false" style="display:none">Novos (<span id="nNovos">0</span>)</button>
+<button class="chip" id="chipAoVivo" data-aovivo="1" aria-pressed="false" style="display:none">🔴 Venda Online ao vivo (<span id="nAoVivo">0</span>)</button>
       <button class="chip chip-send" id="sendFav" style="display:none">Enviar favoritos no WhatsApp</button>
       <span class="count" id="count"></span>
     <a id="mapaLink" href="mapa.html" style="display:none;font-size:.75rem;color:var(--gold);text-decoration:none;margin-left:10px">🗺️ Ver no mapa</a>
@@ -553,15 +555,23 @@ async function carregar(){
     }
     
 
+  function isAoVivo(i){
+    if(!i || i.modalidade !== "Venda Online") return false;
+    const d=parseFimBRT(i.data_fim);
+    return !!(d && d - new Date() > 0);
+  }
   function atualizarContadoresChips(){
 const nb=ALL.filter(function(i){return !!(i.preco_anterior && i.preco_anterior>i.preco);}).length;
 const nn=ALL.filter(function(i){return isNovo(i);}).length;
-const cb=document.getElementById("chipBaixaram"), cn=document.getElementById("chipNovos");
-const sb=document.getElementById("nBaixaram"), sn=document.getElementById("nNovos");
+const nav=ALL.filter(function(i){return isAoVivo(i);}).length;
+const cb=document.getElementById("chipBaixaram"), cn=document.getElementById("chipNovos"), cav=document.getElementById("chipAoVivo");
+const sb=document.getElementById("nBaixaram"), sn=document.getElementById("nNovos"), sav=document.getElementById("nAoVivo");
 if(sb) sb.textContent=nb.toLocaleString("pt-BR");
 if(sn) sn.textContent=nn.toLocaleString("pt-BR");
+if(sav) sav.textContent=nav.toLocaleString("pt-BR");
 if(cb) cb.style.display = nb>0 ? "" : "none";
 if(cn) cn.style.display = nn>0 ? "" : "none";
+if(cav) cav.style.display = nav>0 ? "" : "none";
 }
 function preencherFiltros(){
     function _norm(v){ return String(v||'').trim().toLowerCase(); }
@@ -637,6 +647,7 @@ function aplicar(){
       if(state.mindesc!=null && (i.desconto==null||i.desconto<state.mindesc)) return false;
 if(state.baixou && !(i.preco_anterior && i.preco_anterior>i.preco)) return false;
 if(state.novo && !isNovo(i)) return false;
+if(state.aovivo && !isAoVivo(i)) return false;
       if(state.onlyFav && !isFav(i.id)) return false;
       if(state.q){
         const hay=norm(i.cidade+" "+i.bairro+" "+i.endereco+" "+i.descricao+" "+i.tipo);
@@ -729,6 +740,16 @@ return '<span class="bflag">BAIXOU '+BRL(dif)+'</span>';
 if(isNovo(i)) return '<span class="bflag">NOVO</span>';
 return "";
 }
+// O leilao esta ao vivo na Caixa e o countdown e real - NAO temos o valor
+// do lance em tempo real (sonda confirmou que nao e capturavel na pagina
+// de detalhe hoje), entao o badge se refere so a isso: leilao em
+// andamento com prazo conhecido, nao "temos o lance ao vivo".
+function badgeAoVivoHTML(i){
+if(!i || i.modalidade !== "Venda Online") return "";
+const d=parseFimBRT(i.data_fim);
+if(!d || d - new Date() <= 0) return "";
+return '<span class="bflag bflag--live">🔴 AO VIVO</span>';
+}
 function labelTipo(i){
       if(i && i.tipo_real && String(i.tipo_real).trim()) return esc(String(i.tipo_real).trim().toUpperCase());
       if(i && i.tipo && String(i.tipo).trim() && !/^im[oó]vel$/i.test(String(i.tipo).trim())) return esc(String(i.tipo).trim().toUpperCase());
@@ -749,7 +770,7 @@ function labelTipo(i){
         <div class="pholder"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#c6a052" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity=".45"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg><span style="font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4a6a8a">${labelTipo(i)}</span></div>
         ${img}
         <div class="grad"></div>
-        <div class="badges">${urgenciaHTML(i)}
+        <div class="badges">${badgeAoVivoHTML(i)}${urgenciaHTML(i)}
           <span class="uf">${esc(i.uf)}</span>
 ${badgeFlagHTML(i)}
           ${i.desconto?`<span class="desc">${Math.round(i.desconto)}% OFF</span>`:""}
@@ -900,7 +921,7 @@ ${badgeFlagHTML(i)}
         try{
           if(state.q) n++; if(state.uf) n++; if(state.cidade) n++; if(state.tipo) n++;
           if(state.modalidade) n++; if(state.financiamento) n++;
-          if(state.max) n++; if(state.mindesc) n++; if(state.baixou) n++; if(state.novo) n++;
+          if(state.max) n++; if(state.mindesc) n++; if(state.baixou) n++; if(state.novo) n++; if(state.aovivo) n++;
         }catch(_){}
         return n;
       }
@@ -946,6 +967,9 @@ c.setAttribute("aria-pressed",on?"false":"true"); state.baixou=on?false:true;
 }else if(c.dataset.novo!==undefined){
 const on=c.getAttribute("aria-pressed")==="true";
 c.setAttribute("aria-pressed",on?"false":"true"); state.novo=on?false:true;
+}else if(c.dataset.aovivo!==undefined){
+const on=c.getAttribute("aria-pressed")==="true";
+c.setAttribute("aria-pressed",on?"false":"true"); state.aovivo=on?false:true;
 }
     aplicar();
 
@@ -984,7 +1008,7 @@ c.setAttribute("aria-pressed",on?"false":"true"); state.novo=on?false:true;
   document.getElementById("sendFav").addEventListener("click",sendFavs);
 
   document.getElementById("clear").addEventListener("click",()=>{
-    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",dtrib:"",dcond:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc",baixou:false,novo:false});
+    Object.assign(state,{uf:"",q:"",cidade:"",tipo:"",modalidade:"",financiamento:"",dtrib:"",dcond:"",min:null,max:null,mindesc:null,onlyFav:false,ordem:"desc",baixou:false,novo:false,aovivo:false});
     const _mn=document.getElementById("pRangeMin"),_mx=document.getElementById("pRangeMax");if(_mn){_mn.value=0;_mx.value=1000000;const _lbl=document.getElementById("pMinLbl");if(_lbl)_lbl.textContent="Qualquer";const _fl=document.getElementById("pFill");if(_fl){_fl.style.left="0%";_fl.style.width="100%";}}
     var _cf=document.getElementById("chipFav"); if(_cf)_cf.setAttribute("aria-pressed","false");
     document.getElementById("q").value="";["cidade","tipo","modalidade","financiamento","dtrib","dcond"].forEach(id=>document.getElementById(id).value="");

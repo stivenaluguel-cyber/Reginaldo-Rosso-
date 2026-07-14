@@ -44,19 +44,20 @@ function _fatiaEntre(html, inicioMarcador, fimMarcador) {
 function carregarFuncoesClientSide() {
   const html = fs.readFileSync(path.join(__dirname, "..", "imoveis.html"), "utf8");
   const parte1 = _fatiaEntre(html, "  const BRL =", "async function carregar(){");
-  const parte2 = _fatiaEntre(html, "const _idNum=id=>", "function dimsHTML(i){");
+  const parte2 = _fatiaEntre(html, "  function isAoVivo(i){", "function dimsHTML(i){");
+  const parte3 = _fatiaEntre(html, "function badgeAoVivoHTML(i){", "function labelTipo(i){");
   const elStub = { style: {}, textContent: "", getAttribute: () => null, setAttribute: () => {}, addEventListener: () => {}, remove: () => {}, classList: { toggle() {}, add() {}, remove() {} } };
   const sandbox = {
     document: { getElementById: () => elStub, querySelectorAll: () => [], querySelector: () => null, addEventListener: () => {} },
     localStorage: { getItem: () => null, setItem: () => {} },
     window: {},
   };
-  // `const`/arrow-fn top-level (_idNum, _fimTime, diasAtras) nao viram
-  // propriedade do objeto de contexto do vm (so `function` declarations
-  // viram) - expõe via `var` na MESMA execucao (precisa ser 1 script so;
-  // chamadas separadas de runInContext nao compartilham escopo de const/let
-  // entre si mesmo no mesmo contexto).
-  const trecho = parte1 + "\n" + parte2 + "\nvar __exports=({_fimTime:_fimTime,_idNum:_idNum,diasAtras:diasAtras,urgenciaHTML:urgenciaHTML});";
+  // `const`/arrow-fn top-level (_idNum, _fimTime, diasAtras, isAoVivo) nao
+  // viram propriedade do objeto de contexto do vm (so `function`
+  // declarations viram) - expõe via `var` na MESMA execucao (precisa ser 1
+  // script so; chamadas separadas de runInContext nao compartilham escopo
+  // de const/let entre si mesmo no mesmo contexto).
+  const trecho = parte1 + "\n" + parte2 + "\n" + parte3 + "\nvar __exports=({_fimTime:_fimTime,_idNum:_idNum,diasAtras:diasAtras,urgenciaHTML:urgenciaHTML,isAoVivo:isAoVivo,badgeAoVivoHTML:badgeAoVivoHTML});";
   vm.createContext(sandbox);
   vm.runInContext(trecho, sandbox);
   return Object.assign(sandbox, sandbox.__exports);
@@ -169,4 +170,32 @@ test("htmlPrazoDetalhe: sem data_fim ou com data ja passada, nao renderiza nada"
 test("diasAteEncerramento: null pra data invalida/ausente", () => {
   assert.equal(diasAteEncerramento(null), null);
   assert.equal(diasAteEncerramento(""), null);
+});
+
+// ---------------------------------------------------------------------------
+// badge AO VIVO (imoveis.html) - so Venda Online com data_fim futura
+// ---------------------------------------------------------------------------
+function _strFutura(diasNoFuturo) {
+  const d = new Date(Date.now() + diasNoFuturo * 864e5);
+  return String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear() + " 18:00";
+}
+
+test("isAoVivo/badgeAoVivoHTML: true so quando modalidade=Venda Online E data_fim futura", () => {
+  const { isAoVivo, badgeAoVivoHTML } = carregarFuncoesClientSide();
+  const futura = _strFutura(3);
+
+  assert.equal(isAoVivo({ modalidade: "Venda Online", data_fim: futura }), true);
+  assert.match(badgeAoVivoHTML({ modalidade: "Venda Online", data_fim: futura }), /bflag--live/);
+
+  // Venda Direta Online (outra modalidade) NAO e "ao vivo", mesmo com data_fim futura.
+  assert.equal(isAoVivo({ modalidade: "Venda Direta Online", data_fim: futura }), false);
+  assert.equal(badgeAoVivoHTML({ modalidade: "Venda Direta Online", data_fim: futura }), "");
+
+  // Venda Online sem data_fim (ainda nao raspada) - sem badge.
+  assert.equal(isAoVivo({ modalidade: "Venda Online", data_fim: null }), false);
+  assert.equal(badgeAoVivoHTML({ modalidade: "Venda Online", data_fim: null }), "");
+
+  // Venda Online com data_fim ja vencida - sem badge (leilao acabou).
+  assert.equal(isAoVivo({ modalidade: "Venda Online", data_fim: "01/01/2020 18:00" }), false);
+  assert.equal(badgeAoVivoHTML({ modalidade: "Venda Online", data_fim: "01/01/2020 18:00" }), "");
 });

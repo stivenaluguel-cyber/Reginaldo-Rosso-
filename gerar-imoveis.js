@@ -1025,6 +1025,10 @@ fgts===null
 </div>
 ${htmlPrazoDetalhe(det.data_fim || null)}
 ${htmlOcupacaoDetalhe(det.ocupacao || null)}
+${(i.modalidade === "Venda Online" && det.data_fim) ? `<div class="price-block__row price-block__aovivo-cta" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.08)">
+<a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener" style="display:block;text-align:center">🔴 Ver lances ao vivo na Caixa</a>
+<a class="btn gold" href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero dar lance no imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'), Venda Online. Pode me ajudar com a assessoria? Link: '+url)}" target="_blank" rel="noopener" style="display:block;text-align:center">💬 Quero dar lance com assessoria</a>
+</div>` : ""}
 <div class="price-block__costs">
 Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
 <a class="btn roi-btn" href="${roiUrl}" style="margin-top:10px;display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI</a>
