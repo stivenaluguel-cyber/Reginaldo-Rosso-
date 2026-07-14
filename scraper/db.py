@@ -452,9 +452,23 @@ def upsert_imovel(data: dict):
     # descricao='' (string vazia, nao NULL), o que sobrescrevia descricao
     # boa ja gravada antes - NULLIF trata '' como "sem valor" tambem.
     preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao'}
+    # preco_avaliacao/preco_minimo: ordem do COALESCE INVERTIDA em relacao
+    # aos outros preserve_cols - aqui o valor EXISTENTE vence, EXCLUDED so
+    # preenche lacuna (existente NULL). Motivo: pipeline.py roda etapa1
+    # (CSV, fonte autoritativa - ver update_csv_parsed_bulk) sempre ANTES
+    # de etapa2 (Playwright, extrai preco da pagina de detalhe so pra
+    # cobrir imoveis Venda Online fora do CSV geral) no mesmo ciclo. Se
+    # EXCLUDED vencesse aqui, etapa2 desfaria a correcao do CSV no mesmo
+    # ciclo sempre que a pagina de detalhe mostrar um valor diferente
+    # (ex.: desconto de leilao em rodada mais avancada que o CSV nao
+    # capturou ainda - visto na validacao real, imoveis 10214863 e
+    # 1555534792493).
+    _cols_preco = {'preco_avaliacao', 'preco_minimo'}
     def _set_expr(c):
         if c == 'descricao':
             return f"{c}=COALESCE(NULLIF(EXCLUDED.{c}, ''), imoveis_caixa.{c})"
+        if c in _cols_preco:
+            return f"{c}=COALESCE(imoveis_caixa.{c}, EXCLUDED.{c})"
         if c in preserve_cols:
             return f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})"
         return f"{c}=EXCLUDED.{c}"

@@ -165,6 +165,26 @@ def _parse_area(full_text, *labels):
     m = re.search(r"([\d.]+,[\d]+|\d+[.,]?\d*)", raw)
     return _parse_money(m.group(1)) if m else None
 
+_MONEY_APOS_RS_RE = re.compile(r"r\$\s*([\d.]+,\d+)")
+
+def _parse_valor_monetario(full_text, *labels):
+    """Extrai um valor monetario apos um rotulo (ex.: "Valor minimo de
+    venda"). Ancora em "R$" em vez de pegar o 1o digito generico: imoveis
+    com 2 rodadas de leilao tem "Valor minimo de venda 1o Leilao: R$ X"
+    na mesma linha, e o "1" do ordinal era capturado como se fosse o
+    preco (bug achado na validacao pre-wiring, imovel 1444418687768)."""
+    raw = _find_value(full_text, *labels)
+    if not raw:
+        return None
+    m = _MONEY_APOS_RS_RE.search(raw)
+    if m:
+        return _parse_money(m.group(1))
+    m = re.search(r"([\d.]+,[\d]+|\d+[.,]?\d*)", raw)
+    return _parse_money(m.group(1)) if m else None
+
+LABELS_PRECO_MINIMO = ("valor minimo de venda", "valor mínimo de venda", "preco minimo", "preço mínimo")
+LABELS_PRECO_AVALIACAO = ("valor de avaliacao", "valor de avaliação", "valor da avaliacao", "valor da avaliação")
+
 def _extrair_secao_regras(full_text):
     """Retorna a secao normalizada de "regras para pagamento das despesas"."""
     nt = _norm(full_text)
@@ -410,6 +430,20 @@ async def _extrair_dados_playwright(page, numero_imovel):
         # Campo consolidado 'area' para o frontend (privativa se existir, senao total)
         dados["area"] = dados.get("area_privativa") or dados.get("area_total")
 
+        # === Preco (cobre imoveis Venda Online fora do CSV geral, ex.:
+        # 1444400624799) ===
+        # So grava quando > 0 - upsert_imovel preserva o preco JA existente
+        # (fonte CSV, autoritativa) e so usa este valor extraido pra
+        # preencher lacuna (imovel sem preco vindo do CSV). Validado
+        # contra 40 imoveis reais com preco_minimo/preco_avaliacao
+        # conhecidos antes de ligar (37-38/40 e 40/40 de acerto).
+        _preco_min = _parse_valor_monetario(full_text, *LABELS_PRECO_MINIMO)
+        if _preco_min and _preco_min > 0:
+            dados["preco_minimo"] = _preco_min
+        _preco_aval = _parse_valor_monetario(full_text, *LABELS_PRECO_AVALIACAO)
+        if _preco_aval and _preco_aval > 0:
+            dados["preco_avaliacao"] = _preco_aval
+
         # Debitos: parseia a secao "regras para pagamento das despesas" no texto completo.
         dados["debito_tributos"] = _parse_debito_secao(full_text, "tributos", "iptu")
         dados["debito_condominio"] = _parse_debito_secao(full_text, "condominio")
@@ -478,6 +512,7 @@ async def _extrair_dados_playwright(page, numero_imovel):
             dados.get("debito_condominio") is not None,
             dados.get("ocupacao"), dados.get("quartos") is not None,
             dados.get("data_fim"),
+            dados.get("preco_minimo"), dados.get("preco_avaliacao"),
         ])
         if not dados.get("descricao") and not dados.get("fotos_urls") and not _tem_sinal:
             logger.warning(f"[diag {numero_imovel}] extracao inconclusiva (sem sinal real) - descarta campos vazios, preserva dados existentes")
