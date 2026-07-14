@@ -282,22 +282,20 @@ hoje.setHours(0, 0, 0, 0);
 return Math.round((alvo - hoje) / 86400000);
 }
 
-// Gera HTML do chip/linha de prazo para paginas de detalhe (retorna "" se nao deve renderizar)
+// Gera HTML do chip/linha de prazo para paginas de detalhe (retorna "" se nao deve renderizar).
+// Fallback estatico (dia) fica no HTML pra quem tem JS desligado/indexadores;
+// o script inline abaixo assume o lugar com um countdown vivo (dias/horas/min/seg),
+// interpretando data_fim explicitamente em America/Sao_Paulo (-03:00, sem
+// horario de verao no Brasil desde 2019 - offset fixo o ano todo).
 function htmlPrazoDetalhe(dataFimStr) {
 if (!dataFimStr) return "";
 const n = diasAteEncerramento(dataFimStr);
 if (n === null || n < 0) return ""; // passou ou invalido: nao renderiza
-const fullLabel = n === 0 ? "Encerra hoje!" : (n === 1 ? "Encerra amanha!" : "Leil\u00e3o encerra em " + n + " dias (" + esc(dataFimStr) + ")");
-const partsDT = String(dataFimStr).split(" ");
-const datePart = partsDT[0] || "";
-const timePart = partsDT[1] || "";
-const dpArr = datePart.split("/");
-const curto = dpArr.length >= 2 ? (dpArr[0] + "/" + dpArr[1]) : datePart;
-const shortLabel = n === 0 ? "Encerra hoje!" : (n === 1 ? "Encerra amanha!" : "Encerra em " + n + " dias" + (curto ? (" \u00b7 " + esc(curto) + (timePart ? (" " + esc(timePart)) : "")) : ""));
+const fallbackLabel = n === 0 ? "Encerra hoje!" : (n === 1 ? "Encerra amanha!" : "Leil\u00e3o encerra em " + n + " dias (" + esc(dataFimStr) + ")");
 const chipCls = n <= 7 ? "chip-warn" : "";
 return `<div class="price-block__row price-block__prazo">
 <span class="price-block__label">Prazo</span>
-<span class="${chipCls} prazo-wrap"><span class="prazo-full">${fullLabel}</span><span class="prazo-short">${shortLabel}</span></span>
+<span class="${chipCls} prazo-wrap js-countdown-detalhe" data-fim="${esc(dataFimStr)}">${fallbackLabel}</span>
 </div>`;
 }
 
@@ -1072,6 +1070,36 @@ if(wf){ if(window.innerWidth<=768){ wf.style.display=hidden?'none':''; } else { 
 io.observe(pb);
 })();
 </script>
+<script>
+(function(){
+function parseFimBRT(raw){
+var m=raw&&String(raw).match(/^(\\d{2})\\/(\\d{2})\\/(\\d{4})(?:\\s+(\\d{2}):(\\d{2}))?/);
+if(!m)return null;
+var iso=m[3]+'-'+m[2]+'-'+m[1]+'T'+(m[4]||'00')+':'+(m[5]||'00')+':00-03:00';
+var d=new Date(iso);
+return isNaN(d.getTime())?null:d;
+}
+function pad(n){return (n<10?'0':'')+n;}
+function tick(el,target){
+var diff=target-new Date();
+if(diff<=0){
+el.textContent='Encerrado — consulte oportunidades semelhantes';
+el.className='chip-warn prazo-wrap js-countdown-detalhe';
+return false;
+}
+var s=Math.floor(diff/1000),d=Math.floor(s/86400),h=Math.floor(s/3600)%24,mi=Math.floor(s/60)%60,se=s%60;
+el.className='prazo-wrap js-countdown-detalhe'+(diff<86400000?' chip-warn':'');
+el.textContent=(d>0?d+'d ':'')+pad(h)+'h '+pad(mi)+'m '+pad(se)+'s';
+return true;
+}
+document.querySelectorAll('.js-countdown-detalhe').forEach(function(el){
+var target=parseFimBRT(el.getAttribute('data-fim'));
+if(!target)return;
+if(!tick(el,target))return;
+var timer=setInterval(function(){ if(!tick(el,target)) clearInterval(timer); },1000);
+});
+})();
+</script>
 <a class="wafloat" href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M.06 24l1.68-6.16A11.9 11.9 0 01.16 11.9C.16 5.34 5.5 0 12.06 0a11.8 11.8 0 018.4 3.49 11.8 11.8 0 013.48 8.4c0 6.56-5.34 11.9-11.9 11.9a11.9 11.9 0 01-5.7-1.45L.06 24zm6.6-3.8c1.68.99 3.28 1.59 5.4 1.59 5.45 0 9.9-4.43 9.9-9.88a9.86 9.86 0 00-9.88-9.9C6.6 1.98 2.16 6.42 2.16 11.9c0 2.22.65 3.88 1.74 5.62l-.99 3.62 3.75-.94z"/></svg></a>
 
 <script>
@@ -1423,7 +1451,10 @@ fs.writeFileSync(path.join(__dirname,"imoveis-rs.json"), JSON.stringify(imoveisR
 fs.writeFileSync(path.join(__dirname,"imoveis-sc.json"), JSON.stringify(imoveisSC));
 const meta = {
 atualizado: new Date().toISOString(),
-total: imoveis.length,
+// total = publicados (Disponivel), consistente com porEstado. imoveis.length
+// inclui tambem os Indisponivel (mantidos so pra pagina de detalhe historica/
+// SEO) - usar isso aqui inflava o total (achado: 1007 vs 903 de porEstado).
+total: imoveisRS.length + imoveisSC.length,
 porEstado: { RS: imoveisRS.length, SC: imoveisSC.length }
 };
 fs.writeFileSync(path.join(__dirname,"meta.json"), JSON.stringify(meta));
@@ -1476,4 +1507,4 @@ console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" 
 
 // Exports para testes (tests/gerar-imoveis.test.js) - nao afeta a execucao
 // via `node gerar-imoveis.js` (guardada por require.main acima).
-module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo };
+module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, htmlPrazoDetalhe, htmlPrazoCard, diasAteEncerramento };

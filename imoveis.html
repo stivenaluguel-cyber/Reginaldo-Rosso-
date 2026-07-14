@@ -417,6 +417,26 @@ const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComp
   const BRL = v => v==null ? "—" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
   const norm = s => (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  // data_fim vem do banco como "DD/MM/YYYY" ou "DD/MM/YYYY HH:MM". Interpreta
+  // SEMPRE em America/Sao_Paulo (-03:00, sem horario de verao no Brasil desde
+  // 2019 - offset fixo o ano todo) via string ISO com offset explicito -
+  // new Date("YYYY-MM-DD") sozinho vira meia-noite UTC, e um visitante em
+  // outro fuso via a contagem errada.
+  function parseFimBRT(raw){
+    const s=String(raw||"").trim();
+    const m=s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})(?:[ T](\d{2}):(\d{2}))?/);
+    if(!m) return null;
+    const iso=m[3]+"-"+m[2]+"-"+m[1]+"T"+(m[4]||"00")+":"+(m[5]||"00")+":00-03:00";
+    const d=new Date(iso);
+    return isNaN(d.getTime())?null:d;
+  }
+  function fmtCountdownCard(diffMs){
+    const totalMin=Math.floor(diffMs/60000);
+    const d=Math.floor(totalMin/1440), h=Math.floor((totalMin%1440)/60), m=totalMin%60;
+    if(d>0) return d+"d "+h+"h";
+    if(h>0) return h+"h "+m+"min";
+    return m+"min";
+  }
   const PER_PAGE = 24;
 
   let ALL=[], view=[], shown=0;
@@ -471,6 +491,44 @@ const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComp
   function _parseTrib(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('tributo');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if((sec.includes('inferior a 10')||sec.includes('quando o debito for inferior'))&&(sec.includes('superior a 10')||sec.includes('caixa paga integralmente quando')))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
 function _parseCond(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('condomin');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if(sec.includes('ate o limite de 10%')||sec.includes('valor que exceder')||sec.includes('10% em relacao'))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
 
+// Selo de frescor honesto sobre "quao ao vivo" o site e: granularidade de
+// minuto pras primeiras horas (nao trava em "hoje" o dia inteiro), dias/
+// semanas/meses depois. Roda de novo a cada 60s (ver setInterval no init)
+// pra nao ficar preso no valor computado no load da pagina.
+function diasAtras(s){
+  if(!s) return null;
+  const d=new Date(s); if(isNaN(d.getTime())) return null;
+  const diffMs=new Date()-d;
+  const diffMin=Math.floor(diffMs/60000);
+  if(diffMin<1) return "agora mesmo";
+  if(diffMin<60) return "há "+diffMin+" min";
+  const diffH=Math.floor(diffMin/60);
+  if(diffH<24) return "há "+diffH+"h";
+  const diff=Math.floor(diffMs/864e5);
+  if(diff===1) return "ontem";
+  if(diff<7) return "há "+diff+" dias";
+  if(diff<30){const w=Math.floor(diff/7);return "há "+w+" semana"+(w>1?"s":"");}
+  return "há "+Math.floor(diff/30)+" mes(es)";
+}
+function atualizarSeloFrescor(){
+  const elU=document.getElementById("updatedTxt");
+  if(!elU) return;
+  const quando=window._metaAtualizado, total=window._totalImoveisTxt;
+  if(total==null) return;
+  if(quando){ const rel=diasAtras(quando);
+    elU.textContent="Atualizado "+(rel||new Date(quando).toLocaleDateString("pt-BR"))+" · "+total+" imoveis";
+  } else { elU.textContent=total+" imoveis disponiveis"; }
+}
+function atualizarCountdownsCards(){
+  document.querySelectorAll(".urg[data-fim]").forEach(function(el){
+    const d=parseFimBRT(el.getAttribute("data-fim"));
+    if(!d){ el.remove(); return; }
+    const diffMs=d-new Date();
+    if(diffMs<=0 || diffMs>7*864e5){ el.remove(); return; }
+    el.textContent="⏰ "+fmtCountdownCard(diffMs);
+  });
+}
+
 async function carregar(){
       try{
         // C2: carrega SOMENTE os JSONs canonicos (imoveis-rs.json + imoveis-sc.json).
@@ -484,18 +542,9 @@ async function carregar(){
           if(!item.debito_tributos)  item.debito_tributos  = _parseTrib(item.descricao);
           if(!item.debito_condominio)item.debito_condominio = _parseCond(item.descricao);
         });
-        const quando = meta && meta.atualizado ? meta.atualizado : null;
-        const elU=document.getElementById("updatedTxt");
-        function diasAtras(s){ if(!s)return null; const d=new Date(s); if(isNaN(d.getTime()))return null;
-          const diff=Math.floor((new Date()-d)/864e5);
-          if(diff<=0)return "hoje"; if(diff===1)return "ontem"; if(diff<7)return "ha "+diff+" dias";
-          if(diff<30){const w=Math.floor(diff/7);return "ha "+w+" semana"+(w>1?"s":"");}
-          return "ha "+Math.floor(diff/30)+" mes(es)"; }
-        if(elU){
-          if(quando){ const rel=diasAtras(quando);
-            elU.textContent="Atualizado "+(rel||new Date(quando).toLocaleDateString("pt-BR"))+" \u00b7 "+ALL.length+" imoveis";
-          } else { elU.textContent=ALL.length+" imoveis disponiveis"; }
-        }
+        window._metaAtualizado = meta && meta.atualizado ? meta.atualizado : null;
+        window._totalImoveisTxt = ALL.length;
+        atualizarSeloFrescor();
         preencherFiltros(); aplicarHash(); aplicar(); updateFavUI(); atualizarContadoresChips();
         try{ const _did=_idDaURL(); if(_did) abrirPorId(_did); }catch(_){}
       }catch(e){
@@ -573,6 +622,7 @@ function preencherFiltros(){
   function flashShare(msg){const b=document.getElementById("mshare");if(b){const o=b.innerHTML;b.innerHTML="✓ "+msg;setTimeout(()=>{b.innerHTML=o;},2200);}}
 
   const _idNum=id=>{const n=parseInt(id||"0");return isNaN(n)?0:n>1e12?Math.round(n/1e6):n;};
+  const _fimTime=i=>{const d=parseFimBRT(i&&i.data_fim);return d?d.getTime():null;};
 function aplicar(){
     view=ALL.filter(i=>{
       if(state.uf && i.uf!==state.uf) return false;
@@ -600,8 +650,15 @@ if(state.novo && !isNovo(i)) return false;
       if(state.ordem==="descasc")   return (a.desconto??1e15)-(b.desconto??1e15);
       if(state.ordem==="idasc")     return _idNum(a.id)-_idNum(b.id);
       if(state.ordem==="iddesc")    return _idNum(b.id)-_idNum(a.id);
-      if(state.ordem==="fimasc")    return _idNum(a.id)-_idNum(b.id);
-      if(state.ordem==="fimdesc")   return _idNum(b.id)-_idNum(a.id);
+      if(state.ordem==="fimasc"||state.ordem==="fimdesc"){
+        // Sem data_fim vai sempre pro final, nas duas direcoes - "ordenar
+        // por prazo" nao deveria empurrar os sem-prazo pro topo por acaso.
+        const ta=_fimTime(a), tb=_fimTime(b);
+        if(ta===null&&tb===null) return 0;
+        if(ta===null) return 1;
+        if(tb===null) return -1;
+        return state.ordem==="fimasc" ? ta-tb : tb-ta;
+      }
       return (b.desconto??-1)-(a.desconto??-1);
     });
     shown=0; grid.innerHTML=""; loadingEl.style.display="none";
@@ -631,19 +688,20 @@ if(state.novo && !isNovo(i)) return false;
     return out;
   }
   const SPEC_IC={area:'<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zm2 2v12h12V6zM8 8h2v2H8zm0 6h2v2H8z"/></svg>',dorm:'<svg viewBox="0 0 24 24"><path d="M2 11V7h13a4 4 0 014 4v6h-2v-2H4v2H2zm2-2h9V9H4z"/></svg>',vaga:'<svg viewBox="0 0 24 24"><path d="M5 11l1.4-4.2A2 2 0 017.3 5.4h9.4a2 2 0 011.9 1.4L21 11a2 2 0 012 2v4h-2v-1H3v1H1v-4a2 2 0 012-2zm2.5 4a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm11 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>'};
-  // C8a: badge de urgencia quando data_fim nos proximos 7 dias
+  // C8a: badge de urgencia quando data_fim nos proximos 7 dias.
+  // Countdown vivo (atualizado a cada 60s via setInterval no init, nao a
+  // cada segundo - ~100 cards na tela, sem sentido gastar CPU com segundos
+  // que ninguem le num card pequeno). data-fim fica no proprio elemento pra
+  // o updater periodico achar e recalcular sem precisar re-renderizar a grid.
     function urgenciaHTML(i){
       if(!i || !i.data_fim) return "";
-      const raw=String(i.data_fim).trim(); if(!raw) return "";
-      let d=null;
-      let m=raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
-      if(m){ d=new Date(m[3]+"-"+m[2]+"-"+m[1]); }
-      else { const dd=new Date(raw); if(!isNaN(dd.getTime())) d=dd; }
-      if(!d || isNaN(d.getTime())) return "";
-      const dias=Math.ceil((d-new Date())/864e5);
-      if(dias<0 || dias>7) return "";
-      const txt = dias===0 ? "Encerra hoje" : ("Encerra em "+dias+(dias===1?" dia":" dias"));
-      return '<span class="urg">\u23f0 '+txt+'</span>';
+      const d=parseFimBRT(i.data_fim);
+      if(!d) return "";
+      const diffMs=d-new Date();
+      if(diffMs<=0) return "";
+      const dias=Math.floor(diffMs/864e5);
+      if(dias>7) return "";
+      return '<span class="urg" data-fim="'+esc(i.data_fim)+'">\u23f0 '+fmtCountdownCard(diffMs)+'</span>';
     }
     function dimsHTML(i){
       if(!i) return "";
@@ -940,6 +998,10 @@ c.setAttribute("aria-pressed",on?"false":"true"); state.novo=on?false:true;
   if(_bg){_bg.addEventListener("click",function(){document.getElementById("mobile").classList.toggle("open");});
     document.querySelectorAll("#mobile a").forEach(function(a){a.addEventListener("click",function(){document.getElementById("mobile").classList.remove("open");});});}
   carregar();
+  // 60s, nao 1s: ~100 cards na grid + o selo de frescor, sem necessidade de
+  // precisao de segundo em nenhum dos dois (countdown de segundo fica so na
+  // pagina de detalhe, que tem 1 card so).
+  setInterval(function(){ atualizarSeloFrescor(); atualizarCountdownsCards(); }, 60000);
 </script>
 
 
