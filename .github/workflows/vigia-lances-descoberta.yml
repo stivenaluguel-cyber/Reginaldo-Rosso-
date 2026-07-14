@@ -75,4 +75,5 @@ jobs:
           git diff --cached --stat
           GANHARAM="${{ steps.descoberta.outputs.ganharam }}"
           git commit -m "vigia-lances (descoberta): ${GANHARAM} imoveis ganharam data_fim ($(date +%F\ %H:%M\ UTC))" || echo "Sem mudancas."
+          git pull --rebase origin main
           git push

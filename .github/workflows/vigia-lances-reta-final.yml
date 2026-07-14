@@ -74,4 +74,5 @@ jobs:
           git add -A
           git diff --cached --stat
           git commit -m "vigia-lances (reta final): prorrogacao/encerramento detectado ($(date +%F\ %H:%M\ UTC))" || echo "Sem mudancas."
+          git pull --rebase origin main
           git push
