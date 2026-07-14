@@ -95,4 +95,5 @@ jobs:
           NOVOS="${{ steps.vigia.outputs.novos }}"
           ENCERRADOS="${{ steps.vigia.outputs.encerrados }}"
           git commit -m "vigia: ${NOVOS} novos, ${ENCERRADOS} encerrados ($(date +%F\ %H:%M\ UTC))" || echo "Sem mudancas."
+          git pull --rebase origin main
           git push
