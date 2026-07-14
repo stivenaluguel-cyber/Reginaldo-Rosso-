@@ -33,6 +33,8 @@ window.__AMOSTRA_META__={
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'G-S00J9QCC99');
+document.addEventListener('click',function(ev){var a=ev.target.closest('a[href*="wa.me/"],a[href*="api.whatsapp.com/"]');if(a&&window.gtag){var p=new URLSearchParams(location.search);var ctx={link_text:(a.textContent||'').trim().slice(0,100),page_path:location.pathname};['utm_source','utm_medium','utm_campaign'].forEach(function(k){var v=p.get(k);if(v)ctx[k]=v;});gtag('event','whatsapp_click',ctx);}},true);
+
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#1f324c" />
