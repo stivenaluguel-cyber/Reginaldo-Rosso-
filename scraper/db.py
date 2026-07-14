@@ -447,13 +447,18 @@ def upsert_imovel(data: dict):
     ]
     values = [psycopg2.extras.Json(data.get(c)) if c == 'fotos_urls' and data.get(c) is not None else data.get(c) for c in cols]
     placeholders = ', '.join(['%s'] * len(cols))
-    # Preserva campos CSV existentes se EXCLUDED for NULL
-    preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade'}
-    update_set = ', '.join(
-        [f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})" if c in preserve_cols
-         else f"{c}=EXCLUDED.{c}"
-         for c in cols if c != 'numero_imovel']
-    )
+    # Preserva campos CSV/scrape existentes se EXCLUDED for NULL ou vazio.
+    # descricao entrou aqui porque um scrape que recebe pagina vazia grava
+    # descricao='' (string vazia, nao NULL), o que sobrescrevia descricao
+    # boa ja gravada antes - NULLIF trata '' como "sem valor" tambem.
+    preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao'}
+    def _set_expr(c):
+        if c == 'descricao':
+            return f"{c}=COALESCE(NULLIF(EXCLUDED.{c}, ''), imoveis_caixa.{c})"
+        if c in preserve_cols:
+            return f"{c}=COALESCE(EXCLUDED.{c}, imoveis_caixa.{c})"
+        return f"{c}=EXCLUDED.{c}"
+    update_set = ', '.join(_set_expr(c) for c in cols if c != 'numero_imovel')
     sql = f"""
         INSERT INTO imoveis_caixa ({', '.join(cols)})
         VALUES ({placeholders})

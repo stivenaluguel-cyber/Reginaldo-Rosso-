@@ -464,6 +464,28 @@ async def _extrair_dados_playwright(page, numero_imovel):
         # === Galeria de fotos (zero requests extras,  le o DOM ja carregado) ===
         dados["fotos_urls"] = await _extrair_fotos_galeria(page, numero_imovel)
 
+        # Guarda anti-degradacao: se nada substantivo foi extraido (pagina
+        # carregou >=300 chars mas sem o conteudo real - ex.: placeholder
+        # de indisponibilidade momentanea), descricao='', fotos_urls=[] e
+        # aceita_fgts/aceita_financiamento=False NAO sao sinal real, sao
+        # ausencia de sinal. Gravar isso sobrescreve dados bons ja existentes
+        # (upsert_imovel so preserva NULL, nao '' /[]/False) e removia o
+        # imovel da fila de retry (que so testa IS NULL). Descarta esses
+        # campos como inconclusivos - texto_detalhe_bruto fica p/ diagnostico.
+        _tem_sinal = any([
+            dados.get("area_total"), dados.get("area_privativa"),
+            dados.get("debito_tributos") is not None,
+            dados.get("debito_condominio") is not None,
+            dados.get("ocupacao"), dados.get("quartos") is not None,
+            dados.get("data_fim"),
+        ])
+        if not dados.get("descricao") and not dados.get("fotos_urls") and not _tem_sinal:
+            logger.warning(f"[diag {numero_imovel}] extracao inconclusiva (sem sinal real) - descarta campos vazios, preserva dados existentes")
+            for campo in ("descricao", "fotos_urls", "aceita_fgts", "aceita_financiamento",
+                          "area", "area_total", "area_privativa",
+                          "debito_tributos", "debito_condominio", "ocupacao"):
+                dados.pop(campo, None)
+
     except Exception as e:
         logger.warning(f"[diag {numero_imovel}] erro extracao playwright: {e}")
 
