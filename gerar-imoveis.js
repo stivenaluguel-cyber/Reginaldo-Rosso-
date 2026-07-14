@@ -400,7 +400,9 @@ return `<!doctype html>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net https://www.googletagmanager.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://venda-imoveis.caixa.gov.br https://*.facebook.com https://unpkg.com https://*.tile.openstreetmap.org; connect-src 'self' https://*.facebook.com https://*.facebook.net https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.doubleclick.net https://*.googleadservices.com https://api.web3forms.com https://xpkznaqgctfkoonqpcye.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; object-src 'none'">
 <script async src="https://www.googletagmanager.com/gtag/js?id=${GA}"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');</script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');
+document.addEventListener('click',function(ev){var a=ev.target.closest('a[href*="wa.me/"],a[href*="api.whatsapp.com/"]');if(a&&window.gtag){gtag('event','whatsapp_click',{link_text:(a.textContent||'').trim().slice(0,100),item_id:'${im.id}',cidade:${JSON.stringify(cidade)},uf:'${im.uf}',page_type:'imovel_encerrado'});}},true);
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f324c">
 <title>${esc(titulo)} - Encerrado | Reginaldo Rosso</title>
@@ -542,7 +544,9 @@ return `<!doctype html>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net https://www.googletagmanager.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://venda-imoveis.caixa.gov.br https://*.facebook.com https://unpkg.com https://*.tile.openstreetmap.org; connect-src 'self' https://*.facebook.com https://*.facebook.net https://*.google.com https://*.google-analytics.com https://*.googletagmanager.com https://*.doubleclick.net https://*.googleadservices.com https://api.web3forms.com https://xpkznaqgctfkoonqpcye.supabase.co https://nominatim.openstreetmap.org; base-uri 'self'; object-src 'none'">
 <script async src="https://www.googletagmanager.com/gtag/js?id=${GA}"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');</script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA}');
+document.addEventListener('click',function(ev){var a=ev.target.closest('a[href*="wa.me/"],a[href*="api.whatsapp.com/"]');if(a&&window.gtag){gtag('event','whatsapp_click',{link_text:(a.textContent||'').trim().slice(0,100),cidade:${JSON.stringify(cidade)},uf:'${uf}',page_type:'hub_cidade'});}},true);
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1f324c">
 <title>${esc(titleStr)}</title>
@@ -951,6 +955,7 @@ hasFim
 '});',
 'if(res.status===201||res.status===200){',
 'showOk("\u2705 Prontinho! Voc\u00EA vai receber alertas em "+email+".");',
+'if(window.gtag){gtag("event","generate_lead",{method:"alerta_leilao",item_id:"' + i.id + '",cidade:' + JSON.stringify(cidade) + ',uf:"' + i.uf + '"});}',
 '}else if(res.status===409){',
 'showErr("Voc\u00EA j\u00E1 est\u00E1 inscrito neste im\u00F3vel.");',
 '}else{',
@@ -1072,12 +1077,18 @@ io.observe(pb);
 <script>
 document.getElementById('sh').addEventListener('click',async function(){
 const url=location.href, t=${JSON.stringify(titulo+" - "+brl(i.preco))};
-const txt=t+"\nImóvel da Caixa com Reginaldo Rosso:\n"+url;
+const txt=t+"\\nImóvel da Caixa com Reginaldo Rosso:\\n"+url;
 if(window.gtag)gtag('event','share',{item_id:'${i.id}'});
 try{ if(navigator.share){ await navigator.share({title:t,text:txt,url}); return; } }catch(e){ return; }
 try{ await navigator.clipboard.writeText(txt); this.textContent='\u2713 Link copiado!'; setTimeout(()=>{this.textContent='\u{1F517} Compartilhar';},2000);}catch(e){ window.prompt('Copie o link:',url); }
 });
 if(window.gtag)gtag('event','view_item',{item_id:'${i.id}',item_name:${JSON.stringify(cidade+"/"+i.uf)}});
+document.addEventListener('click',function(ev){
+var roi=ev.target.closest('.roi-btn');
+if(roi&&window.gtag){gtag('event','select_content',{content_type:'calcular_roi',item_id:'${i.id}',cidade:${JSON.stringify(cidade)},uf:'${i.uf}'});return;}
+var a=ev.target.closest('a[href*="wa.me/"],a[href*="api.whatsapp.com/"]');
+if(a&&window.gtag){gtag('event','whatsapp_click',{link_text:(a.textContent||'').trim().slice(0,100),item_id:'${i.id}',cidade:${JSON.stringify(cidade)},uf:'${i.uf}',page_type:'imovel'});}
+},true);
 </script>
 </body>
 </html>`;
