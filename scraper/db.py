@@ -451,7 +451,13 @@ def upsert_imovel(data: dict):
     # descricao entrou aqui porque um scrape que recebe pagina vazia grava
     # descricao='' (string vazia, nao NULL), o que sobrescrevia descricao
     # boa ja gravada antes - NULLIF trata '' como "sem valor" tambem.
-    preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao'}
+    # data_fim entrou aqui pro vigia-lances (re-raspa Venda Online repetidas
+    # vezes por dia): _extrair_dados_playwright so seta a chave data_fim no
+    # dict quando ACHA algo (parse_data_fim ou parse_tempo_restante) - se um
+    # re-scrape falhar em achar o widget dessa vez (timing, WAF parcial),
+    # EXCLUDED.data_fim vem NULL, e sem COALESCE aqui isso apagava um
+    # data_fim bom ja gravado numa tentativa anterior.
+    preserve_cols = {'uf', 'cidade', 'bairro', 'endereco', 'preco_avaliacao', 'preco_minimo', 'modalidade', 'descricao', 'data_fim'}
     # preco_avaliacao/preco_minimo: ordem do COALESCE INVERTIDA em relacao
     # aos outros preserve_cols - aqui o valor EXISTENTE vence, EXCLUDED so
     # preenche lacuna (existente NULL). Motivo: pipeline.py roda etapa1

@@ -1,0 +1,77 @@
+name: Vigia Lances - Reta Final
+
+# CAMADA 2 do vigia-lances (desenho em 2 camadas, aprovado). Roda a
+# cada 30 min, janela 8h-21h BRT. So imoveis Venda Online com data_fim
+# nas proximas 4 horas - deteccao de prorrogacao (lance de ultima hora
+# estende o prazo na Caixa) e encerramento antecipado. Maximo 10/run,
+# encerramento so por sinal explicito (fluxo normal do reconciliar).
+
+on:
+  schedule:
+    # 8h-20h30 BRT = 11h-23h30 UTC, de 30 em 30 min
+    - cron: '0,30 11-23 * * *'
+    # 21h BRT = 00h UTC (do dia seguinte em UTC, ainda dentro do dia BRT)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Mesmo grupo de concorrencia do resto do scraper - serializa, nao
+# corre por cima de outra raspagem em andamento (inclusive a camada 1).
+concurrency:
+  group: scraper-caixa
+  cancel-in-progress: false
+
+jobs:
+  reta-final:
+    name: Reta final - prorrogacao/encerramento
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: Dependencias Python
+        run: cd scraper && pip install -r requirements.txt
+
+      - name: Playwright
+        run: |
+          playwright install chromium
+          playwright install-deps chromium
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Dependencias Node
+        run: npm install pg --no-save
+
+      - name: Rodar reta final
+        id: reta
+        run: cd scraper && python vigia_lances_reta_final.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PYTHONUNBUFFERED: "1"
+
+      - name: Gerar paginas HTML (so se houve mudanca)
+        if: steps.reta.outputs.mudancas == 'true'
+        run: node gerar-imoveis.js
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Publicar paginas (so se houve mudanca)
+        if: steps.reta.outputs.mudancas == 'true'
+        run: |
+          git config user.name "robo-vigia-lances"
+          git config user.email "robo@users.noreply.github.com"
+          git add -A
+          git diff --cached --stat
+          git commit -m "vigia-lances (reta final): prorrogacao/encerramento detectado ($(date +%F\ %H:%M\ UTC))" || echo "Sem mudancas."
+          git push
