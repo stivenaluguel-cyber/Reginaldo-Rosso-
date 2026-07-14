@@ -519,13 +519,21 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
       upsert so roda para IDs novos, o CSV nunca reparava esses NULLs. Aqui
       reaplicamos os campos de localizacao do CSV quando o valor no banco
       estiver NULL/vazio (COALESCE preserva o que ja existe).
-    - preco_minimo, preco_avaliacao, modalidade: MESMO padrao de reparo
-      (achado da auditoria de SEO). Faltavam aqui - upsert so roda para
-      IDs novos, entao um preco/modalidade NULL na ingestao inicial (por
-      qualquer motivo pontual) nunca era reparado por reraspagens
-      seguintes, mesmo com o CSV trazendo o valor correto a cada ciclo.
-      Investigacao confirmou 100% dos casos com CSV atual disponivel:
-      valor sempre presente e parseavel no CSV, so nao chegava ao banco.
+    - preco_minimo, preco_avaliacao, modalidade: CSV E FONTE AUTORITATIVA
+      (causa raiz da divergencia de preco entre o site e o CSV oficial -
+      dry-run confirmou 28.3% dos imoveis com preco/modalidade
+      divergente, nao so os poucos casos de NULL/0 tratados antes). O
+      upsert normal so roda para IDs novos, entao um imovel que ja
+      existe no banco NUNCA tinha o preco atualizado por reraspagens
+      seguintes do CSV, mesmo com reducao real de preco. Agora o CSV
+      sempre vence quando: (a) o valor do CSV e > 0 (nunca degrada um
+      preco valido com 0/NULL de um CSV ruim); (b) para os campos
+      numericos, a diferenca e > 0.005 (tolerancia contra ruido de
+      parse float, evita disparar o trigger preco_alterado por ruido);
+      (c) para modalidade, o valor do CSV e uma string nao-vazia.
+      Efeito esperado e desejado: o trigger trigger_historico_imoveis
+      (evento preco_alterado) passa a disparar em reducoes reais,
+      alimentando o badge "BAIXOU" que antes quase nunca acionava.
     """
     if not lista:
         return 0
@@ -564,9 +572,13 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         bairro = COALESCE(NULLIF(t.bairro, ''), v.bairro),
                         endereco = COALESCE(NULLIF(t.endereco, ''), v.endereco),
                         uf = COALESCE(NULLIF(t.uf, ''), v.uf),
-                        preco_minimo = COALESCE(NULLIF(t.preco_minimo, 0), v.preco_minimo),
-                        preco_avaliacao = COALESCE(NULLIF(t.preco_avaliacao, 0), v.preco_avaliacao),
-                        modalidade = COALESCE(NULLIF(t.modalidade, ''), v.modalidade),
+                        preco_minimo = CASE
+                            WHEN v.preco_minimo > 0 AND (t.preco_minimo IS NULL OR ABS(v.preco_minimo - t.preco_minimo) > 0.005)
+                            THEN v.preco_minimo ELSE t.preco_minimo END,
+                        preco_avaliacao = CASE
+                            WHEN v.preco_avaliacao > 0 AND (t.preco_avaliacao IS NULL OR ABS(v.preco_avaliacao - t.preco_avaliacao) > 0.005)
+                            THEN v.preco_avaliacao ELSE t.preco_avaliacao END,
+                        modalidade = COALESCE(NULLIF(v.modalidade, ''), t.modalidade),
                         updated_at = NOW()
                     FROM (VALUES %s) AS v(numero_imovel, tipo_real, area, aceita_financiamento, descricao, cidade, bairro, endereco, uf, preco_minimo, preco_avaliacao, modalidade)
                     WHERE t.numero_imovel = v.numero_imovel
@@ -577,9 +589,9 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                          OR t.bairro IS NULL OR t.bairro = ''
                          OR t.endereco IS NULL OR t.endereco = ''
                          OR t.uf IS NULL OR t.uf = ''
-                         OR t.preco_minimo IS NULL OR t.preco_minimo <= 0
-                         OR t.preco_avaliacao IS NULL OR t.preco_avaliacao <= 0
-                         OR t.modalidade IS NULL OR t.modalidade = '')
+                         OR (v.preco_minimo > 0 AND (t.preco_minimo IS NULL OR ABS(v.preco_minimo - t.preco_minimo) > 0.005))
+                         OR (v.preco_avaliacao > 0 AND (t.preco_avaliacao IS NULL OR ABS(v.preco_avaliacao - t.preco_avaliacao) > 0.005))
+                         OR (v.modalidade IS NOT NULL AND v.modalidade <> '' AND v.modalidade IS DISTINCT FROM t.modalidade))
                 """
                 extras.execute_values(
                     cur, sql, rows,
