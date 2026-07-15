@@ -930,13 +930,18 @@ ${badgeFlagHTML(i)}
       };
       function expandir(){ secFiltros.classList.remove("recolhida"); compact.classList.remove("visivel"); compact.setAttribute("aria-expanded","true"); }
       function recolher(){ secFiltros.classList.add("recolhida"); compact.classList.add("visivel"); compact.setAttribute("aria-expanded","false"); }
-      compact.addEventListener("click", expandir);
-      compact.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" ") expandir(); });
       let recolhido=false;
+      compact.addEventListener("click", ()=>{ expandir(); recolhido=false; });
+      compact.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ expandir(); recolhido=false; } });
+      // capturado UMA VEZ antes de qualquer scroll: .filters e sticky, e assim
+      // que "gruda" no topo o offsetTop passa a refletir scrollY+top (nao mais
+      // a posicao estatica), o que tornaria o gatilho de colapso auto-referente
+      // e impossivel de satisfazer se recalculado a cada tick.
+      const limite = secFiltros.offsetTop + secFiltros.offsetHeight + 40;
+      const topoFiltros = secFiltros.offsetTop;
       window.addEventListener("scroll", ()=>{
-        const limite = secFiltros.offsetTop + secFiltros.offsetHeight + 40;
         if(window.scrollY > limite && !recolhido){ recolher(); recolhido=true; window.atualizarCompact(); }
-        else if(window.scrollY <= secFiltros.offsetTop && recolhido){ expandir(); recolhido=false; }
+        else if(window.scrollY <= topoFiltros && recolhido){ expandir(); recolhido=false; }
       }, {passive:true});
     })();
 
