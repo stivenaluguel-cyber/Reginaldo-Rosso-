@@ -43,6 +43,7 @@ from s3_uploader import upload_bytes
 from db import upsert_imovel, set_matricula_url  # noqa: F401
 from financiamento_heuristica import eh_financiavel
 from data_fim_heuristica import parse_data_fim, parse_tempo_restante
+from debito_heuristica import classificar_debito
 
 logger = logging.getLogger(__name__)
 
@@ -187,47 +188,12 @@ def _parse_valor_monetario(full_text, *labels):
 LABELS_PRECO_MINIMO = ("valor minimo de venda", "valor mínimo de venda", "preco minimo", "preço mínimo")
 LABELS_PRECO_AVALIACAO = ("valor de avaliacao", "valor de avaliação", "valor da avaliacao", "valor da avaliação")
 
-def _extrair_secao_regras(full_text):
-    """Retorna a secao normalizada de "regras para pagamento das despesas"."""
-    nt = _norm(full_text)
-    idx = nt.find("regras para pagamento")
-    if idx < 0:
-        return ""
-    return nt[idx:idx + 800]
-
-def _classificar_despesa(trecho):
-    """Classifica um trecho de despesa (condominio/tributos) em rotulo padronizado."""
-    t = _norm(trecho)
-    if not t:
-        return None
-    comprador = "responsabilidade do comprador" in t or "arrematante paga" in t or "responsabilidade do arrematante" in t
-    caixa = "responsabilidade da caixa" in t or "caixa paga integralmente" in t or "sob responsabilidade da caixa" in t
-    if comprador and "10%" in t:
-        return "Arrematante paga ate 10%"
-    if comprador:
-        return "Arrematante paga"
-    if caixa:
-        return "Caixa paga"
-    if ("nao ha" in t or "nao existe" in t or "quitado" in t or "sem debito" in t):
-        return "Sem debito"
-    return None
-
-def _parse_debito_secao(full_text, *labels):
-    """Extrai o rotulo do campo (condominio/tributos) da secao de regras da Caixa."""
-    secao = _extrair_secao_regras(full_text)
-    base = secao if secao else _norm(full_text)
-    if not base:
-        return None
-    for label in labels:
-        nl = _norm(label)
-        idx = base.find(nl)
-        if idx < 0:
-            continue
-        trecho = base[idx + len(nl): idx + len(nl) + 260]
-        rot = _classificar_despesa(trecho)
-        if rot:
-            return rot
-    return None
+# _extrair_secao_regras / _classificar_despesa / _parse_debito_secao:
+# delegadas para debito_heuristica.classificar_debito (import no topo do
+# arquivo) - antes esta versao nao aceitava "caixa paga" solto (sem
+# "integralmente") como parser_caixa.py aceitava. Ver debito_heuristica.py
+# para o historico completo da divergencia.
+_parse_debito_secao = classificar_debito
 
 def _parse_ocupacao(full_text):
     """Detecta se o imovel esta ocupado ou desocupado."""

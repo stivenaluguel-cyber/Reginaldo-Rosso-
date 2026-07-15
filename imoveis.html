@@ -415,6 +415,7 @@ const PLACEHOLDER_SVG_CARD = `<svg xmlns="http://www.w3.org/2000/svg" width="400
 const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(PLACEHOLDER_SVG_CARD);
   const fotoURL = id => `https://venda-imoveis.caixa.gov.br/fotos/F${String(id).padStart(13,'0')}21.jpg`;
 </script>
+<script src="debito-parser.js"></script>
 <script>
   const BRL = v => v==null ? "—" : v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
   const norm = s => (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
@@ -489,9 +490,6 @@ const PLACEHOLDER_CARD_URL = "data:image/svg+xml;charset=utf-8," + encodeURIComp
   // por nao terem mais nenhuma chamada (achado da auditoria de manutencao,
   // confirmado por grep antes de remover cada uma).
     async function carregarJSON(arq){return fetch(arq,{cache:"no-store"}).then(r=>r.ok?r.json():[]).catch(()=>[]);}
-
-  function _parseTrib(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('tributo');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if((sec.includes('inferior a 10')||sec.includes('quando o debito for inferior'))&&(sec.includes('superior a 10')||sec.includes('caixa paga integralmente quando')))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
-function _parseCond(d){if(!d)return null;const sv=d.toLowerCase();const iv=sv.indexOf('condomin');if(iv<0)return null;const sec=sv.substring(iv,Math.min(sv.length,iv+500));if(sec.includes('ate o limite de 10%')||sec.includes('valor que exceder')||sec.includes('10% em relacao'))return'Caixa paga acima de 10%';if(sec.includes('caixa paga integralmente')||sec.includes('caixa paga'))return'Caixa Paga';if(sec.includes('responsabilidade do comprador')||sec.includes('arrematante paga'))return'Arrematante Paga';return null;}
 
 // Selo de frescor honesto sobre "quao ao vivo" o site e: granularidade de
 // minuto pras primeiras horas (nao trava em "hoje" o dia inteiro), dias/

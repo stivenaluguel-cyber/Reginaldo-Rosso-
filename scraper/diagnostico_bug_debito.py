@@ -24,7 +24,7 @@ diagnostico de contagem, conforme solicitado.
 import sys
 
 import db
-from parser_caixa import _norm, _extrair_secao
+from debito_heuristica import _norm, _extrair_janela_palavra_chave as _extrair_secao
 
 
 # --- logica ANTIGA (buggy, pre-hotfix commit b1e8a7c53b) - copia exata ---
@@ -49,9 +49,10 @@ def _parse_debito_antigo(secao):
 
 
 # --- logica NOVA (corrigida, HEAD atual) - importada ao vivo do modulo ---
+# unificado debito_heuristica.py (antes vivia em parser_caixa.py::_parse_debito).
 def _parse_debito_novo(secao):
-    from parser_caixa import _parse_debito
-    return _parse_debito(secao)
+    from debito_heuristica import _classificar
+    return _classificar(secao)
 
 
 def _classificar_ambos(texto_bruto, *labels):

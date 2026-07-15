@@ -1,13 +1,15 @@
 """
-Testes de scraper/parser_caixa.py (achados #2 e #3 do lote de testes).
+Testes de scraper/parser_caixa.py (achado #2 do lote de testes).
 
 Cobre:
   - parse_descricao_csv: classificacao de tipo_real a partir da coluna
     Descricao do CSV, incluindo um teste de PRECEDENCIA da lista _TIPOS_CSV
     (ordem importa - mais especifico primeiro).
-  - _extrair_secao / _parse_debito: classificacao de debito de tributos e
-    condominio a partir da secao "regras para pagamento das despesas" do
-    texto de detalhe.
+
+Cobertura de classificacao de debito de tributos/condominio (antigo achado
+#3) foi migrada para tests/test_debito_heuristica.py, que testa a funcao
+compartilhada com etapa2_scraper.py (debito_heuristica.classificar_debito)
+em vez das antigas funcoes privadas locais _extrair_secao/_parse_debito.
 """
 import parser_caixa
 
@@ -52,74 +54,3 @@ def test_precedencia_tipos_csv_terreno_antes_de_lote_mesmo_label():
 def test_parse_descricao_csv_texto_vazio():
     assert parser_caixa.parse_descricao_csv("") == {}
     assert parser_caixa.parse_descricao_csv(None) == {}
-
-
-# ---------------------------------------------------------------------------
-# _extrair_secao / _parse_debito (achado #3)
-# ---------------------------------------------------------------------------
-
-def _norm(t):
-    return parser_caixa._norm(t)
-
-
-def test_extrair_secao_encontra_janela_ao_redor_da_palavra_chave():
-    texto = "x" * 50 + " tributo: caixa paga acima de 10% do valor " + "y" * 400
-    t_norm = _norm(texto)
-    secao = parser_caixa._extrair_secao(t_norm, "tributo")
-    assert "tributo" in secao
-    assert "caixa paga acima de 10%" in secao
-
-
-def test_extrair_secao_sem_palavra_chave_retorna_vazio():
-    assert parser_caixa._extrair_secao(_norm("nenhuma secao relevante aqui"), "tributo") == ""
-
-
-def test_parse_debito_caixa_paga_acima_de_10_por_cento():
-    secao = _norm("Tributos: a Caixa paga valores acima de 10% do valor de avaliacao")
-    assert parser_caixa._parse_debito(secao) == "Caixa paga acima de 10%"
-
-
-# Regressao do bug HOTFIX (achado desta bateria de testes): _parse_debito
-# tinha `("caixa" in s or "caixa paga")` - faltava "in s" no segundo
-# operando, entao "caixa paga" (string literal nao-vazia) era sempre
-# truthy e a condicao colapsava para so checar 10%/limite/acima/exceder,
-# ignorando se o texto de fato mencionava "caixa". Fix: `"caixa paga" in s`.
-def test_parse_debito_arrematante_paga_ate_10_por_cento():
-    secao = _norm("Condominio: o arrematante paga até 10% do valor, excedente por conta da Caixa")
-    assert parser_caixa._parse_debito(secao) == "Arrematante paga ate 10%"
-
-
-def test_parse_debito_caixa_paga_integralmente():
-    secao = _norm("Tributos sob responsabilidade da Caixa, que paga integralmente os debitos existentes")
-    assert parser_caixa._parse_debito(secao) == "Caixa Paga"
-
-
-def test_parse_debito_secao_vazia_retorna_none():
-    assert parser_caixa._parse_debito("") is None
-
-
-# Regressao do bug HOTFIX (achado desta bateria de testes): a clausula
-# `"integralmente" in s` sozinha nao checava de quem era a
-# responsabilidade - "comprador paga integralmente" caia neste branch (que
-# vem ANTES do branch de arrematante) e retornava "Caixa Paga", o oposto
-# do texto. Fix: exige tambem "caixa" in s (mesmo padrao de deteccao de
-# sujeito usado nas outras clausulas da funcao).
-def test_parse_debito_arrematante_paga_integralmente_nao_e_marcado_como_caixa():
-    secao = _norm("Condominio: responsabilidade do comprador, que paga integralmente os debitos")
-    assert parser_caixa._parse_debito(secao) == "Arrematante Paga"
-
-
-def test_parse_detalhe_classifica_tributos_e_condominio_independentemente():
-    """Integracao: tributos e condominio no MESMO texto, com classificacoes
-    DIFERENTES, nao podem se contaminar (cada um deve ler so a sua propria
-    secao via _extrair_secao). Evita deliberadamente as palavras
-    10%/limite/acima/exceder no trecho de condominio para nao exercitar o
-    bug ja isolado em test_parse_debito_arrematante_paga_ate_10_por_cento."""
-    texto = (
-        "Regras para pagamento das despesas: "
-        "Tributos: a Caixa paga valores acima de 10% do valor de avaliacao. "
-        "Condominio: responsabilidade do comprador, que paga os valores devidos."
-    )
-    r = parser_caixa.parse_detalhe(texto)
-    assert r["debito_tributos"] == "Caixa paga acima de 10%"
-    assert r["debito_condominio"] == "Arrematante Paga"

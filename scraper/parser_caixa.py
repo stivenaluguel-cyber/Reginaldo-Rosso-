@@ -15,6 +15,7 @@ import unicodedata
 
 from financiamento_heuristica import eh_financiavel
 from data_fim_heuristica import parse_data_fim as _parse_data_fim
+from debito_heuristica import classificar_debito
 
 
 # ---------------------------------------------------------------------------
@@ -198,15 +199,17 @@ def parse_detalhe(texto: str) -> dict:
         if fin is not None:
             result["financiamento"] = fin
 
-    # ---- DEBITO TRIBUTOS ----
-    deb_t = _extrair_secao(t_norm, "tributo", "iptu")
+    # ---- DEBITO TRIBUTOS / CONDOMINIO ----
+    # Heuristica compartilhada com etapa2_scraper.py (debito_heuristica.py) -
+    # antes cada modulo tinha sua propria extracao/classificacao, e elas
+    # haviam divergido (casing dos rotulos, caso "Sem debito" ausente aqui).
+    deb_t = classificar_debito(texto, "tributo", "iptu")
     if deb_t:
-        result["debito_tributos"] = _parse_debito(deb_t)
+        result["debito_tributos"] = deb_t
 
-    # ---- DEBITO CONDOMINIO ----
-    deb_c = _extrair_secao(t_norm, "condominio", "condomin")
+    deb_c = classificar_debito(texto, "condominio", "condomin")
     if deb_c:
-        result["debito_condominio"] = _parse_debito(deb_c)
+        result["debito_condominio"] = deb_c
 
     # ---- QUARTOS ----
     quartos = _parse_quartos(t_norm)
@@ -227,53 +230,11 @@ def parse_detalhe(texto: str) -> dict:
     return result
 
 
-def _extrair_secao(t_norm: str, *palavras_chave) -> str:
-    """Extrai um trecho de ~300 chars ao redor da primeira palavra-chave encontrada."""
-    for kw in palavras_chave:
-        idx = t_norm.find(kw)
-        if idx >= 0:
-            return t_norm[max(0, idx - 20):idx + 300]
-    return ""
-
-
-def _parse_debito(secao: str) -> str | None:
-    """
-    Classifica o texto de uma secao de debito (tributos ou condominio).
-    Logica: detecta qual parte paga e se ha limite de 10%.
-    """
-    if not secao:
-        return None
-    s = secao  # ja normalizado (sem acentos, lower)
-
-    # "caixa paga acima de 10%" / "caixa paga valores acima"
-    # bug corrigido: o 2o operando do or era a string literal "caixa paga"
-    # (sempre truthy, faltava "in s"), entao a condicao virava so o
-    # segundo bloco (10%/limite/acima/...), classificando qualquer secao
-    # de ARREMATANTE que citasse um percentual/limite como "Caixa paga".
-    if "caixa paga" in s and (
-        "10%" in s or "limite" in s or "acima" in s or "exceder" in s
-        or "ate 10" in s or "ate o limite" in s
-    ):
-        return "Caixa paga acima de 10%"
-
-    # "caixa paga integralmente" / "sob responsabilidade da caixa"
-    # bug corrigido: "integralmente" in s sozinho nao verificava de QUEM
-    # e a responsabilidade - "comprador paga integralmente" tambem batia
-    # aqui. Agora exige o mesmo padrao de deteccao de sujeito (presenca
-    # de "caixa") usado nas outras clausulas da funcao.
-    if ("caixa paga" in s or "responsabilidade da caixa" in s
-            or ("integralmente" in s and "caixa" in s)):
-        return "Caixa Paga"
-
-    # "arrematante paga" / "sob responsabilidade do comprador"
-    if ("arrematante" in s or "comprador" in s
-            or "responsabilidade do comprador" in s):
-        # sub-caso: "arrematante paga ate 10% / acima paga a caixa"
-        if "10%" in s and ("ate" in s or "limite" in s):
-            return "Arrematante paga ate 10%"
-        return "Arrematante Paga"
-
-    return None
+# _extrair_secao / _parse_debito: delegadas para
+# debito_heuristica.classificar_debito (import no topo do arquivo) - antes
+# esta versao nao reconhecia o caso "Sem debito" (so em etapa2_scraper.py) e
+# usava casing diferente de rotulos ("Caixa Paga" vs "Caixa paga"). Ver
+# debito_heuristica.py para o historico completo da divergencia.
 
 
 # _parse_data_fim: delegada para data_fim_heuristica.parse_data_fim (topo do
