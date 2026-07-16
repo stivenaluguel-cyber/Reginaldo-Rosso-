@@ -1383,6 +1383,8 @@ const artigos = [
 // registradas aqui, entao nunca apareceram no sitemap.xml auto-gerado.
 "/corretor-credenciado-caixa-joinville.html",
 "/corretor-credenciado-caixa-pelotas.html",
+"/corretor-credenciado-caixa-gravatai.html",
+"/corretor-credenciado-caixa-santa-maria.html",
 "/custos-para-arrematar-imovel-caixa.html",
 "/diferenca-primeiro-segundo-leilao-caixa.html",
 "/financiamento-imovel-leilao-caixa.html",
