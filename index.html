@@ -80,17 +80,34 @@
   .hero h1{font-size:2.35rem;font-weight:800;color:var(--navy);margin:14px 0 6px;letter-spacing:.01em}
   .hero h1 span{color:var(--gold)}
   .hero .lead{color:var(--ink2);font-size:1.06rem;max-width:680px;margin:0 auto 8px;font-weight:500}
-  .hero .selo{display:inline-block;margin-top:10px;background:var(--navy);color:var(--cream);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;padding:7px 16px;border-radius:30px;font-weight:600}
 
-  /* busca */
-  .busca{position:relative;max-width:920px;margin:34px auto 0;min-height:75px;background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(31,50,76,.16);padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
-  .busca .f{flex:1;min-width:150px;display:flex;flex-direction:column;text-align:left;padding:8px 12px;border-right:1px solid var(--line)}
+  /* botoes copiar CRECI */
+  .creci-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .creci-btn{display:inline-flex;align-items:center;gap:9px;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:13px 24px;font-family:inherit;font-weight:700;font-size:.92rem;letter-spacing:.03em;cursor:pointer;transition:.2s;min-width:190px;justify-content:center}
+  .creci-btn:hover{background:var(--navy2);transform:translateY(-2px)}
+  .creci-btn.copiado{background:#1e7a4c}
+  .creci-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  .creci-caption{margin-top:12px;color:var(--muted);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+
+  /* tutorial de 3 passos */
+  .tutorial{max-width:860px;margin:38px auto 0;display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+  .tutorial .step{flex:1;min-width:230px;background:#fff;border-radius:14px;padding:22px 20px;box-shadow:0 12px 34px rgba(31,50,76,.12);text-align:left;position:relative}
+  .tutorial .step .num{position:absolute;top:-12px;left:20px;background:var(--gold);color:var(--navy);font-weight:800;font-size:.8rem;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .tutorial .step svg{width:28px;height:28px;fill:none;stroke:var(--navy);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin:6px 0 10px}
+  .tutorial .step h3{font-size:.98rem;color:var(--navy);margin-bottom:6px}
+  .tutorial .step p{font-size:.85rem;color:var(--muted);line-height:1.5}
+  .tutorial-cta{text-align:center;margin-top:24px}
+
+  /* busca (secundaria) */
+  .busca-transicao{text-align:center;color:var(--muted);font-size:.82rem;font-weight:600;margin:40px auto 10px}
+  .busca{position:relative;max-width:760px;margin:0 auto 0;min-height:60px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(31,50,76,.10);padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:stretch}
+  .busca .f{flex:1;min-width:140px;display:flex;flex-direction:column;text-align:left;padding:6px 10px;border-right:1px solid var(--line)}
   .busca .f:last-of-type{border-right:0}
-  .busca label{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:3px}
-  .busca select,.busca input{border:0;font-family:inherit;font-size:.95rem;color:var(--ink);font-weight:600;background:none;outline:none;cursor:pointer}
-  .busca .go{flex:0 0 auto;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:0 26px;font-family:inherit;font-weight:700;font-size:.95rem;letter-spacing:.05em;cursor:pointer;display:flex;align-items:center;gap:9px;transition:.2s}
-  .busca .go:hover{background:var(--gold);color:var(--navy)}
-  .busca .go svg{width:17px;height:17px;fill:currentColor}
+  .busca label{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:2px}
+  .busca select,.busca input{border:0;font-family:inherit;font-size:.85rem;color:var(--ink);font-weight:600;background:none;outline:none;cursor:pointer}
+  .busca .go{flex:0 0 auto;background:transparent;color:var(--navy);border:1.5px solid var(--navy);border-radius:8px;padding:0 18px;font-family:inherit;font-weight:700;font-size:.82rem;letter-spacing:.03em;cursor:pointer;display:flex;align-items:center;gap:7px;transition:.2s}
+  .busca .go:hover{background:var(--navy);color:#fff}
+  .busca .go svg{width:14px;height:14px;fill:currentColor}
 
   /* ===== SECOES ===== */
   section{padding:66px 0}
@@ -331,8 +348,37 @@ gtag('config','AW-872430371');
   <svg class="logo-xl" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 23h5v5" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="42" width="4" height="8" fill="#c6a052"/><rect x="26" y="38" width="4" height="12" fill="#c6a052"/><rect x="34" y="40" width="4" height="10" fill="#c6a052"/></svg>
   <h1>Arremate Imóveis da Caixa com <span>Desconto</span> e Mais Segurança na Decisão</h1>
   <p class="lead">Assessoria 100% gratuita de um corretor credenciado Caixa (CRECI/RS 28565J · CRECI/SC 8152J). Você recebe o Relatório Confidencial do Arrematante e arremata sem o risco de comprar dívidas ocultas ou um imóvel impossível de desocupar.</p>
-  <div class="selo">Credenciado Caixa · CRECI/RS 28565J · CRECI/SC 8152J</div>
+  <div class="creci-actions">
+    <button type="button" class="creci-btn" id="copyCreciRS" data-creci="28565J" data-estado="RS"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 12l2 2 4-4"/></svg><span>Copiar CRECI RS</span></button>
+    <button type="button" class="creci-btn" id="copyCreciSC" data-creci="8152J" data-estado="SC"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 12l2 2 4-4"/></svg><span>Copiar CRECI SC</span></button>
+  </div>
+  <p class="creci-caption">CRECI/RS 28565J · CRECI/SC 8152J</p>
 
+  <div class="tutorial">
+    <div class="step">
+      <div class="num">1</div>
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <h3>Escolha o imóvel</h3>
+      <p>Encontre o imóvel da Caixa que você quer arrematar, no leilão ou na venda direta.</p>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="16" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 12h6M9 16h4"/></svg>
+      <h3>Informe o corretor credenciado</h3>
+      <p>Na proposta, indique o corretor credenciado e cole o CRECI copiado acima.</p>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+      <h3>Assessoria gratuita ativada</h3>
+      <p>Você recebe o Relatório Confidencial do Arrematante, sem custo nenhum.</p>
+    </div>
+  </div>
+  <div class="tutorial-cta">
+    <a href="#contato" class="btn btn-gold">Já usei o CRECI, quero meu relatório</a>
+  </div>
+
+  <p class="busca-transicao">Ou explore nosso portal de imóveis</p>
   <div class="busca">
     <div class="f">
       <label for="bEstado">Estado</label>
@@ -639,6 +685,41 @@ function toggleFaq(btn){var item=btn.parentElement;item.classList.toggle('open')
 <script>
   document.getElementById('burger').addEventListener('click',function(){document.getElementById('mobile').classList.toggle('open');});
   document.querySelectorAll('#mobile a').forEach(function(a){a.addEventListener('click',function(){document.getElementById('mobile').classList.remove('open');});});
+
+  // ===== Copiar CRECI (hero) =====
+  function fallbackCopy(txt){
+    var ta=document.createElement('textarea');
+    ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    var ok=false;
+    try{ ok=document.execCommand('copy'); }catch(e){ ok=false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function copyText(txt){
+    return new Promise(function(resolve){
+      var done=false;
+      function finish(ok){ if(done)return; done=true; resolve(ok); }
+      if(navigator.clipboard&&navigator.clipboard.writeText&&document.hasFocus()){
+        navigator.clipboard.writeText(txt).then(function(){finish(true);}).catch(function(){finish(fallbackCopy(txt));});
+        setTimeout(function(){ if(!done) finish(fallbackCopy(txt)); },800);
+      } else {
+        finish(fallbackCopy(txt));
+      }
+    });
+  }
+  document.querySelectorAll('.creci-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var creci=btn.getAttribute('data-creci'), estado=btn.getAttribute('data-estado');
+      var span=btn.querySelector('span'), original=span.textContent;
+      copyText(creci).then(function(ok){
+        span.textContent=ok?'Copiado! ✓':'Não copiou, selecione manualmente';
+        if(ok)btn.classList.add('copiado');
+        setTimeout(function(){ span.textContent=original; btn.classList.remove('copiado'); },2000);
+        if(ok&&window.gtag) gtag('event','creci_copiado',{estado:estado});
+      });
+    });
+  });
 
   // ===== Contexto de origem (UTM + pagina) para eventos GA4 - so parametro do evento, nao persiste em banco =====
   function rrCtx(){
