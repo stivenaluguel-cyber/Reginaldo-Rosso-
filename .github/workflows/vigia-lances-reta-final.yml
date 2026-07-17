@@ -1,16 +1,27 @@
 name: Vigia Lances - Reta Final
 
-# CAMADA 2 do vigia-lances (desenho em 2 camadas, aprovado). Roda a
-# cada 30 min, janela 8h-21h BRT. So imoveis Venda Online com data_fim
-# nas proximas 4 horas - deteccao de prorrogacao (lance de ultima hora
-# estende o prazo na Caixa) e encerramento antecipado. Maximo 10/run,
-# encerramento so por sinal explicito (fluxo normal do reconciliar).
+# CAMADA 2 do vigia-lances (desenho em 2 camadas, aprovado). So imoveis
+# Venda Online com data_fim nas proximas 4 horas - deteccao de
+# prorrogacao (lance de ultima hora estende o prazo na Caixa) e
+# encerramento antecipado. Maximo 10/run, encerramento so por sinal
+# explicito (fluxo normal do reconciliar).
+#
+# CORRIGIDO 2026-07-18: rodava a cada 30min (27 runs/dia) no MESMO
+# grupo de concorrencia do scraper-caixa.yml (que ja tem ~50 runs/dia
+# por auto-encadeamento) e do vigia-novos.yml (deteccao de encerrados,
+# roda so 08h45-11h30 BRT). Resultado medido: vigia-novos teve 5
+# execucoes seguidas CANCELADAS antes de comecar (fila do GitHub
+# Actions nao espera indefinidamente por um run agendado quando a fila
+# esta cheia) — leiloes encerrados pararam de ser detectados por ~27h,
+# imovel vendido continuou publicado como disponivel. Reduzido pra a
+# cada 2h (8 runs/dia) pra devolver prioridade de fila ao vigia-novos,
+# que e mais critico (afeta confianca do usuario em imoveis ja
+# vendidos aparecendo como disponiveis).
 
 on:
   schedule:
-    # 8h-20h30 BRT = 11h-23h30 UTC, de 30 em 30 min
-    - cron: '0,30 11-23 * * *'
-    # 21h BRT = 00h UTC (do dia seguinte em UTC, ainda dentro do dia BRT)
+    # 8h-21h BRT = 11h-00h UTC, de 2 em 2 horas
+    - cron: '0 11-23/2 * * *'
     - cron: '0 0 * * *'
   workflow_dispatch:
 
