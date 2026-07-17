@@ -12,6 +12,10 @@ on:
         description: "Numero do elo da corrente (auto-encadeamento). Nao mexer manualmente."
         required: false
         default: "1"
+      fila_anterior:
+        description: "fila_restante do elo anterior (guarda anti-loop). Nao mexer manualmente."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -87,9 +91,10 @@ jobs:
         run: |
           FILA="${{ steps.pipeline.outputs.fila_restante }}"
           CADEIA="${{ github.event.inputs.cadeia_num }}"
+          FILA_ANT="${{ github.event.inputs.fila_anterior }}"
           if [ -z "$CADEIA" ]; then CADEIA=1; fi
           if [ -z "$FILA" ]; then FILA=0; fi
-          echo "[cadeia] elo=$CADEIA | fila_restante=$FILA | max=$MAX_CADEIA"
+          echo "[cadeia] elo=$CADEIA | fila_restante=$FILA | fila_anterior=${FILA_ANT:-n/a} | max=$MAX_CADEIA"
           if [ "$FILA" -le 0 ]; then
             echo "[cadeia] Fila vazia — corrente encerrada. O cron segue como backup."
             exit 0
@@ -98,8 +103,19 @@ jobs:
             echo "[cadeia] Guarda-corpo: elo $CADEIA >= MAX_CADEIA ($MAX_CADEIA). Nao re-disparando. Cron religa."
             exit 0
           fi
+          # Guarda anti-loop (2026-07-18): se a fila NAO diminuiu em relacao ao
+          # elo anterior, os itens restantes sao incuraveis NESTE ciclo (pagina
+          # sem os dados, ou WAF constante). Sem esta guarda a corrente girava
+          # em circulo ate MAX_CADEIA re-raspando os mesmos itens (observado:
+          # fila travada em 17 pelos elos 7->8->9), saturando o grupo de
+          # concorrencia o dia inteiro e impedindo o vigia-novos de detectar
+          # leiloes encerrados. O cron de 45min re-tenta naturalmente depois.
+          if [ -n "$FILA_ANT" ] && [ "$FILA" -ge "$FILA_ANT" ]; then
+            echo "[cadeia] SEM PROGRESSO: fila $FILA >= anterior $FILA_ANT. Itens incuraveis neste ciclo — corrente encerrada. Cron re-tenta."
+            exit 0
+          fi
           PROX=$((CADEIA + 1))
           echo "[cadeia] Aguardando ~150s (ritmo educado) antes de disparar elo $PROX..."
           sleep 150
           echo "[cadeia] Disparando elo $PROX (fila ainda em $FILA)."
-          gh workflow run scraper-caixa.yml --repo "${{ github.repository }}" --ref main -f cadeia_num="$PROX"
+          gh workflow run scraper-caixa.yml --repo "${{ github.repository }}" --ref main -f cadeia_num="$PROX" -f fila_anterior="$FILA"
