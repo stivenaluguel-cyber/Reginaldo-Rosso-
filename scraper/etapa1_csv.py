@@ -12,11 +12,14 @@ Estrategia multi-camada com 4 abordagens:
 """
 import asyncio
 import io
+import json
 import logging
 import os
 import random
 import subprocess
 import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import httpx
@@ -503,6 +506,29 @@ async def _baixar_csv_estado(context, estado: str) -> Optional[bytes]:
     return await _download_via_fetch_browser(context, estado)
 
 
+PARIDADE_PATH = Path(__file__).parent.parent / "paridade-csv.json"
+
+
+def _persistir_paridade(paridade_ufs: dict):
+    """Merge por UF em paridade-csv.json na raiz do repo. So atualiza as
+    UFs processadas nesta invocacao, preservando as demais (ex.: invocacao
+    so de RS nao apaga os dados do SC). Nunca derruba o pipeline."""
+    if not paridade_ufs:
+        return
+    try:
+        atual = {}
+        if PARIDADE_PATH.exists():
+            try:
+                atual = json.loads(PARIDADE_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                atual = {}
+        atual.update(paridade_ufs)
+        PARIDADE_PATH.write_text(json.dumps(atual, ensure_ascii=False, indent=2), encoding="utf-8")
+        logger.info(f"etapa1: paridade-csv.json atualizado para {list(paridade_ufs.keys())}")
+    except Exception as e:
+        logger.warning(f"etapa1: falha ao persistir paridade-csv.json: {e}")
+
+
 async def _executar() -> dict:
     db.init_db()
     todos_imoveis = []
@@ -608,9 +634,22 @@ async def _executar() -> dict:
     # contra a ultima contagem conhecida NAQUELA UF; se vier abaixo de 80%,
     # nao remove NADA daquela UF (so loga), mesmo que a outra UF esteja ok.
     ids_removidos = set()
+    paridade_ufs = {}
     for _estado in ESTADOS:
         _ids_csv_uf = {im["numero_imovel"] for im in todos_imoveis if im.get("uf") == _estado}
         _ids_banco_uf = db.get_ids_by_uf([_estado])
+        # Paridade CSV-vs-site (para paridade-csv.json): reaproveita os
+        # mesmos sets ja calculados acima, sem custo de rede extra.
+        _faltando_uf = _ids_csv_uf - _ids_banco_uf
+        _sobrando_uf = _ids_banco_uf - _ids_csv_uf
+        paridade_ufs[_estado] = {
+            "atualizado": datetime.now(timezone.utc).isoformat(),
+            "total_csv": len(_ids_csv_uf),
+            "total_banco_disponivel": len(_ids_banco_uf),
+            "faltando_count": len(_faltando_uf),
+            "faltando_ids": sorted(_faltando_uf)[:30],
+            "sobrando_count": len(_sobrando_uf),
+        }
         if not _ids_banco_uf:
             continue
         _limiar = max(10, int(len(_ids_banco_uf) * 0.8))
@@ -619,6 +658,7 @@ async def _executar() -> dict:
             continue
         ids_removidos |= (_ids_banco_uf - _ids_csv_uf)
     ids_novos = ids_csv - ids_banco
+    _persistir_paridade(paridade_ufs)
 
     # Imoveis que voltaram a aparecer no CSV: limpa qualquer suspeita antiga.
     ids_recuperados = ids_banco & ids_csv
