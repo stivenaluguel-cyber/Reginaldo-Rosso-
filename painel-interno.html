@@ -27,6 +27,13 @@ header .badge-priv{background:rgba(198,160,82,.16);border:1px solid rgba(198,160
 .stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:12px;padding:16px 18px}
 .stat b{display:block;font-size:1.7rem;font-weight:800;color:var(--ink)}
 .stat span{font-size:.74rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.paridade-wrap{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.paridade-item{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:.84rem;color:var(--ink2);display:flex;flex-direction:column;gap:2px}
+.paridade-item b{color:var(--ink);font-weight:800;margin-right:4px}
+.paridade-item small{color:var(--muted);font-size:.68rem}
+.paridade-item.alerta{border-color:#b91c1c;background:rgba(185,28,28,.07);color:#b91c1c}
+.paridade-item.alerta b{color:#b91c1c}
+.paridade-item.alerta small{color:#b91c1c}
 .painel-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px}
 .busca{flex:1 1 260px;min-width:220px}
 .busca label{display:block;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin:0 0 5px 2px;font-weight:700}
@@ -94,6 +101,8 @@ footer{background:var(--navy-d);color:#9fb0c0;padding:26px 0;font-size:.8rem;lin
 <div class="stat"><b id="stSaidas">—</b><span>Saíram (7 dias)</span></div>
 </section>
 
+<section class="paridade-wrap" id="paridade-wrap" style="display:none"></section>
+
 <section class="painel-filtros">
 <div class="busca">
 <label for="busca">Buscar (cidade ou código)</label>
@@ -148,6 +157,7 @@ function liberarPainel(){
   document.getElementById("gate").style.display = "none";
   document.getElementById("conteudo").style.display = "block";
   carregar();
+  carregarParidade();
 }
 if(sessionStorage.getItem("painelAuth") === PASSWORD_HASH){
   liberarPainel();
@@ -368,6 +378,43 @@ function carregar(){
   }).catch(function(){
     document.getElementById("corpo").innerHTML = '<tr><td colspan="10"><div class="vazio">Não consegui carregar os dados agora. Atualize a página em instântes.</div></td></tr>';
     document.getElementById("rodape").textContent = "Uso interno — não indexado.";
+  });
+}
+
+// Paridade CSV-vs-site: quantos imoveis o CSV oficial da Caixa lista vs.
+// quantos estao publicados como Disponivel no banco. 1-2 faltando e normal
+// (lag de ate ~1 ciclo do pipeline); o sinal real de problema e faltando_count
+// alto ou o arquivo parado ha muito tempo (pipeline pode estar preso).
+var PARIDADE_LIMIAR_FALTANDO = 15;
+var PARIDADE_LIMIAR_HORAS = 2;
+
+function carregarParidade(){
+  fetch("paridade-csv.json", {cache:"no-store"}).then(function(r){
+    return r.ok ? r.json() : null;
+  }).then(function(data){
+    var wrap = document.getElementById("paridade-wrap");
+    var ufs = data ? Object.keys(data).sort() : [];
+    if(!ufs.length){ wrap.style.display = "none"; return; }
+    var html = "";
+    ufs.forEach(function(uf){
+      var p = data[uf] || {};
+      var d = p.atualizado ? new Date(p.atualizado) : null;
+      var valido = d && !isNaN(d.getTime());
+      var horasAtras = valido ? (Date.now() - d.getTime()) / 3600000 : null;
+      var alerta = !valido || (p.faltando_count || 0) > PARIDADE_LIMIAR_FALTANDO || (horasAtras != null && horasAtras > PARIDADE_LIMIAR_HORAS);
+      var txtHora = valido ? d.toLocaleString("pt-BR") : "sem data";
+      html += '<div class="paridade-item' + (alerta ? ' alerta' : '') + '">';
+      html += '<span><b>' + uf + '</b>: ' + (p.total_banco_disponivel != null ? p.total_banco_disponivel.toLocaleString("pt-BR") : "—") +
+              '/' + (p.total_csv != null ? p.total_csv.toLocaleString("pt-BR") : "—") +
+              ' — ' + (p.faltando_count != null ? p.faltando_count.toLocaleString("pt-BR") : "—") + ' faltando</span>';
+      html += '<small>Calculado ' + txtHora + '</small>';
+      html += '</div>';
+    });
+    wrap.innerHTML = html;
+    wrap.style.display = "";
+  }).catch(function(){
+    var wrap = document.getElementById("paridade-wrap");
+    if(wrap) wrap.style.display = "none";
   });
 }
 </script>
