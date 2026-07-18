@@ -18,7 +18,7 @@ on:
         default: ""
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 # Evita sobreposicao: se um run ainda esta rodando, o proximo aguarda.
@@ -74,6 +74,31 @@ jobs:
         run: cd scraper && python pipeline.py
         env:
           PYTHONUNBUFFERED: "1"
+
+      - name: Publicar paridade-csv.json
+        # Este job roda em runner efemero: nada que o pipeline escreve em
+        # disco sobrevive sem commit+push explicito aqui (gerar-imoveis.yml
+        # roda em runner separado, sem visibilidade deste checkout).
+        if: ${{ always() }}
+        run: |
+          if [ ! -f paridade-csv.json ]; then
+            echo "paridade-csv.json nao foi gerado nesta execucao - nada a publicar."
+            exit 0
+          fi
+          git config user.name "robo-imoveis"
+          git config user.email "robo@users.noreply.github.com"
+          git add paridade-csv.json
+          if git diff --cached --quiet; then
+            echo "Sem mudancas em paridade-csv.json."
+            exit 0
+          fi
+          git commit -m "chore: atualiza paridade-csv.json"
+          for i in 1 2 3; do
+            git push && exit 0
+            echo "push falhou (tentativa $i), rebase e retry..."
+            git pull --rebase origin main
+          done
+          echo "::warning::Nao foi possivel publicar paridade-csv.json apos 3 tentativas."
 
       - name: Publicar site (gerar-imoveis)
         if: ${{ always() }}
