@@ -19,7 +19,13 @@ jobs:
   reconciliar:
     name: Recalcular e reconciliar stale
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    # 2026-07-20: aumentado de 30 -> 75min. O lote cresceu de 14 (achado
+    # original) para 62 candidatos hoje; com o ritmo educado anti-WAF
+    # (25-45s/item) 30min nao bastava mais -- o job estava sendo
+    # cancelado por timeout no meio do lote (script salva por item via
+    # db.upsert_imovel/mark_unavailable, entao nao perdia progresso, so
+    # ficava incompleto). 75min cobre confortavelmente ate ~120 itens.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
