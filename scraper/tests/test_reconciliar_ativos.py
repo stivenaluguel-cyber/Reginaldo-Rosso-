@@ -160,3 +160,46 @@ def test_pagina_de_imovel_sem_sinal_ativo_nem_encerrado_e_inconclusiva():
     explicito de ativo ou encerrado - nao deve adivinhar."""
     dados = {"texto_detalhe_bruto": "Detalhe do imovel. Comarca: PELOTAS-RS. Descricao do imovel: Casa."}
     assert ra._classificar(dados) == "inconclusivo"
+
+
+# ---------------------------------------------------------------------------
+# Caso (e): pagina de ERRO explicita da Caixa (imovel removido de venda,
+# confirmada ao vivo em 20/07/2026 - venda-imoveis.caixa.gov.br devolve isso
+# com HTTP 200 normal, sem sinal de bloqueio, quando o imovel saiu de venda).
+# Nao e a ficha do imovel (nao bate SINAIS_PAGINA_IMOVEL), entao precisa do
+# SINAIS_ERRO_IMOVEL_REMOVIDO checado ANTES desse gate.
+# ---------------------------------------------------------------------------
+
+_TEXTO_ERRO_IMOVEL_REMOVIDO_REAL = (
+    "Ocorreu um erro ao tentar recuperar os dados do imóvel.\n"
+    "O imóvel que você procura não está mais disponível para venda."
+)
+
+
+def test_pagina_de_erro_imovel_removido_real_e_encerrada():
+    """Texto real capturado ao vivo em 20/07/2026 (hdnimovel=8787714708260) -
+    deve classificar como 'encerrado' mesmo sem nenhum SINAIS_PAGINA_IMOVEL."""
+    dados = {"texto_detalhe_bruto": _TEXTO_ERRO_IMOVEL_REMOVIDO_REAL}
+    assert ra._classificar(dados) == "encerrado"
+
+
+def test_incidente_08_07_continua_inconclusivo_apos_novo_sinal():
+    """Regressao explicita: o menu generico do incidente de 08/07 nao pode
+    virar 'encerrado' por causa do novo sinal (ele nao contem nenhuma das
+    duas frases de SINAIS_ERRO_IMOVEL_REMOVIDO)."""
+    dados = {"texto_detalhe_bruto": _MENU_GENERICO_CAIXA}
+    assert ra._classificar(dados) == "inconclusivo"
+
+
+def test_apenas_primeira_frase_do_erro_e_inconclusiva():
+    """AND, nao OR: so a primeira frase presente (sem a segunda) nao deve
+    bastar para 'encerrado'."""
+    dados = {"texto_detalhe_bruto": "Ocorreu um erro ao tentar recuperar os dados do imóvel. Tente novamente mais tarde."}
+    assert ra._classificar(dados) == "inconclusivo"
+
+
+def test_apenas_segunda_frase_do_erro_e_inconclusiva():
+    """AND, nao OR: so a segunda frase presente (sem a primeira) nao deve
+    bastar para 'encerrado'."""
+    dados = {"texto_detalhe_bruto": "O imóvel que você procura não está mais disponível para venda no momento."}
+    assert ra._classificar(dados) == "inconclusivo"

@@ -27,6 +27,7 @@ import logging
 import random
 import re
 import sys
+import unicodedata
 from datetime import datetime, date
 
 import db
@@ -73,9 +74,27 @@ SINAIS_PAGINA_IMOVEL = ("numero do imovel", "detalhe do imovel", "modalidade de 
 "valor minimo de venda", "venda online", "tempo restante",
 "descricao do imovel", "comarca")
 
+# Pagina de ERRO explicita que a Caixa devolve (HTTP 200 normal, sem sinal de
+# bloqueio WAF) quando o imovel foi removido de venda de verdade. Nao e a
+# ficha do imovel (nao bate SINAIS_PAGINA_IMOVEL) e por isso caia em
+# "inconclusivo" antes desta correcao. Exige as DUAS frases juntas (AND) para
+# reduzir risco de falso positivo por coincidencia de uma frase isolada.
+# Comparado sempre sem acentos (ver _sem_acentos) porque a pagina real usa
+# acentuacao UTF-8 normal ("imóvel", "não está") mas as frases aqui sao
+# mantidas sem acento por legibilidade/consistencia com o restante do modulo.
+SINAIS_ERRO_IMOVEL_REMOVIDO = (
+    "erro ao tentar recuperar os dados do imovel",
+    "nao esta mais disponivel para venda",
+)
+
 
 def _norm(t):
     return (t or "").lower()
+
+
+def _sem_acentos(t):
+    nfkd = unicodedata.normalize("NFKD", t or "")
+    return "".join(c for c in nfkd if not unicodedata.combining(c))
 
 
 def _classificar(dados):
@@ -91,6 +110,16 @@ def _classificar(dados):
     daquelas paginas tinha >2000 caracteres (nao curto) e nao continha
     "captcha"/"radware" (era so o menu de navegacao da Caixa), entao qualquer
     guard baseado em tamanho ou nessas palavras nao pegaria o caso real.
+
+    NOVO (2026-07-20): a Caixa tambem devolve, com HTTP 200 normal e sem
+    nenhum sinal de bloqueio, uma pagina de ERRO explicita quando o imovel
+    saiu de venda de verdade ("Ocorreu um erro ao tentar recuperar os dados
+    do imovel. O imovel que voce procura nao esta mais disponivel para
+    venda."). Essa pagina nunca bate SINAIS_PAGINA_IMOVEL (nao e a ficha do
+    imovel), entao e verificada em SINAIS_ERRO_IMOVEL_REMOVIDO ANTES desse
+    gate - e a UNICA excecao que passa por fora dele, e so quando as DUAS
+    frases aparecem juntas. E um caso distinto do incidente de 08/07 acima:
+    aquele nao tinha nenhuma mencao a "erro"/"indisponivel", so o menu.
     """
     if not dados:
         return "inconclusivo"
@@ -99,6 +128,9 @@ def _classificar(dados):
         return "inconclusivo"
     if any(s in txt for s in SINAIS_PAGINA_GENERICA):
         return "inconclusivo"
+    txt_sem_acentos = _sem_acentos(txt)
+    if all(s in txt_sem_acentos for s in SINAIS_ERRO_IMOVEL_REMOVIDO):
+        return "encerrado"
     if not any(s in txt for s in SINAIS_PAGINA_IMOVEL):
         return "inconclusivo"
     if any(s in txt for s in SINAIS_ENCERRADO):
