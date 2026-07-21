@@ -9,6 +9,7 @@ scrape_imovel + reconciliar_ativos._classificar (sinal EXPLICITO de
 ativo/encerrado, nunca por ausencia - licao do incidente de 09/07 ja
 documentada em reconciliar_ativos.py).
 """
+import argparse
 import asyncio
 import sys
 from datetime import datetime, timedelta, timezone
@@ -100,7 +101,26 @@ async def _reconciliar_um(numero, uf, cidade_db):
     return "encerrado"
 
 
+def _aplicar_exclusao(stale, excluir_ids):
+    """Remove da lista de candidatos os numero_imovel em excluir_ids (uso
+    unico/manual - ex: candidatos que uma checagem ao vivo ja confirmou
+    ativos e que nao devem ser reconciliados nesta rodada). Nao afeta o
+    banco nem sinaliza nada - so filtra a lista em memoria antes do loop."""
+    if not excluir_ids:
+        return stale, []
+    excluidos = [c for c in stale if c[0] in excluir_ids]
+    restante = [c for c in stale if c[0] not in excluir_ids]
+    return restante, excluidos
+
+
 async def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--excluir", default="",
+                    help="numero_imovel separados por virgula para pular nesta rodada "
+                         "(uso manual - nao reconciliar, mesmo estando na lista de stale)")
+    args = ap.parse_args()
+    excluir_ids = {s.strip() for s in args.excluir.split(",") if s.strip()}
+
     db.init_db()
     agora = datetime.now(timezone.utc)
 
@@ -123,6 +143,14 @@ async def main():
 
     stale = _listar_stale(csv_ids, agora)
     print(f"\nCandidatos a stale recalculados: {len(stale)}")
+
+    stale, excluidos = _aplicar_exclusao(stale, excluir_ids)
+    if excluidos:
+        print(f"\nExcluidos manualmente desta rodada ({len(excluidos)}), NAO reconciliados:")
+        for numero, uf, cidade, updated_at, dias_fora in excluidos:
+            print(f"  {numero} | uf={uf} | cidade={cidade}")
+
+    print(f"\nSerao reconciliados agora ({len(stale)}):")
     for numero, uf, cidade, updated_at, dias_fora in stale:
         print(f"  {numero} | uf={uf} | cidade={cidade} | updated_at={updated_at.isoformat()} | dias_fora={dias_fora}")
 

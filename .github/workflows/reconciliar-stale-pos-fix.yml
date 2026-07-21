@@ -7,6 +7,11 @@ name: Reconciliar Stale Pos-Fix
 
 on:
   workflow_dispatch:
+    inputs:
+      excluir:
+        description: 'numero_imovel separados por virgula para pular nesta rodada (uso manual, ex: falso-positivo confirmado ao vivo)'
+        required: false
+        default: ''
 
 concurrency:
   group: reconciliar-stale-pos-fix
@@ -42,7 +47,7 @@ jobs:
         run: cd scraper && python -m playwright install --with-deps chromium
 
       - name: Rodar reconciliar_stale_pos_fix.py
-        run: cd scraper && python reconciliar_stale_pos_fix.py
+        run: cd scraper && python reconciliar_stale_pos_fix.py --excluir "${{ github.event.inputs.excluir }}"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PYTHONUNBUFFERED: "1"
