@@ -103,3 +103,79 @@ def test_lista_vazia_nao_toca_no_banco(monkeypatch):
 
     assert total == 0
     chamado.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Achado 22/07/2026: 2 imoveis reais (Cachoeirinha-RS, Canoas-RS) gravados
+# com uf='SC' na ingestao inicial (24/06/2026) nunca foram corrigidos -
+# uf so era reparado quando NULL/vazio (COALESCE(NULLIF(t.uf,''), v.uf)),
+# nunca quando preenchido mas ERRADO. Cada CSV e baixado separado por
+# estado, entao a propria origem do arquivo ja e prova definitiva do uf
+# correto - precisa se comportar como preco/modalidade (CSV sempre vence),
+# nao como cidade/bairro/endereco (so repara NULL).
+# ---------------------------------------------------------------------------
+
+def test_sql_uf_sempre_vence_do_csv_mesmo_quando_banco_tem_valor_preenchido(monkeypatch):
+    """O bug real: t.uf='SC' (preenchido, errado) + v.uf='RS' (CSV correto)
+    -> o SQL tem que corrigir, nao preservar o valor antigo."""
+    captured = {}
+    monkeypatch.setattr(db, "get_connection", lambda: _FakeConnCtx())
+
+    def _fake_execute_values(cur, sql, rows, template=None):
+        captured["sql"] = sql
+        captured["rows"] = rows
+
+    monkeypatch.setattr(db.psycopg2.extras, "execute_values", _fake_execute_values, raising=False)
+
+    lista = [{
+        "numero_imovel": "1444407896565",
+        "tipo_real": "Casa", "area": 229.49, "aceita_financiamento": True,
+        "descricao": "desc csv", "cidade": "CACHOEIRINHA", "bairro": "PARQUE DA MATRIZ",
+        "endereco": "RUA X", "uf": "RS",
+        "preco_minimo": 303998.92, "preco_avaliacao": 530000.0, "modalidade": "Venda Online",
+    }]
+
+    db.update_csv_parsed_bulk(lista)
+
+    sql = captured["sql"]
+    # uf agora usa o MESMO padrao de preco/modalidade: CSV (v.uf) tem
+    # prioridade, so cai pro valor antigo (t.uf) se o CSV vier vazio.
+    assert "uf = COALESCE(NULLIF(v.uf, ''), t.uf)" in sql
+    # NAO pode mais ter o padrao antigo (preservava t.uf mesmo preenchido)
+    assert "uf = COALESCE(NULLIF(t.uf, ''), v.uf)" not in sql
+    # WHERE precisa qualificar a linha pra UPDATE mesmo com t.uf preenchido,
+    # contanto que v.uf (CSV) seja diferente - mesmo padrao ja usado pra modalidade.
+    assert "v.uf IS NOT NULL AND v.uf <> '' AND v.uf IS DISTINCT FROM t.uf" in sql
+
+    row = captured["rows"][0]
+    assert row[0] == "1444407896565"
+    assert row[8] == "RS"  # uf no INSERT VALUES, posicao correspondente ao template
+
+
+def test_sql_uf_vazio_ou_ausente_no_csv_ainda_passa_o_item_sem_quebrar(monkeypatch):
+    """Defensivo: se o CSV vier sem uf (nunca deveria acontecer, mas por
+    seguranca), o item ainda e passado pro SQL - a protecao contra apagar
+    um uf existente fica no COALESCE(NULLIF(v.uf,''), t.uf) do lado do
+    banco (v.uf vazio -> NULLIF vira NULL -> COALESCE cai pro t.uf), ja
+    coberto estruturalmente no teste anterior."""
+    captured = {}
+    monkeypatch.setattr(db, "get_connection", lambda: _FakeConnCtx())
+
+    def _fake_execute_values(cur, sql, rows, template=None):
+        captured["sql"] = sql
+        captured["rows"] = rows
+
+    monkeypatch.setattr(db.psycopg2.extras, "execute_values", _fake_execute_values, raising=False)
+
+    lista = [{
+        "numero_imovel": "999",
+        "tipo_real": None, "area": None, "aceita_financiamento": None,
+        "descricao": None, "cidade": None, "bairro": None, "endereco": None,
+        "uf": None,  # CSV sem uf - caso defensivo
+        "preco_minimo": None, "preco_avaliacao": None, "modalidade": None,
+    }]
+
+    db.update_csv_parsed_bulk(lista)
+
+    assert captured["rows"][0][0] == "999"
+    assert captured["rows"][0][8] is None

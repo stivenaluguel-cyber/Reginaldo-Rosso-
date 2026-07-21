@@ -538,12 +538,22 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
 
     Preenche (sem sobrescrever dados nao-nulos ja existentes):
     - area, aceita_financiamento, descricao (se vazio); tipo_real: SEMPRE corrige com o valor do CSV quando presente - fonte autoritativa (ver COALESCE(v.tipo_real, t.tipo_real) abaixo);
-    - cidade, bairro, endereco, uf: FONTE DE CORRECAO. Muitos imoveis foram
-      gravados com cidade=NULL por desalinhamento de colunas na ingestao
-      inicial, e o gerar-imoveis.js exclui linhas com cidade IS NULL. Como o
-      upsert so roda para IDs novos, o CSV nunca reparava esses NULLs. Aqui
-      reaplicamos os campos de localizacao do CSV quando o valor no banco
-      estiver NULL/vazio (COALESCE preserva o que ja existe).
+    - cidade, bairro, endereco: FONTE DE CORRECAO SO QUANDO NULL/VAZIO. Muitos
+      imoveis foram gravados com cidade=NULL por desalinhamento de colunas na
+      ingestao inicial, e o gerar-imoveis.js exclui linhas com cidade IS NULL.
+      Como o upsert so roda para IDs novos, o CSV nunca reparava esses NULLs.
+      Aqui reaplicamos os campos de localizacao do CSV quando o valor no
+      banco estiver NULL/vazio (COALESCE preserva o que ja existe).
+    - uf: CSV E FONTE AUTORITATIVA, SEMPRE (achado 22/07/2026, nao so quando
+      NULL). Cada CSV (Lista_imoveis_RS.csv/Lista_imoveis_SC.csv) e baixado
+      SEPARADO POR ESTADO - a propria origem do arquivo ja e prova definitiva
+      do uf correto, diferente de cidade/bairro/endereco (que nao tem essa
+      garantia). Achado real: 2 imoveis (Cachoeirinha-RS, Canoas-RS) foram
+      gravados com uf='SC' na ingestao inicial (24/06/2026) e, como uf nunca
+      ficava NULL/vazio, o COALESCE(NULLIF(t.uf,''), v.uf) antigo nunca
+      corrigia - ficaram permanentemente ausentes de imoveis-rs.json e
+      vazando errado em imoveis-sc.json por quase 1 mes. Mesmo padrao de
+      "CSV sempre vence" ja usado em preco_minimo/preco_avaliacao/modalidade.
     - preco_minimo, preco_avaliacao, modalidade: CSV E FONTE AUTORITATIVA
       (causa raiz da divergencia de preco entre o site e o CSV oficial -
       dry-run confirmou 28.3% dos imoveis com preco/modalidade
@@ -596,7 +606,7 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                         cidade = COALESCE(NULLIF(t.cidade, ''), v.cidade),
                         bairro = COALESCE(NULLIF(t.bairro, ''), v.bairro),
                         endereco = COALESCE(NULLIF(t.endereco, ''), v.endereco),
-                        uf = COALESCE(NULLIF(t.uf, ''), v.uf),
+                        uf = COALESCE(NULLIF(v.uf, ''), t.uf),
                         preco_minimo = CASE
                             WHEN v.preco_minimo > 0 AND (t.preco_minimo IS NULL OR ABS(v.preco_minimo - t.preco_minimo) > 0.005)
                             THEN v.preco_minimo ELSE t.preco_minimo END,
@@ -613,10 +623,10 @@ def update_csv_parsed_bulk(lista: list, batch_size: int = 500) -> int:
                          OR t.cidade IS NULL OR t.cidade = ''
                          OR t.bairro IS NULL OR t.bairro = ''
                          OR t.endereco IS NULL OR t.endereco = ''
-                         OR t.uf IS NULL OR t.uf = ''
                          OR (v.preco_minimo > 0 AND (t.preco_minimo IS NULL OR ABS(v.preco_minimo - t.preco_minimo) > 0.005))
                          OR (v.preco_avaliacao > 0 AND (t.preco_avaliacao IS NULL OR ABS(v.preco_avaliacao - t.preco_avaliacao) > 0.005))
-                         OR (v.modalidade IS NOT NULL AND v.modalidade <> '' AND v.modalidade IS DISTINCT FROM t.modalidade))
+                         OR (v.modalidade IS NOT NULL AND v.modalidade <> '' AND v.modalidade IS DISTINCT FROM t.modalidade)
+                         OR (v.uf IS NOT NULL AND v.uf <> '' AND v.uf IS DISTINCT FROM t.uf))
                 """
                 extras.execute_values(
                     cur, sql, rows,
