@@ -21,11 +21,27 @@ from datetime import date, datetime, timedelta
 HORA_PADRAO = "18:00"  # padrao da venda online da Caixa (documentado)
 
 _DATE_PATTERN = r"(\d{2}/\d{2}/\d{4})"
-_ROTULOS = [
-    r"(?:data\s+(?:de\s+)?(?:encerramento|fim|vencimento|limite)|encerra\s+em|valido\s+ate)[:\s]+",
-    r"(?:1[oº]?\s*leil[aã]o|primeiro\s+leil[aã]o|"
-    r"2[oº]?\s*leil[aã]o|segundo\s+leil[aã]o|venda\s+online)[^\n]*?-\s*",
-]
+
+# Rotulo explicito de encerramento - sempre confiavel, nao depende de
+# estrutura de leilao (usado por venda online/venda direta).
+_ROTULO_ENCERRAMENTO_EXPLICITO = (
+    r"(?:data\s+(?:de\s+)?(?:encerramento|fim|vencimento|limite)|encerra\s+em|valido\s+ate)[:\s]+"
+)
+
+# Rotulos de leilao/venda online - usados como fallback quando nao ha
+# rotulo explicito. Achado 21/07/2026: para imoveis "Leilao SFI" com 2
+# pracas anunciadas (1o E 2o leilao no mesmo texto), NENHUMA das 2 datas
+# de praca e um indicador confiavel de encerramento real - confirmado ao
+# vivo em 6 imoveis que continuavam com "De seu lance" (leilao ainda em
+# aberto) dias depois de AMBAS as datas anunciadas terem passado. Textos
+# de praca UNICA (so "1o leilao" OU so "2o leilao", sem a outra) nao tem
+# esse problema e continuam usando a data normalmente (achado #8 original).
+_ROTULO_LEILAO_OU_VENDA_ONLINE = (
+    r"(?P<rotulo>1[oº]?\s*leil[aã]o|primeiro\s+leil[aã]o|"
+    r"2[oº]?\s*leil[aã]o|segundo\s+leil[aã]o|venda\s+online)[^\n]*?-\s*"
+)
+_RE_TEM_1A_PRACA = re.compile(r"1[oº]?\s*leil[aã]o|primeiro\s+leil[aã]o", re.IGNORECASE)
+_RE_TEM_2A_PRACA = re.compile(r"2[oº]?\s*leil[aã]o|segundo\s+leil[aã]o", re.IGNORECASE)
 
 # Paginas de Venda Online NAO tem data absoluta em lugar nenhum do texto -
 # so o widget de JS ao vivo da propria Caixa ("Tempo restante: X DIAS Y
@@ -71,8 +87,11 @@ def parse_tempo_restante(texto: str, capturado_em: datetime):
 
 
 def _com_hora(data_str, resto):
-    """Tenta achar HH:MM(:SS) logo apos a data; senao usa HORA_PADRAO."""
-    m = re.search(r"^\s*(\d{1,2}):(\d{2})", resto or "")
+    """Tenta achar HH:MM ou HHhMM logo apos a data; senao usa HORA_PADRAO.
+    Confirmado em texto real: "Data do 1º Leilão - 13/07/2026 - 10h00" usa
+    "h" como separador (nao ":") e tem um "-" entre a data e a hora -
+    suporta os 2 formatos de hora e o separador opcional."""
+    m = re.search(r"^\s*-?\s*(\d{1,2})[:h](\d{2})", resto or "", re.IGNORECASE)
     if m:
         hh, mm = int(m.group(1)), int(m.group(2))
         if 0 <= hh <= 23 and 0 <= mm <= 59:
@@ -83,18 +102,29 @@ def _com_hora(data_str, resto):
 def parse_data_fim(texto: str):
     """Extrai a data-limite do leilao/venda como 'dd/mm/yyyy HH:MM'.
 
-    Prioriza rotulos conhecidos (com hora explicita logo apos a data, quando
-    houver); fallback: primeira data futura encontrada no texto."""
+    Prioriza rotulo explicito de encerramento (sempre confiavel); depois
+    rotulo de leilao/venda online - EXCETO quando o texto tem 1o E 2o
+    leilao juntos (Leilao SFI 2 pracas), caso em que nenhuma das 2 datas
+    de praca e usada (nao e um indicador confiavel de encerramento real -
+    ver comentario de _ROTULO_LEILAO_OU_VENDA_ONLINE); fallback final:
+    primeira data futura encontrada no texto."""
     if not texto:
         return None
     t = str(texto)
 
-    for rot in _ROTULOS:
-        m = re.search(rot + _DATE_PATTERN, t, re.IGNORECASE)
-        if m:
-            data = m.group(m.lastindex)
-            resto = t[m.end():m.end() + 12]
-            return _com_hora(data, resto)
+    m = re.search(_ROTULO_ENCERRAMENTO_EXPLICITO + _DATE_PATTERN, t, re.IGNORECASE)
+    if m:
+        data = m.group(1)
+        resto = t[m.end():m.end() + 12]
+        return _com_hora(data, resto)
+
+    tem_ambas_pracas = bool(_RE_TEM_1A_PRACA.search(t)) and bool(_RE_TEM_2A_PRACA.search(t))
+    for m in re.finditer(_ROTULO_LEILAO_OU_VENDA_ONLINE + _DATE_PATTERN, t, re.IGNORECASE):
+        if tem_ambas_pracas:
+            continue
+        data = m.group(m.lastindex)
+        resto = t[m.end():m.end() + 12]
+        return _com_hora(data, resto)
 
     hoje = date.today()
     for m in re.finditer(_DATE_PATTERN, t):

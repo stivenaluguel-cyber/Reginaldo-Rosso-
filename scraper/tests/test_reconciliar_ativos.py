@@ -338,3 +338,142 @@ def test_frase_especifica_de_encerrado_continua_valendo_mesmo_com_lance_ativo():
         )
     }
     assert ra._classificar(dados) == "encerrado"
+
+
+# ---------------------------------------------------------------------------
+# Caso (g): 2a camada de defesa contra o falso-positivo SFI - achado
+# 21/07/2026. O parser (data_fim_heuristica.py) ja foi corrigido pra nunca
+# extrair data_fim da 1a/2a praca quando as 2 aparecem juntas no texto, mas
+# _classificar tem uma guarda REDUNDANTE aqui: mesmo que `dados["data_fim"]`
+# venha vencido de algum jeito (ex: scrape antigo, antes do fix do parser,
+# ainda salvo no banco), a presenca de "De seu lance" na pagina bloqueia a
+# classificacao "encerrado" por data_fim vencida tambem.
+# ---------------------------------------------------------------------------
+
+import data_fim_heuristica as dfh  # noqa: E402
+
+
+def test_data_fim_vencida_com_lance_ativo_nao_encerra_mesmo_se_data_fim_veio_de_scrape_antigo():
+    """Defesa redundante: mesmo simulando um data_fim vencido salvo de ANTES
+    do fix do parser (nao usa parse_data_fim aqui, seta direto), a presenca
+    de 'De seu lance' ainda bloqueia 'encerrado'."""
+    dados = {
+        "texto_detalhe_bruto": (
+            "Detalhe do imovel. Comarca: TESTE-RS. Leilão SFI. "
+            "Data do 1º Leilão - 13/07/2026 - 10h00. Dê seu lance"
+        ),
+        "data_fim": "13/07/2026 18:00",  # vencido, simulando dado stale no banco
+    }
+    assert ra._classificar(dados) in ("ativo", "inconclusivo")
+    assert ra._classificar(dados) != "encerrado"
+
+
+def test_data_fim_vencida_sem_lance_ativo_continua_encerrando():
+    """Controle: sem 'De seu lance' na pagina, data_fim vencida continua
+    classificando 'encerrado' normalmente - a guarda nao enfraquece o caso
+    legitimo, so age quando ha o sinal de leilao aberto."""
+    dados = {
+        "texto_detalhe_bruto": "Detalhe do imovel. Comarca: TESTE-RS. Descricao do imovel: Casa.",
+        "data_fim": "13/07/2026 18:00",
+    }
+    assert ra._classificar(dados) == "encerrado"
+
+
+# ---------------------------------------------------------------------------
+# Caso (h): os 6 imoveis do falso-positivo SFI real (confirmados ativos ao
+# vivo em 21/07/2026), testados fim-a-fim com AS DUAS camadas do fix juntas
+# - texto real capturado (cabecalho + datas de praca, de cada pagina real)
+# combinado com o trecho real de "Dê seu lance" (capturado separadamente
+# nas mesmas 6 paginas ao vivo, texto identico nas 6). `data_fim` e
+# calculado DINAMICAMENTE via data_fim_heuristica.parse_data_fim (o mesmo
+# caminho que etapa2_scraper.py usa de verdade), nao hardcoded - testa a
+# integracao real das 2 camadas, nao so uma cada vez.
+# ---------------------------------------------------------------------------
+
+_TRECHO_REAL_DE_SEU_LANCE = (
+    " edital e anexos\n(Edital publicado em: 17/07/2026 08:22:04)\n"
+    "Dê seu lance  Sou o ex mutuário   Voltar  \nGaleria de fotos"
+)
+
+_SEIS_FALSOS_POSITIVOS_SFI_TEXTO_REAL = {
+    "8787712908564": (  # Cachoeirinha-RS
+        "COND ALEGRIA\n\nValor de avaliação: R$ 135.000,00\n"
+        "Valor mínimo de venda 1º Leilão: R$ 136.155,91\n"
+        "Valor mínimo de venda 2º Leilão: R$ 97.983,97\n\n"
+        "Tipo de imóvel: Apartamento\nQuartos: 2\nNúmero do imóvel: 878771290856-4\n"
+        "Matrícula(s): 2021\nComarca: CACHOEIRINHA-RS\nOfício: 01\n"
+        "Leilão SFI\nEdital: 0029/0226 - CPA/RE\nNúmero do item: 402\n\n"
+        "Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO\n"
+        " Data do 1º Leilão - 13/07/2026 - 10h00\n"
+        " Data do 2º Leilão - 17/07/2026 - 10h00\n"
+    ),
+    "8555527021671": (  # Itapema-SC
+        "RES MIRANTE DAS ÁGUAS\n\nValor de avaliação: R$ 360.000,00\n"
+        "Valor mínimo de venda 1º Leilão: R$ 360.000,00\n"
+        "Valor mínimo de venda 2º Leilão: R$ 216.000,00\n\n"
+        "Tipo de imóvel: Apartamento\nQuartos: 2\nNúmero do imóvel: 855552702167-1\n"
+        "Matrícula(s): 42872\nComarca: ITAPEMA-SC\nOfício: 01\n"
+        "Leilão SFI\nEdital: 0029/0226 - CPA/RE\nNúmero do item: 435\n\n"
+        "Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO\n"
+        " Data do 1º Leilão - 13/07/2026 - 10h00\n"
+        " Data do 2º Leilão - 17/07/2026 - 10h00\n"
+    ),
+    "8787700367032": (  # Chapeco-SC
+        "COND RES BOM PASTOR I\n\nValor de avaliação: R$ 350.000,00\n"
+        "Valor mínimo de venda 1º Leilão: R$ 350.000,00\n"
+        "Valor mínimo de venda 2º Leilão: R$ 210.000,00\n\n"
+        "Tipo de imóvel: Apartamento\nQuartos: 2\nMatrícula(s): 113321, 113397\n"
+        "Comarca: CHAPECO-SC\nOfício: 01\n"
+        "Leilão SFI\nEdital: 0029/0226 - CPA/RE\nNúmero do item: 430\n\n"
+        "Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO\n"
+        " Data do 1º Leilão - 13/07/2026 - 10h00\n"
+        " Data do 2º Leilão - 17/07/2026 - 10h00\n"
+    ),
+    "10003975": (  # Cocal do Sul-SC
+        "COCAL DO SUL - CENTRO\n\nValor de avaliação: R$ 375.000,00\n"
+        "Valor mínimo de venda 1º Leilão: R$ 424.900,00\n"
+        "Valor mínimo de venda 2º Leilão: R$ 925.122,30\n\n"
+        "Tipo de imóvel: Terreno\nNúmero do imóvel: 000001000397-5\n"
+        "Matrícula(s): 3710\nComarca: URUSSANGA-SC\nOfício: 01\n"
+        "Leilão SFI\nEdital: 0029/0226 - CPA/RE\nNúmero do item: 431\n\n"
+        "Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO\n"
+        " Data do 1º Leilão - 13/07/2026 - 10h00\n"
+        " Data do 2º Leilão - 17/07/2026 - 10h00\n"
+    ),
+    "8555506485733": (  # Carazinho-RS
+        "SARANDI - LT SANTA GEMA\n\nValor de avaliação: R$ 130.000,00\n"
+        "Valor mínimo de venda 1º Leilão: R$ 130.000,00\n"
+        "Valor mínimo de venda 2º Leilão: R$ 78.000,00\n\n"
+        "Tipo de imóvel: Casa\nQuartos: 2\nNúmero do imóvel: 855550648573-3\n"
+        "Matrícula(s): 20416\nComarca: CARAZINHO-RS\nOfício: 01\n"
+        "Leilão SFI\nEdital: 0029/0226 - CPA/RE\nNúmero do item: 423\n\n"
+        "Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO\n"
+        " Data do 1º Leilão - 13/07/2026 - 10h00\n"
+        " Data do 2º Leilão -\n"  # captura real foi truncada aqui, sem a data/hora da 2a praca
+    ),
+    "8787715132230": (  # Itajai-SC
+        "ED RES RECANTO DOS ESPINHEIROS\n\nValor de avaliação: R$ 250.000,00\n"
+        "Valor mínimo de venda 1º Leilão: R$ 250.000,00\n"
+        "Valor mínimo de venda 2º Leilão: R$ 164.433,29\n\n"
+        "Tipo de imóvel: Apartamento\nQuartos: 1\nNúmero do imóvel: 878771513223-0\n"
+        "Matrícula(s): 73249\nComarca: ITAJAI-SC\nOfício: 01\n"
+        "Leilão SFI\nEdital: 0029/0226 - CPA/RE\nNúmero do item: 434\n\n"
+        "Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO\n"
+        " Data do 1º Leilão - 13/07/2026 - 10h00\n"
+        " Data do 2º Leilão - 17/07/2026 - 10h00\n"
+    ),
+}
+
+
+def test_os_6_falsos_positivos_sfi_reais_nao_classificam_encerrado():
+    """Ponta a ponta, com AS DUAS camadas do fix: parser (data_fim_heuristica)
+    + guarda de classificacao (reconciliar_ativos). Texto real capturado ao
+    vivo em 21/07/2026 para os 6 imoveis confirmados ativos."""
+    for numero, cabecalho in _SEIS_FALSOS_POSITIVOS_SFI_TEXTO_REAL.items():
+        texto_completo = cabecalho + _TRECHO_REAL_DE_SEU_LANCE
+        data_fim = dfh.parse_data_fim(texto_completo)
+        dados = {"texto_detalhe_bruto": texto_completo, "data_fim": data_fim}
+        resultado = ra._classificar(dados)
+        assert resultado != "encerrado", (
+            f"{numero}: classificou 'encerrado' indevidamente (data_fim={data_fim!r})"
+        )

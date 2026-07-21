@@ -160,6 +160,16 @@ def _classificar(dados):
     _sinal_encerrado_confiavel - se a pagina tambem mostrar "De seu lance"
     (leilao ainda aberto), o token amplo sozinho NAO conta como encerrado;
     as frases mais especificas continuam valendo normalmente.
+
+    NOVO (2026-07-21, 2a camada): o mesmo falso-positivo SFI tambem
+    aparecia via data_fim vencida - parse_data_fim() confundia a data da
+    1a praca com o encerramento definitivo (corrigido separadamente em
+    data_fim_heuristica.py, que agora nunca usa a data de nenhuma praca
+    quando o texto tem 1a E 2a praca juntas). Como defesa extra aqui
+    tambem: mesmo se dados["data_fim"] vier vencida (de scrape antigo, por
+    exemplo), a presenca de "De seu lance" na pagina bloqueia a
+    classificacao "encerrado" por essa via - cai em 'ativo'/'inconclusivo'
+    conforme os demais sinais, nunca adivinha.
     """
     if not dados:
         return "inconclusivo"
@@ -175,7 +185,8 @@ def _classificar(dados):
         return "inconclusivo"
     if _sinal_encerrado_confiavel(txt, txt_sem_acentos):
         return "encerrado"
-    if _data_fim_futura(dados) is False:
+    tem_lance_ativo = any(s in txt_sem_acentos for s in SINAIS_LANCE_ATIVO)
+    if _data_fim_futura(dados) is False and not tem_lance_ativo:
         return "encerrado"
     if any(s in txt for s in SINAIS_ATIVO):
         return "ativo"

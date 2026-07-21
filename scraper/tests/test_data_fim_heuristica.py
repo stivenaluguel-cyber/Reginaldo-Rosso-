@@ -74,3 +74,54 @@ def test_hora_padrao_e_18h_nos_2_modulos_nunca_meia_noite():
         resultado = via(texto)
         assert resultado.endswith("18:00"), f"{via.__name__}: {resultado!r} nao usou HORA_PADRAO"
         assert not resultado.endswith("00:00"), f"{via.__name__}: {resultado!r} regrediu para meia-noite implicita"
+
+
+# ---------------------------------------------------------------------------
+# Achado 21/07/2026: para "Leilao SFI" com 1a E 2a praca no mesmo texto,
+# parse_data_fim pegava a data da 1a praca como se fosse o encerramento
+# definitivo (bug real, confirmado ao vivo em 6 imoveis que continuavam
+# biddable dias depois de AMBAS as datas anunciadas terem passado). Texto
+# real capturado: "Data do 1º Leilão - 13/07/2026 - 10h00 / Data do 2º
+# Leilão - 17/07/2026 - 10h00" (imovel 8787712908564, Cachoeirinha-RS).
+# ---------------------------------------------------------------------------
+
+_TEXTO_REAL_SFI_2_PRACAS = (
+    "Leilão SFI\nEdital: 0029/0226 - CPA/RE\nNúmero do item: 402\n\n"
+    "Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO\n"
+    " Data do 1º Leilão - 13/07/2026 - 10h00\n"
+    " Data do 2º Leilão - 17/07/2026 - 10h00\n"
+)
+
+
+def test_sfi_com_1a_e_2a_praca_juntas_nao_usa_nenhuma_data_de_praca():
+    """O caso real do bug: 1a e 2a praca no mesmo texto -> nenhuma das 2
+    datas e confiavel o suficiente pra ser o data_fim -> None (nao
+    'adivinha', conforme pedido)."""
+    for via in (_via_parser_caixa, _via_etapa2_scraper):
+        assert via(_TEXTO_REAL_SFI_2_PRACAS) is None, f"{via.__name__} nao deveria extrair data_fim de SFI 2 pracas"
+
+
+def test_horario_formato_10h00_e_interpretado_corretamente():
+    """Confirma que o parser RECONHECE "10h00" (formato real da Caixa) -
+    testado isoladamente com so 1 praca (sem o guard de 2 pracas no meio)
+    pra provar que a falha do teste acima e por causa da guarda de 2
+    pracas, nao por nao entender o formato de hora."""
+    texto = "Data do 1º Leilão - 13/07/2026 - 10h00"
+    for via in (_via_parser_caixa, _via_etapa2_scraper):
+        assert via(texto) == "13/07/2026 10:00", f"{via.__name__}: nao interpretou 10h00 corretamente"
+
+
+def test_praca_unica_1o_leilao_sem_2a_praca_continua_funcionando():
+    """Regressao: imovel de praca UNICA (so "1o leilao" no texto, sem "2o
+    leilao" em lugar nenhum) nao e afetado pela guarda - continua usando a
+    data normalmente, igual antes do fix."""
+    texto = "Data do 1º Leilão - 13/07/2026 - 10h00\n(licitacao unica, sem segunda praca)"
+    for via in (_via_parser_caixa, _via_etapa2_scraper):
+        assert via(texto) == "13/07/2026 10:00"
+
+
+def test_praca_unica_2o_leilao_sem_1a_praca_continua_funcionando():
+    """Mesma regressao para o caso inverso (so '2o leilao' mencionado)."""
+    texto = "Data do 2º Leilão - 17/07/2026 - 10h00\n(sem mencao a 1a praca no texto)"
+    for via in (_via_parser_caixa, _via_etapa2_scraper):
+        assert via(texto) == "17/07/2026 10:00"
