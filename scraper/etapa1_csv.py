@@ -11,6 +11,7 @@ Estrategia multi-camada com 4 abordagens:
   + Crosscheck: marca indisponivel, faz upsert de novos imoveis
 """
 import asyncio
+import hashlib
 import io
 import json
 import logging
@@ -543,6 +544,92 @@ def _persistir_paridade(paridade_ufs: dict):
         logger.warning(f"etapa1: falha ao persistir paridade-csv.json: {e}")
 
 
+SNAPSHOT_CSV_PATH = Path(__file__).parent.parent / "csv-oficial-snapshot.json"
+LIMIAR_QUEDA_SNAPSHOT = 0.8  # mesmo limiar de _uf_csv_confiavel, aplicado aqui a nivel de snapshot
+
+
+def _hash_ids(ids):
+    h = hashlib.sha256()
+    for i in sorted(ids):
+        h.update(i.encode("utf-8"))
+        h.update(b"\n")
+    return h.hexdigest()
+
+
+def _gerar_snapshot_csv_oficial(todos_imoveis, estados_ok, estados_falha, snapshot_anterior=None):
+    """Gera o snapshot validado dos IDs do CSV oficial (RS+SC), fonte unica
+    de verdade da vitrine (achado 22/07/2026 - regra de visibilidade
+    aprovada explicitamente pelo dono do site). Funcao pura (sem I/O) -
+    testavel sem rede/banco.
+
+    Protecoes obrigatorias, retorna (None, motivo) sem gerar snapshot novo
+    se QUALQUER uma falhar - o chamador entao preserva o ultimo snapshot
+    valido (nunca reduz a vitrine por causa de uma falha de coleta):
+      1. Os 2 estados (RS e SC) precisam ter tido sucesso no download desta
+         rodada - se qualquer um falhou (WAF, timeout, CSV invalido),
+         aborta o snapshot inteiro (nao so a UF que falhou), porque um
+         snapshot parcial teria menos IDs do que deveria pra UF ausente.
+      2. Se ha um snapshot_anterior, cada UF nao pode cair mais de 20% em
+         relacao a contagem anterior (mesmo limiar de _uf_csv_confiavel) -
+         protege contra CSV "valido" mas anormalmente pequeno.
+    """
+    if estados_falha:
+        return None, f"estados com falha nesta rodada ({estados_falha}) - snapshot nao atualizado"
+    if not estados_ok or set(estados_ok) < {"RS", "SC"}:
+        return None, f"nem todos os estados foram processados com sucesso (ok={estados_ok}) - snapshot nao atualizado"
+
+    ids_por_uf = {"RS": [], "SC": []}
+    for im in todos_imoveis:
+        uf = im.get("uf")
+        numero = im.get("numero_imovel")
+        if uf in ids_por_uf and numero:
+            ids_por_uf[uf].append(numero)
+
+    if snapshot_anterior:
+        for uf in ("RS", "SC"):
+            antigo = snapshot_anterior.get(uf, {}).get("total", 0)
+            novo = len(ids_por_uf[uf])
+            if antigo > 10 and novo < antigo * LIMIAR_QUEDA_SNAPSHOT:
+                return None, (
+                    f"{uf}: queda anormal ({antigo} -> {novo}, abaixo de {LIMIAR_QUEDA_SNAPSHOT*100:.0f}% do anterior) "
+                    "- snapshot nao atualizado"
+                )
+
+    todos_ids = ids_por_uf["RS"] + ids_por_uf["SC"]
+    snapshot = {
+        "atualizado": datetime.now(timezone.utc).isoformat(),
+        "RS": {"total": len(ids_por_uf["RS"]), "ids": sorted(ids_por_uf["RS"])},
+        "SC": {"total": len(ids_por_uf["SC"]), "ids": sorted(ids_por_uf["SC"])},
+        "hash": _hash_ids(todos_ids),
+    }
+    return snapshot, None
+
+
+def _persistir_snapshot_csv_oficial(todos_imoveis, estados_ok, estados_falha):
+    """Le o snapshot anterior (se houver), gera o novo via
+    _gerar_snapshot_csv_oficial (com todas as protecoes), e so sobrescreve
+    o arquivo se a geracao foi aprovada. Nunca derruba o pipeline."""
+    try:
+        snapshot_anterior = None
+        if SNAPSHOT_CSV_PATH.exists():
+            try:
+                snapshot_anterior = json.loads(SNAPSHOT_CSV_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                snapshot_anterior = None
+
+        novo, motivo = _gerar_snapshot_csv_oficial(todos_imoveis, estados_ok, estados_falha, snapshot_anterior)
+        if novo is None:
+            logger.warning(f"etapa1: snapshot CSV oficial NAO atualizado - {motivo}. Mantendo o ultimo valido.")
+            return
+        SNAPSHOT_CSV_PATH.write_text(json.dumps(novo, ensure_ascii=False, indent=2), encoding="utf-8")
+        logger.info(
+            f"etapa1: csv-oficial-snapshot.json atualizado - "
+            f"RS={novo['RS']['total']} SC={novo['SC']['total']} hash={novo['hash'][:12]}..."
+        )
+    except Exception as e:
+        logger.warning(f"etapa1: falha ao persistir csv-oficial-snapshot.json: {e}")
+
+
 async def _executar() -> dict:
     db.init_db()
     todos_imoveis = []
@@ -671,6 +758,7 @@ async def _executar() -> dict:
         ids_removidos |= (_ids_banco_uf - _ids_csv_uf)
     ids_novos = ids_csv - ids_banco
     _persistir_paridade(paridade_ufs)
+    _persistir_snapshot_csv_oficial(todos_imoveis, estados_ok, estados_falha)
 
     # Imoveis que voltaram a aparecer no CSV: limpa qualquer suspeita antiga.
     ids_recuperados = ids_banco & ids_csv

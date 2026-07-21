@@ -119,3 +119,96 @@ def test_uf_csv_igual_ou_maior_que_banco_e_sempre_confiavel():
     banco = {str(i) for i in range(10)}
     csv = {str(i) for i in range(15)}
     assert ec._uf_csv_confiavel(csv, banco) is True
+
+
+# ---------------------------------------------------------------------------
+# _gerar_snapshot_csv_oficial - snapshot validado do CSV oficial RS+SC,
+# fonte unica de verdade da vitrine (aprovado explicitamente 22/07/2026).
+# Funcao pura, sem I/O - protecoes: aborta o snapshot INTEIRO (nao so a UF
+# que falhou) se qualquer estado falhar, e aborta se qualquer UF cair mais
+# de 20% em relacao ao snapshot anterior.
+# ---------------------------------------------------------------------------
+
+def _imovel(numero, uf):
+    return {"numero_imovel": numero, "uf": uf}
+
+
+def test_snapshot_csv_completo_e_valido_gera_ids_de_ambas_ufs():
+    todos = [_imovel("1", "RS"), _imovel("2", "RS"), _imovel("3", "SC")]
+    snap, motivo = ec._gerar_snapshot_csv_oficial(todos, ["RS", "SC"], [], None)
+    assert motivo is None
+    assert snap["RS"]["total"] == 2
+    assert snap["RS"]["ids"] == ["1", "2"]
+    assert snap["SC"]["total"] == 1
+    assert snap["SC"]["ids"] == ["3"]
+    assert "atualizado" in snap
+    assert len(snap["hash"]) == 64  # sha256 hex
+
+
+def test_snapshot_com_qualquer_estado_falho_nao_e_gerado():
+    todos = [_imovel("1", "RS")]
+    snap, motivo = ec._gerar_snapshot_csv_oficial(todos, ["RS"], ["SC"], None)
+    assert snap is None
+    assert "SC" in motivo
+
+
+def test_snapshot_com_apenas_um_estado_ok_nao_e_gerado_mesmo_sem_falha_explicita():
+    """Defensivo: se por algum motivo estados_ok nao tem os 2 estados e
+    estados_falha tambem nao lista o motivo, ainda assim nao gera - exige
+    RS E SC explicitamente em estados_ok."""
+    todos = [_imovel("1", "RS")]
+    snap, motivo = ec._gerar_snapshot_csv_oficial(todos, ["RS"], [], None)
+    assert snap is None
+
+
+def test_snapshot_csv_vazio_com_ambos_estados_ok_gera_snapshot_vazio():
+    """CSV oficial genuinamente vazio (0 imoveis) com os 2 estados
+    reportando sucesso - gera o snapshot vazio mesmo assim (a validacao de
+    'vazio e suspeito' e responsabilidade de _is_csv_valido, upstream;
+    aqui so valida queda em relacao ao anterior, que nao existe ainda)."""
+    snap, motivo = ec._gerar_snapshot_csv_oficial([], ["RS", "SC"], [], None)
+    assert motivo is None
+    assert snap["RS"]["total"] == 0
+    assert snap["SC"]["total"] == 0
+
+
+def test_snapshot_com_queda_anormal_de_uma_uf_nao_e_atualizado():
+    """RS caiu de 100 pra 50 (50%, abaixo do limiar de 80%) em relacao ao
+    snapshot anterior - nao atualiza, mesmo SC estando normal."""
+    anterior = {"RS": {"total": 100, "ids": []}, "SC": {"total": 50, "ids": []}}
+    todos = [_imovel(str(i), "RS") for i in range(50)] + [_imovel(str(i), "SC") for i in range(48)]
+    snap, motivo = ec._gerar_snapshot_csv_oficial(todos, ["RS", "SC"], [], anterior)
+    assert snap is None
+    assert "RS" in motivo
+
+
+def test_snapshot_com_flutuacao_normal_e_atualizado():
+    """Flutuacao normal (queda leve, dentro do limiar de 80%) atualiza sem
+    problema."""
+    anterior = {"RS": {"total": 100, "ids": []}, "SC": {"total": 50, "ids": []}}
+    todos = [_imovel(str(i), "RS") for i in range(95)] + [_imovel(str(i), "SC") for i in range(48)]
+    snap, motivo = ec._gerar_snapshot_csv_oficial(todos, ["RS", "SC"], [], anterior)
+    assert motivo is None
+    assert snap["RS"]["total"] == 95
+    assert snap["SC"]["total"] == 48
+
+
+def test_snapshot_uf_pequena_usa_piso_minimo_de_10():
+    """UF pequena (anterior=8, abaixo do piso de 10) nunca conta como
+    queda anormal, mesmo zerando."""
+    anterior = {"RS": {"total": 8, "ids": []}, "SC": {"total": 50, "ids": []}}
+    todos = [_imovel(str(i), "SC") for i in range(48)]  # RS zerado
+    snap, motivo = ec._gerar_snapshot_csv_oficial(todos, ["RS", "SC"], [], anterior)
+    assert motivo is None
+    assert snap["RS"]["total"] == 0
+
+
+def test_snapshot_hash_e_deterministico_e_sensivel_ao_conteudo():
+    todos_a = [_imovel("1", "RS"), _imovel("2", "SC")]
+    todos_b = [_imovel("2", "SC"), _imovel("1", "RS")]  # mesma composicao, ordem diferente
+    todos_c = [_imovel("1", "RS"), _imovel("3", "SC")]  # composicao diferente
+    snap_a, _ = ec._gerar_snapshot_csv_oficial(todos_a, ["RS", "SC"], [], None)
+    snap_b, _ = ec._gerar_snapshot_csv_oficial(todos_b, ["RS", "SC"], [], None)
+    snap_c, _ = ec._gerar_snapshot_csv_oficial(todos_c, ["RS", "SC"], [], None)
+    assert snap_a["hash"] == snap_b["hash"]  # ordem de entrada nao importa
+    assert snap_a["hash"] != snap_c["hash"]  # composicao diferente = hash diferente
