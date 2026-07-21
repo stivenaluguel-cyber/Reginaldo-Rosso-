@@ -203,3 +203,138 @@ def test_apenas_segunda_frase_do_erro_e_inconclusiva():
     bastar para 'encerrado'."""
     dados = {"texto_detalhe_bruto": "O imóvel que você procura não está mais disponível para venda no momento."}
     assert ra._classificar(dados) == "inconclusivo"
+
+
+# ---------------------------------------------------------------------------
+# Caso (f): falso-positivo do token amplo "encerrad" em imoveis Leilao SFI
+# (2 pracas) pouco depois da 2a praca - confirmado ao vivo em 21/07/2026 em
+# 6 imoveis (8787712908564, 8555527021671, 8787700367032, 10003975,
+# 8555506485733, 8787715132230) marcados "encerrado" pelo token amplo pelo
+# gate antigo. Checagem manual (navegador real, bypass WAF) logo depois: NENHUM
+# dos 6 tinha mais "encerrad" no texto - o transitorio de apuracao de
+# resultado ja tinha passado, entao a frase exata que disparou a
+# classificacao nao pode ser recapturada (nao foi persistida em lugar
+# nenhum - mark_unavailable() nao grava o texto que gerou a classificacao,
+# mesma limitacao documentada em diagnostico_gate_antigo_historico.py).
+#
+# O trecho abaixo de "COND ALEGRIA" ATE "Dê seu lance" e o texto REAL
+# capturado ao vivo do imovel 8787712908564 (Cachoeirinha-RS) nesse
+# episodio. A frase "Leilao encerrado. Resultado em apuracao." NAO e
+# verbatim da Caixa (nao foi possivel recapturar) - e uma reconstrucao
+# plausivel só para exercitar o token "encerrad" no teste, marcada
+# explicitamente como tal (mesmo padrao ja usado no caso (b) acima para o
+# incidente de 08/07).
+# ---------------------------------------------------------------------------
+
+_PAGINA_SFI_REAL_8787712908564 = """
+Ajuda para Acessar ›
+Imprensa / EN /
+Imprensa
+Segurança Downloads Sobre a Caixa
+Produtos Benefícios e Programas Atendimento Poder Público
+Buscar
+ Acessar minha conta
+
+Início › Produtos para você › Imóveis à venda › Detalhe
+
+
+
+Buscar
+imóveis Minhas
+disputas Meus
+resultados Meus
+favoritos Dados
+cadastrais
+COND ALEGRIA
+
+Valor de avaliação: R$ 135.000,00
+Valor mínimo de venda 1º Leilão: R$ 136.155,91
+Valor mínimo de venda 2º Leilão: R$ 97.983,97
+
+Tipo de imóvel: Apartamento
+Quartos: 2
+Número do imóvel: 878771290856-4
+Matrícula(s): 2021
+Comarca: CACHOEIRINHA-RS
+Ofício: 01
+Inscrição imobiliária: 1135902
+Averbação dos leilões negativos: Não se aplica
+
+
+Área total = 76,62m2
+Área privativa = 41,19m2
+
+
+Leilão SFI
+Edital: 0029/0226 - CPA/RE
+Número do item: 402
+
+Leiloeiro(a): BRENNO DE FIGUEIREDO PORTO
+ Data do 1º Leilão - 13/07/2026 - 10h00
+ Data do 2º Leilão - 17/07/2026 - 10h00
+""".strip()
+
+# NAO verbatim da Caixa - ver comentario acima.
+_TRECHO_RECONSTRUIDO_ENCERRAD = "Leilao encerrado. Resultado em apuracao."
+
+
+def test_leilao_sfi_com_encerrad_e_lance_ativo_nao_e_encerrado():
+    """O falso-positivo real: token amplo 'encerrad' + 'De seu lance' na
+    mesma pagina -> NAO pode classificar como 'encerrado'. Cai em
+    'inconclusivo' (a pagina nao bate nenhum SINAIS_ATIVO por causa da
+    divergencia de acento ja documentada em "valor minimo de venda" vs
+    "Valor mínimo de venda" real - fora do escopo deste fix)."""
+    dados = {
+        "texto_detalhe_bruto": (
+            _PAGINA_SFI_REAL_8787712908564 + "\n" +
+            _TRECHO_RECONSTRUIDO_ENCERRAD +
+            "\nDê seu lance  Sou o ex mutuário   Voltar\nGaleria de fotos"
+        )
+    }
+    assert ra._classificar(dados) == "inconclusivo"
+
+
+def test_leilao_sfi_com_encerrad_e_lance_ativo_variacao_maiuscula_sem_acento():
+    """Mesmo caso, variando capitalizacao/acentuacao do sinal de lance
+    ('DE SEU LANCE' maiusculo sem circunflexo) - a guarda tem que pegar
+    independente de acento/caixa, igual o resto do modulo (_sem_acentos)."""
+    dados = {
+        "texto_detalhe_bruto": (
+            _PAGINA_SFI_REAL_8787712908564 + "\n" +
+            _TRECHO_RECONSTRUIDO_ENCERRAD +
+            "\nDE SEU LANCE  Sou o ex mutuário   Voltar\nGaleria de fotos"
+        )
+    }
+    assert ra._classificar(dados) == "inconclusivo"
+
+
+def test_leilao_sfi_com_encerrad_sem_lance_ativo_continua_encerrado():
+    """Controle: mesma pagina SFI com o token amplo 'encerrad', mas SEM
+    'De seu lance' na mesma pagina (leilao realmente sem acao de lance
+    disponivel) - o token amplo sozinho ainda deve classificar como
+    'encerrado', igual antes deste fix. Prova que a guarda so age quando
+    ha sinal de leilao aberto, nao enfraquece o caso comum."""
+    dados = {
+        "texto_detalhe_bruto": (
+            _PAGINA_SFI_REAL_8787712908564 + "\n" +
+            _TRECHO_RECONSTRUIDO_ENCERRAD
+        )
+    }
+    assert ra._classificar(dados) == "encerrado"
+
+
+def test_frase_especifica_de_encerrado_continua_valendo_mesmo_com_lance_ativo():
+    """As frases mais especificas (nao a do token amplo) NAO devem ser
+    afetadas pela guarda - 'imovel vendido' + 'De seu lance' juntos (caso
+    hipotetico/adversarial) ainda tem que classificar 'encerrado', porque
+    'imovel vendido' e um sinal forte o suficiente pra nao precisar de
+    contraprova. Isso prova que a mudanca ficou limitada ao token amplo
+    'encerrad', conforme pedido."""
+    dados = {
+        "texto_detalhe_bruto": (
+            "Detalhe do imovel. Numero do imovel: 123456. Modalidade de venda: Venda Online. "
+            "Este imovel ja foi vendido e nao esta disponivel para novos lances. "
+            "De seu lance"
+        )
+    }
+    assert ra._classificar(dados) == "encerrado"

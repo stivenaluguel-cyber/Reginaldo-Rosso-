@@ -87,6 +87,19 @@ SINAIS_ERRO_IMOVEL_REMOVIDO = (
     "nao esta mais disponivel para venda",
 )
 
+# Contraprova pro token amplo "encerrad" dentro de SINAIS_ENCERRADO. Imoveis
+# "Leilao SFI" (2 pracas) poucos dias apos a 2a praca podem exibir texto
+# transitorio de apuracao de resultado que contem "encerrad" mesmo
+# continuando ativos de verdade, com ficha completa e lance disponivel.
+# Confirmado ao vivo em 21/07/2026 em 6 imoveis (8787712908564, 8555527021671,
+# 8787700367032, 10003975, 8555506485733, 8787715132230) marcados
+# "encerrado" pelo token amplo: nenhum tinha mais "encerrad" na checagem
+# manual (o texto transitorio ja tinha passado, entao nao foi possivel
+# capturar a frase exata que disparou), mas TODOS mostravam "De seu lance"
+# com pagina completa - o sinal mais forte e consistente de leilao aberto
+# encontrado nos 6 casos. Comparado sem acento (ver _sem_acentos).
+SINAIS_LANCE_ATIVO = ("de seu lance",)
+
 
 def _norm(t):
     return (t or "").lower()
@@ -95,6 +108,26 @@ def _norm(t):
 def _sem_acentos(t):
     nfkd = unicodedata.normalize("NFKD", t or "")
     return "".join(c for c in nfkd if not unicodedata.combining(c))
+
+
+def _sinal_encerrado_confiavel(txt, txt_sem_acentos):
+    """True se SINAIS_ENCERRADO bate de um jeito confiavel.
+
+    As frases mais especificas (nao esta disponivel, imovel vendido,
+    indisponivel para venda) sao sinais fortes o suficiente e continuam
+    validas mesmo com "De seu lance" na mesma pagina - nao mexe nelas.
+
+    O token amplo "encerrad" sozinho e mais fraco: se a pagina TAMBEM
+    mostrar um sinal confiavel de leilao aberto (SINAIS_LANCE_ATIVO), e o
+    falso-positivo transitorio do Leilao SFI (2a praca ja realizada,
+    resultado em apuracao) e NAO deve classificar como encerrado.
+    """
+    sinais_especificos = [s for s in SINAIS_ENCERRADO if s != "encerrad"]
+    if any(s in txt for s in sinais_especificos):
+        return True
+    if "encerrad" in txt:
+        return not any(s in txt_sem_acentos for s in SINAIS_LANCE_ATIVO)
+    return False
 
 
 def _classificar(dados):
@@ -120,6 +153,13 @@ def _classificar(dados):
     gate - e a UNICA excecao que passa por fora dele, e so quando as DUAS
     frases aparecem juntas. E um caso distinto do incidente de 08/07 acima:
     aquele nao tinha nenhuma mencao a "erro"/"indisponivel", so o menu.
+
+    NOVO (2026-07-21): o token amplo "encerrad" em SINAIS_ENCERRADO tem um
+    falso-positivo conhecido em imoveis "Leilao SFI" pouco depois da 2a
+    praca (texto transitorio de apuracao de resultado). Ver
+    _sinal_encerrado_confiavel - se a pagina tambem mostrar "De seu lance"
+    (leilao ainda aberto), o token amplo sozinho NAO conta como encerrado;
+    as frases mais especificas continuam valendo normalmente.
     """
     if not dados:
         return "inconclusivo"
@@ -133,7 +173,7 @@ def _classificar(dados):
         return "encerrado"
     if not any(s in txt for s in SINAIS_PAGINA_IMOVEL):
         return "inconclusivo"
-    if any(s in txt for s in SINAIS_ENCERRADO):
+    if _sinal_encerrado_confiavel(txt, txt_sem_acentos):
         return "encerrado"
     if _data_fim_futura(dados) is False:
         return "encerrado"
