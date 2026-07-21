@@ -16,7 +16,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const path = require("node:path");
 
-const { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, quedaDePublicacaoSuspeita, resolverTextoDebito } = require(
+const { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, quedaDePublicacaoSuspeita, resolverTextoDebito, estaNoSnapshotCsvOficial } = require(
   path.join(__dirname, "..", "gerar-imoveis.js")
 );
 
@@ -169,4 +169,36 @@ test("resolverTextoDebito: sem evidencia (null/undefined/vazio), cai no fallback
 test("resolverTextoDebito: nunca inventa 'sem debito' quando na verdade e so 'nao informado'", () => {
   // Distincao critica do requisito: ausencia de dado != "nao ha debito".
   assert.notEqual(resolverTextoDebito(null), "Sem debito");
+});
+
+// ---------------------------------------------------------------------------
+// estaNoSnapshotCsvOficial - regra de vitrine aprovada 22/07/2026: publica
+// EXATAMENTE os IDs do CSV oficial atual (RS/SC). Snapshot ausente/invalido
+// -> nunca filtra (protecao contra reduzir a vitrine por falha de leitura).
+// ---------------------------------------------------------------------------
+
+test("estaNoSnapshotCsvOficial: sem snapshot (null), sempre retorna true (nao filtra)", () => {
+  assert.equal(estaNoSnapshotCsvOficial({ id: "123", uf: "RS" }, null), true);
+  assert.equal(estaNoSnapshotCsvOficial({ id: "999999", uf: "SC" }, null), true);
+});
+
+test("estaNoSnapshotCsvOficial: ID presente no snapshot da UF correta -> true", () => {
+  const snap = { RS: new Set(["123", "456"]), SC: new Set(["789"]) };
+  assert.equal(estaNoSnapshotCsvOficial({ id: "123", uf: "RS" }, snap), true);
+  assert.equal(estaNoSnapshotCsvOficial({ id: "789", uf: "SC" }, snap), true);
+});
+
+test("estaNoSnapshotCsvOficial: ID ausente do snapshot da UF -> false (oculta)", () => {
+  const snap = { RS: new Set(["123"]), SC: new Set(["789"]) };
+  assert.equal(estaNoSnapshotCsvOficial({ id: "999", uf: "RS" }, snap), false);
+});
+
+test("estaNoSnapshotCsvOficial: compara id como string (numero vs string no objeto)", () => {
+  const snap = { RS: new Set(["123"]), SC: new Set([]) };
+  assert.equal(estaNoSnapshotCsvOficial({ id: 123, uf: "RS" }, snap), true);
+});
+
+test("estaNoSnapshotCsvOficial: UF sem conjunto no snapshot -> nao filtra esse item (defensivo)", () => {
+  const snap = { RS: new Set(["123"]), SC: new Set(["789"]) };
+  assert.equal(estaNoSnapshotCsvOficial({ id: "1", uf: "PR" }, snap), true);
 });

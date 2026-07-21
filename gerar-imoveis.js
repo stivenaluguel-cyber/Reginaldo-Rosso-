@@ -388,6 +388,41 @@ const l = limiar != null ? limiar : 0.5;
 return novoLen < anteriorLen * l;
 }
 
+// Regra de vitrine aprovada explicitamente em 22/07/2026: a vitrine publica
+// EXATAMENTE os IDs presentes no CSV oficial atual da Caixa (RS/SC) - o
+// snapshot validado (csv-oficial-snapshot.json, gerado por
+// etapa1_csv.py::_persistir_snapshot_csv_oficial, com protecoes contra CSV
+// vazio/invalido/queda anormal) e a fonte de verdade. Imoveis fora do CSV
+// continuam no banco/historico, so nao aparecem na vitrine - status/dados
+// de ficha nunca sao alterados por essa funcao, e so visibilidade.
+function carregarSnapshotCsvOficial(caminho){
+try {
+const raw = fs.readFileSync(caminho, "utf8");
+const snap = JSON.parse(raw);
+if (!snap || !snap.RS || !snap.SC || !Array.isArray(snap.RS.ids) || !Array.isArray(snap.SC.ids)) return null;
+return {
+atualizado: snap.atualizado || null,
+hash: snap.hash || null,
+RS: new Set(snap.RS.ids.map(String)),
+SC: new Set(snap.SC.ids.map(String)),
+totalRS: snap.RS.total,
+totalSC: snap.SC.total,
+};
+} catch (e) {
+return null;
+}
+}
+
+// snapshotCarregado=null (arquivo ausente/invalido) -> NUNCA filtra por CSV,
+// preserva o comportamento antigo (so status) - protecao contra reduzir a
+// vitrine por falha de leitura do snapshot, nao so por falha de coleta dele.
+function estaNoSnapshotCsvOficial(im, snapshotCarregado){
+if (!snapshotCarregado) return true;
+const conjuntoUf = snapshotCarregado[im.uf];
+if (!conjuntoUf) return true;
+return conjuntoUf.has(String(im.id));
+}
+
 // ============================================================
 // Pagina em modo ENCERRADO (imovel removido da Caixa)
 // Banner destacado, sem preco, similares + WhatsApp de alerta
@@ -1483,8 +1518,12 @@ data_inclusao: im.created_at ? new Date(im.created_at).toISOString().slice(0,10)
 preco_anterior: (im.preco_anterior_14d != null && im.preco_anterior_14d > im.preco) ? im.preco_anterior_14d : null
 };
 }
-const imoveisRS = imoveis.filter(im=>im.uf==="RS"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
-const imoveisSC = imoveis.filter(im=>im.uf==="SC"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
+const snapshotCsvOficial = carregarSnapshotCsvOficial(path.join(__dirname, "csv-oficial-snapshot.json"));
+if (!snapshotCsvOficial) {
+console.warn("[vitrine] AVISO: csv-oficial-snapshot.json ausente/invalido - publicando por status apenas (sem filtro de CSV), protecao contra reduzir a vitrine por falha de leitura do snapshot.");
+}
+const imoveisRS = imoveis.filter(im=>im.uf==="RS"&&(im.status||"Disponivel")==="Disponivel"&&estaNoSnapshotCsvOficial(im, snapshotCsvOficial)).map(imovelParaJson);
+const imoveisSC = imoveis.filter(im=>im.uf==="SC"&&(im.status||"Disponivel")==="Disponivel"&&estaNoSnapshotCsvOficial(im, snapshotCsvOficial)).map(imovelParaJson);
 
 // Guarda de sanidade (achado 22/07/2026): se a coleta do banco tiver sucesso
 // mas devolver uma contagem anormalmente baixa (bug de query, conexao
@@ -1525,7 +1564,16 @@ atualizado: new Date().toISOString(),
 // inclui tambem os Indisponivel (mantidos so pra pagina de detalhe historica/
 // SEO) - usar isso aqui inflava o total (achado: 1007 vs 903 de porEstado).
 total: imoveisRS.length + imoveisSC.length,
-porEstado: { RS: imoveisRS.length, SC: imoveisSC.length }
+porEstado: { RS: imoveisRS.length, SC: imoveisSC.length },
+// Registro auditavel do snapshot usado nesta publicacao (requisito
+// explicito 22/07/2026) - null quando publicado sem filtro de CSV
+// (snapshot ausente/invalido, protecao ativada).
+vitrineFonte: snapshotCsvOficial ? {
+csvOficialAtualizado: snapshotCsvOficial.atualizado,
+csvOficialHash: snapshotCsvOficial.hash,
+csvOficialTotalRS: snapshotCsvOficial.totalRS,
+csvOficialTotalSC: snapshotCsvOficial.totalSC,
+} : null
 };
 fs.writeFileSync(path.join(__dirname,"meta.json"), JSON.stringify(meta));
 console.log("JSONs atualizados: imoveis-rs("+imoveisRS.length+"), imoveis-sc("+imoveisSC.length+"), meta(total="+meta.total+").");
@@ -1577,4 +1625,4 @@ console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" 
 
 // Exports para testes (tests/gerar-imoveis.test.js) - nao afeta a execucao
 // via `node gerar-imoveis.js` (guardada por require.main acima).
-module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, htmlPrazoDetalhe, htmlPrazoCard, diasAteEncerramento, quedaDePublicacaoSuspeita, resolverTextoDebito };
+module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, htmlPrazoDetalhe, htmlPrazoCard, diasAteEncerramento, quedaDePublicacaoSuspeita, resolverTextoDebito, estaNoSnapshotCsvOficial, carregarSnapshotCsvOficial };
