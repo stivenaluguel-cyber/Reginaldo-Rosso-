@@ -41,6 +41,20 @@ logger = logging.getLogger(__name__)
 ESTADOS = [e.strip().upper() for e in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if e.strip()]
 ESTADOS_PRIORIDADE = list(ESTADOS)
 
+def _uf_csv_confiavel(ids_csv_uf: set, ids_banco_uf: set) -> bool:
+    """True se o CSV desta UF e confiavel o suficiente pra calcular
+    remocoes (>= 80% da ultima contagem conhecida no banco, minimo 10 -
+    protege UFs pequenas de um limiar absurdamente baixo). Banco vazio
+    para essa UF (sem baseline ainda, ex. primeira carga) sempre conta
+    como confiavel - nao ha o que comparar, e a diferenca (banco vazio -
+    csv) e sempre vazia de qualquer forma. Extraido de dentro de
+    _executar() (achado 22/07/2026) so para ficar testavel sem banco."""
+    if not ids_banco_uf:
+        return True
+    limiar = max(10, int(len(ids_banco_uf) * 0.8))
+    return len(ids_csv_uf) >= limiar
+
+
 CAIXA_CSV_URL = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{estado}.csv"
 CAIXA_HOME_URL = "https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.aspx?sltTipoBusca=imoveis"
 PROXY_URL = os.getenv("PROXY_URL", "")
@@ -650,10 +664,8 @@ async def _executar() -> dict:
             "faltando_ids": sorted(_faltando_uf)[:30],
             "sobrando_count": len(_sobrando_uf),
         }
-        if not _ids_banco_uf:
-            continue
-        _limiar = max(10, int(len(_ids_banco_uf) * 0.8))
-        if len(_ids_csv_uf) < _limiar:
+        if not _uf_csv_confiavel(_ids_csv_uf, _ids_banco_uf):
+            _limiar = max(10, int(len(_ids_banco_uf) * 0.8))
             logger.warning(f"etapa1: CSV suspeito para {_estado} (csv={len(_ids_csv_uf)}, banco={len(_ids_banco_uf)}, limiar_80pct={_limiar}). Pulando mark_unavailable para esta UF.")
             continue
         ids_removidos |= (_ids_banco_uf - _ids_csv_uf)

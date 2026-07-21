@@ -359,6 +359,35 @@ if (dbVal !== null) return dbVal;
 return null;
 }
 
+const NAO_INFORMADO_DEBITO = "Consulte edital/ficha oficial";
+
+// Resolve o texto exibido pra responsabilidade de debito (tributos/
+// condominio) - achado 22/07/2026: sem evidencia textual explicita na
+// ficha oficial da Caixa, NUNCA inferir quem paga. Distingue "nao" (texto
+// explicito, ex: "Sem debito"), "sim" (texto explicito de quem paga) e
+// "nao informado" (null/vazio - nunca raspado ou pagina sem essa secao) -
+// os 2 primeiros vem prontos de debito_heuristica.classificar_debito(),
+// esta funcao so decide o fallback do terceiro caso.
+function resolverTextoDebito(valor) {
+return (valor != null && valor !== "") ? valor : NAO_INFORMADO_DEBITO;
+}
+
+// Guarda de sanidade de publicacao (achado 22/07/2026): decide se uma
+// contagem nova e uma "queda suspeita" em relacao ao conjunto anterior
+// publicado - mesmo espirito do limiar de 80% por UF de etapa1_csv.py, so
+// que na camada de publicacao (gerar-imoveis.js), pra pegar o caso em que a
+// coleta do banco teve sucesso tecnico mas devolveu uma contagem
+// anormalmente baixa (bug de query, conexao instavel, etc). anteriorLen=null
+// (primeira execucao, sem baseline) ou anteriorLen<=10 (base pequena demais
+// pra confiar em proporcao) nunca conta como suspeito - so protege quedas
+// bruscas de um conjunto ja estabelecido.
+function quedaDePublicacaoSuspeita(anteriorLen, novoLen, limiar) {
+if (anteriorLen === null || anteriorLen === undefined) return false;
+if (anteriorLen <= 10) return false;
+const l = limiar != null ? limiar : 0.5;
+return novoLen < anteriorLen * l;
+}
+
 // ============================================================
 // Pagina em modo ENCERRADO (imovel removido da Caixa)
 // Banner destacado, sem preco, similares + WhatsApp de alerta
@@ -747,10 +776,13 @@ const precoAnterior = (i.preco_anterior_14d != null && Number(i.preco_anterior_1
 const condHTML = '';
 
 // ---- regras tributos / condominio ----
-const regras = [];
-if(tributos) regras.push(["Tributos (IPTU)", tributos]);
-if(condominio) regras.push(["Condominio", condominio]);
-const regrasHTML = regras.length? '<div class="regras"><h2>Débitos e responsabilidades</h2>'+regras.map(r=>'<div class="regra"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</div>').join("")+'</div>' : '';
+// Sem evidencia -> "Consulte edital/ficha oficial" em vez de omitir a
+// secao (omitir silenciosamente pode parecer "sem debito").
+const regras = [
+["Tributos (IPTU)", resolverTextoDebito(tributos)],
+["Condominio", resolverTextoDebito(condominio)],
+];
+const regrasHTML = '<div class="regras"><h2>Débitos e responsabilidades</h2>'+regras.map(r=>'<div class="regra"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</div>').join("")+'</div>';
 
 // ---- bloco "Mais sobre o imóvel" (detalhes tecnicos) ----
 const mais = [];
@@ -1453,6 +1485,38 @@ preco_anterior: (im.preco_anterior_14d != null && im.preco_anterior_14d > im.pre
 }
 const imoveisRS = imoveis.filter(im=>im.uf==="RS"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
 const imoveisSC = imoveis.filter(im=>im.uf==="SC"&&(im.status||"Disponivel")==="Disponivel").map(imovelParaJson);
+
+// Guarda de sanidade (achado 22/07/2026): se a coleta do banco tiver sucesso
+// mas devolver uma contagem anormalmente baixa (bug de query, conexao
+// instavel devolvendo parcial, etc), sem essa guarda o script escreveria
+// imoveis-rs.json/imoveis-sc.json/meta.json encolhidos ou vazios sem abortar
+// - mesmo espirito do limiar de 80% por UF ja usado em etapa1_csv.py, so que
+// aqui na camada de publicacao. Limiar mais permissivo (50%) porque
+// flutuacoes normais de dezenas de itens/dia sao esperadas; so aborta em
+// queda brusca. Primeira execucao (arquivo ainda nao existe) nao tem
+// baseline - nao guarda contra nada, deixa passar.
+function _contagemAnteriorPublicada(caminho){
+try {
+const anterior = JSON.parse(fs.readFileSync(caminho, "utf8"));
+return Array.isArray(anterior) ? anterior.length : null;
+} catch (e) {
+return null;
+}
+}
+for (const [uf, lista, caminho] of [
+["RS", imoveisRS, path.join(__dirname,"imoveis-rs.json")],
+["SC", imoveisSC, path.join(__dirname,"imoveis-sc.json")],
+]) {
+const anterior = _contagemAnteriorPublicada(caminho);
+if (quedaDePublicacaoSuspeita(anterior, lista.length)) {
+throw new Error(
+`gerar-imoveis abortado ANTES de escrever: imoveis-${uf.toLowerCase()}.json cairia de ${anterior} para ${lista.length} `+
+`(queda > 50%) - dado suspeito de falha parcial na coleta, nao publicando. `+
+`Conjunto valido anterior preservado intacto.`
+);
+}
+}
+
 fs.writeFileSync(path.join(__dirname,"imoveis-rs.json"), JSON.stringify(imoveisRS));
 fs.writeFileSync(path.join(__dirname,"imoveis-sc.json"), JSON.stringify(imoveisSC));
 const meta = {
@@ -1464,7 +1528,7 @@ total: imoveisRS.length + imoveisSC.length,
 porEstado: { RS: imoveisRS.length, SC: imoveisSC.length }
 };
 fs.writeFileSync(path.join(__dirname,"meta.json"), JSON.stringify(meta));
-console.log("JSONs atualizados: imoveis-rs("+imoveisRS.length+"), imoveis-sc("+imoveisSC.length+"), meta(total="+imoveis.length+").");
+console.log("JSONs atualizados: imoveis-rs("+imoveisRS.length+"), imoveis-sc("+imoveisSC.length+"), meta(total="+meta.total+").");
 
 await gerarPainelDados();
 
@@ -1513,4 +1577,4 @@ console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" 
 
 // Exports para testes (tests/gerar-imoveis.test.js) - nao afeta a execucao
 // via `node gerar-imoveis.js` (guardada por require.main acima).
-module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, htmlPrazoDetalhe, htmlPrazoCard, diasAteEncerramento };
+module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, htmlPrazoDetalhe, htmlPrazoCard, diasAteEncerramento, quedaDePublicacaoSuspeita, resolverTextoDebito };

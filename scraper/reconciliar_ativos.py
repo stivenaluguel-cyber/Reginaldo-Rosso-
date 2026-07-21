@@ -58,6 +58,13 @@ SEED_ATIVOS = {
     "8444427297835": ("RS", "PELOTAS"),
 }
 
+# Comparado sem acento (ver txt_sem_acentos em _classificar) - achado
+# 22/07/2026: o texto real da Caixa usa "Valor mínimo de venda" acentuado,
+# entao "valor minimo de venda" nunca batia comparando so com .lower()
+# (_norm nao remove acento). Confirmado com texto real de 6 imoveis
+# capturados ao vivo (mesmo lote do fix de SFI); corrigido comparando
+# contra a versao sem acento, sem alterar as strings aqui (continuam sem
+# acento por legibilidade, igual o resto do modulo).
 SINAIS_ATIVO = ("venda online", "tempo restante", "valor minimo de venda")
 SINAIS_ENCERRADO = ("encerrad", "nao esta disponivel", "nÃ£o estÃ¡ disponÃ­vel",
                     "imovel vendido", "imÃ³vel vendido", "indisponivel para venda")
@@ -188,7 +195,7 @@ def _classificar(dados):
     tem_lance_ativo = any(s in txt_sem_acentos for s in SINAIS_LANCE_ATIVO)
     if _data_fim_futura(dados) is False and not tem_lance_ativo:
         return "encerrado"
-    if any(s in txt for s in SINAIS_ATIVO):
+    if any(s in txt_sem_acentos for s in SINAIS_ATIVO):
         return "ativo"
     return "inconclusivo"
 

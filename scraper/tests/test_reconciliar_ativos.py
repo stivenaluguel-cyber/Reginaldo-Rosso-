@@ -280,10 +280,11 @@ _TRECHO_RECONSTRUIDO_ENCERRAD = "Leilao encerrado. Resultado em apuracao."
 
 def test_leilao_sfi_com_encerrad_e_lance_ativo_nao_e_encerrado():
     """O falso-positivo real: token amplo 'encerrad' + 'De seu lance' na
-    mesma pagina -> NAO pode classificar como 'encerrado'. Cai em
-    'inconclusivo' (a pagina nao bate nenhum SINAIS_ATIVO por causa da
-    divergencia de acento ja documentada em "valor minimo de venda" vs
-    "Valor mínimo de venda" real - fora do escopo deste fix)."""
+    mesma pagina -> NAO pode classificar como 'encerrado'. Desde o fix do
+    bug de acento em SINAIS_ATIVO (22/07/2026), essa pagina bate
+    "valor minimo de venda" (via "Valor mínimo de venda 1º/2º Leilão" real,
+    comparado sem acento) e classifica 'ativo' - resultado correto, ja que
+    e um imovel confirmado ativo de verdade."""
     dados = {
         "texto_detalhe_bruto": (
             _PAGINA_SFI_REAL_8787712908564 + "\n" +
@@ -291,7 +292,7 @@ def test_leilao_sfi_com_encerrad_e_lance_ativo_nao_e_encerrado():
             "\nDê seu lance  Sou o ex mutuário   Voltar\nGaleria de fotos"
         )
     }
-    assert ra._classificar(dados) == "inconclusivo"
+    assert ra._classificar(dados) == "ativo"
 
 
 def test_leilao_sfi_com_encerrad_e_lance_ativo_variacao_maiuscula_sem_acento():
@@ -305,7 +306,7 @@ def test_leilao_sfi_com_encerrad_e_lance_ativo_variacao_maiuscula_sem_acento():
             "\nDE SEU LANCE  Sou o ex mutuário   Voltar\nGaleria de fotos"
         )
     }
-    assert ra._classificar(dados) == "inconclusivo"
+    assert ra._classificar(dados) == "ativo"
 
 
 def test_leilao_sfi_com_encerrad_sem_lance_ativo_continua_encerrado():
@@ -477,3 +478,33 @@ def test_os_6_falsos_positivos_sfi_reais_nao_classificam_encerrado():
         assert resultado != "encerrado", (
             f"{numero}: classificou 'encerrado' indevidamente (data_fim={data_fim!r})"
         )
+
+
+# ---------------------------------------------------------------------------
+# Caso (i): bug de acento em SINAIS_ATIVO (achado 21/07/2026, corrigido
+# 22/07/2026 com comprovacao de texto real). "valor minimo de venda" (sem
+# acento) nunca batia contra o texto real da Caixa ("Valor mínimo de venda",
+# com í) porque _norm so faz .lower(), nao remove acento - reduzindo
+# indevidamente imoveis genuinamente ativos a "inconclusivo" em vez de
+# "ativo". Corrigido comparando contra txt_sem_acentos.
+# ---------------------------------------------------------------------------
+
+def test_bug_de_acento_valor_minimo_de_venda_corrigido_com_texto_real():
+    """Texto real (um dos 6 imoveis SFI confirmados ativos) com "Valor
+    mínimo de venda" ACENTUADO, como a Caixa realmente escreve - antes do
+    fix caia em 'inconclusivo', agora classifica 'ativo' corretamente."""
+    texto = _SEIS_FALSOS_POSITIVOS_SFI_TEXTO_REAL["8787712908564"] + _TRECHO_REAL_DE_SEU_LANCE
+    assert "Valor mínimo de venda" in texto, "fixture precisa ter o acento real pra validar o fix"
+    dados = {"texto_detalhe_bruto": texto, "data_fim": None}
+    assert ra._classificar(dados) == "ativo"
+
+
+def test_bug_de_acento_nao_cria_falso_ativo_em_pagina_sem_sinal_de_venda():
+    """Guarda contra falso-positivo NOVO: uma pagina de imovel valida mas
+    SEM nenhum dos 3 sinais de venda ativa (nem acentuado nem sem acento)
+    continua 'inconclusivo' - o fix so remove acento na comparacao, nao
+    afrouxa quais frases contam."""
+    dados = {
+        "texto_detalhe_bruto": "Detalhe do imovel. Comarca: TESTE-RS. Descricao do imovel: Casa.",
+    }
+    assert ra._classificar(dados) == "inconclusivo"

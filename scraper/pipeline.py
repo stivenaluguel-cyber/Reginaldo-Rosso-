@@ -39,6 +39,7 @@ from db import (upsert_imovel, upsert_imoveis_bulk, get_pendentes_com_uf,
                 get_uf_por_ids, get_pendentes_matricula_com_uf,
                 get_ids_by_uf, mark_unavailable, marcar_suspeitos, limpar_suspeita)
 from reconciliar_ativos import verificar_suspeitos_ativos
+from auditoria_execucao import registrar_execucao
 import etapa2_scraper as _e2
 
 # -- Logging -------------------------------------------------------
@@ -193,6 +194,13 @@ async def run_vigia():
 
     focos = [s.strip().upper() for s in os.getenv("FOCO_ESTADOS", "RS,SC").split(",") if s.strip()]
 
+    # -- Auditoria: valores default (sobrescritos conforme o run avanca) --
+    total_csv = 0
+    estados_ok, estados_falha = [], []
+    ids_novos, ids_removidos = [], []
+    ativos_conf, encerrados_conf = [], []
+    erro_fatal = None
+
     try:
         # Etapa 1: baixa CSV e obtem IDs atuais
         logger.info("--- Vigia: baixando CSV da Caixa ---")
@@ -200,6 +208,8 @@ async def run_vigia():
         ids_no_csv = set(resultado.get("ids_no_csv", []))
         ids_novos = resultado.get("ids_novos", [])
         total_csv = resultado.get("total_csv", 0)
+        estados_ok = resultado.get("estados_ok", [])
+        estados_falha = resultado.get("estados_falha", [])
         logger.info(f"CSV: {total_csv} imoveis | {len(ids_novos)} novos detectados")
 
         # Obtem IDs ativos no banco para os estados focados
@@ -275,6 +285,7 @@ async def run_vigia():
             f"{len(ids_removidos)} encerrados ===")
 
     except Exception as e:
+        erro_fatal = str(e)
         logger.exception(f"Erro fatal no vigia: {e}")
         _set_github_output("mudancas", "false")
         _set_github_output("novos", "0")
@@ -283,11 +294,39 @@ async def run_vigia():
     finally:
         elapsed = (datetime.now() - start).total_seconds()
         logger.info(f"=== Vigia finalizado em {elapsed:.0f}s ===")
+        try:
+            rs = len(get_ids_by_uf(["RS"]))
+            sc = len(get_ids_by_uf(["SC"]))
+        except Exception:
+            rs = sc = None
+        registrar_execucao(
+            tipo="vigia",
+            duracao_s=round(elapsed, 1),
+            total_csv=total_csv,
+            estados_csv_ok=estados_ok,
+            estados_csv_falha=estados_falha,
+            publicaveis_rs=rs,
+            publicaveis_sc=sc,
+            publicaveis_total=(rs + sc) if rs is not None and sc is not None else None,
+            novos=len(ids_novos),
+            suspeitos_sinalizados=len(ids_removidos),
+            confirmados_ativos=len(ativos_conf),
+            confirmados_encerrados=len(encerrados_conf),
+            erro_fatal=erro_fatal,
+        )
 
 # -- Pipeline completo ---------------------------------------------
 async def run_pipeline():
     start = datetime.now()
     logger.info(f"=== Pipeline v3 iniciado em {start.strftime('%Y-%m-%d %H:%M:%S')} ===")
+
+    # -- Auditoria: valores default (sobrescritos conforme o run avanca) --
+    total_csv = 0
+    estados_ok, estados_falha = [], []
+    ids_novos = []
+    ativos_conf, encerrados_conf = [], []
+    fila_restante = None
+    erro_fatal = None
 
     try:
         logger.info("--- Etapa 1: Download CSV e crosscheck ---")
@@ -367,11 +406,32 @@ async def run_pipeline():
         _set_github_output("fila_restante", str(fila_restante))
 
     except Exception as e:
+        erro_fatal = str(e)
         logger.exception(f"Erro fatal no pipeline: {e}")
         sys.exit(1)
     finally:
         elapsed = (datetime.now() - start).total_seconds()
         logger.info(f"=== Pipeline v3 finalizado em {elapsed:.0f}s ===")
+        try:
+            rs = len(get_ids_by_uf(["RS"]))
+            sc = len(get_ids_by_uf(["SC"]))
+        except Exception:
+            rs = sc = None
+        registrar_execucao(
+            tipo="pipeline",
+            duracao_s=round(elapsed, 1),
+            total_csv=total_csv,
+            estados_csv_ok=estados_ok,
+            estados_csv_falha=estados_falha,
+            publicaveis_rs=rs,
+            publicaveis_sc=sc,
+            publicaveis_total=(rs + sc) if rs is not None and sc is not None else None,
+            novos=len(ids_novos),
+            confirmados_ativos=len(ativos_conf),
+            confirmados_encerrados=len(encerrados_conf),
+            fila_restante=fila_restante,
+            erro_fatal=erro_fatal,
+        )
 
 # -- CLI -----------------------------------------------------------
 def main():
