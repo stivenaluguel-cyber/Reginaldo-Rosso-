@@ -1,0 +1,1 @@
+{"executado_em": "2026-07-22T13:54:33.964564+00:00", "tipo": "vigia", "duracao_s": 570.2, "total_csv": 902, "estados_csv_ok": ["RS", "SC"], "estados_csv_falha": [], "publicaveis_rs": 850, "publicaveis_sc": 197, "publicaveis_total": 1047, "novos": 0, "suspeitos_sinalizados": 145, "confirmados_ativos": 15, "confirmados_encerrados": 0, "erro_fatal": null}
