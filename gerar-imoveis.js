@@ -623,22 +623,22 @@ document.addEventListener('click',function(ev){var a=ev.target.closest('a[href*=
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../imovel.css">
 <script type="application/ld+json">${JSON.stringify(ldItemList).replace(/</g, '\\u003c')}</script>
 <script type="application/ld+json">${JSON.stringify(ldBreadcrumb).replace(/</g, '\\u003c')}</script>
 <script type="application/ld+json">${JSON.stringify(ldFaq).replace(/</g, '\\u003c')}</script>
 <style>
-.hub-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;padding:2.5rem 1rem 2rem;text-align:center}
-.hub-hero h1{font-size:clamp(1.4rem,4vw,2rem);font-weight:800;margin:0 0 .5rem;color:#fff}
-.hub-hero p{color:#a8c0d8;margin:0;font-size:1rem}
+.hub-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--navy-d) 0%,var(--navy2) 100%);color:#fff;padding:2.5rem 1rem 2rem;text-align:center}
+.hub-hero h1{font-family:var(--serif);font-size:clamp(1.4rem,4vw,2.1rem);font-weight:600;margin:0 0 .5rem;color:#fff}
+.hub-hero p{color:#c3d0e0;margin:0;font-size:1rem}
 .hub-stats{display:flex;gap:1.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap}
-.hub-stat{background:rgba(255,255,255,.08);border-radius:8px;padding:.5rem 1.2rem;font-size:.9rem;color:#c6a052;font-weight:700}
+.hub-stat{background:rgba(255,255,255,.08);border-radius:8px;padding:.5rem 1.2rem;font-size:.9rem;color:var(--gold-soft);font-weight:700}
 .hub-section{max-width:960px;margin:0 auto;padding:2rem 1rem 1rem}
-.hub-section h2{color:var(--navy);font-size:1.25rem;font-weight:800;margin:0 0 1rem;border-left:4px solid var(--gold);padding-left:.75rem}
+.hub-section h2{font-family:var(--serif);color:var(--navy);font-size:1.3rem;font-weight:600;margin:0 0 1rem;border-left:4px solid var(--gold);padding-left:.75rem}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;margin-bottom:2rem}
-.card{display:block;background:#fff;border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:transform .2s,box-shadow .2s;border:1px solid var(--line)}
-.card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.card{display:block;background:#fff;border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 2px 12px rgba(8,17,32,.1);transition:transform .2s,box-shadow .2s;border:1px solid var(--line)}
+.card:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(8,17,32,.16)}
 .card-img{position:relative;height:170px;background:var(--navy)}
 .card-img img{width:100%;height:100%;object-fit:cover;display:block}
 .card-img .off{position:absolute;top:10px;right:10px;background:#ef4444;color:#fff;font-size:.72rem;font-weight:800;padding:3px 8px;border-radius:50px}
@@ -646,11 +646,11 @@ document.addEventListener('click',function(ev){var a=ev.target.closest('a[href*=
 .card-city{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:.25rem}
 .uf-tag{background:var(--navy);color:#fff;font-size:.65rem;font-weight:700;padding:1px 6px;border-radius:50px;margin-left:.3rem}
 .card-tipo{font-size:.85rem;color:var(--ink2);margin-bottom:.35rem}
-.card-price{font-size:1.3rem;font-weight:800;color:var(--navy)}
+.card-price{font-family:var(--serif);font-size:1.35rem;font-weight:600;color:var(--navy)}
 .card-aval{font-size:.75rem;color:var(--muted);text-decoration:line-through}
-.hub-text{background:#f8f7f4;border-radius:12px;padding:1.5rem;margin-bottom:2rem;font-size:.96rem;line-height:1.7;color:var(--ink2)}
+.hub-text{background:#f8f5ee;border-radius:12px;padding:1.5rem;margin-bottom:2rem;font-size:.96rem;line-height:1.7;color:var(--ink2)}
 .hub-cta-box{background:var(--navy);color:#fff;border-radius:12px;padding:1.5rem;text-align:center;margin-bottom:2rem}
-.hub-cta-box p{color:#a8c0d8;margin:0 0 1rem}
+.hub-cta-box p{color:#c3d0e0;margin:0 0 1rem}
 .faq-item{border:1px solid var(--line);border-radius:8px;margin-bottom:.75rem;overflow:hidden}
 .faq-q{padding:.85rem 1rem;font-weight:600;font-size:.95rem;cursor:pointer;list-style:none;background:#fff;color:var(--navy)}
 .faq-q::-webkit-details-marker{display:none}
@@ -664,7 +664,7 @@ details[open] .faq-q::before{content:"- "}
 <body>
 <header><div class="topbar">
 <a class="brand" href="../../index.html">
-<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#27405f" stroke="#c6a052" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c6a052" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3l24 9v18c0 15-10 27-24 31C18 57 8 45 8 30V12z" fill="#1a2d4a" stroke="#c9a15a" stroke-width="2.2"/><path d="M19 40l8-9 6 5 11-13" fill="none" stroke="#c9a15a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
 <span class="bt"><b>Reginaldo Rosso</b><small>Imóveis Caixa - RS &amp; SC</small></span>
 </a>
 <div class="fones">
@@ -672,15 +672,15 @@ details[open] .faq-q::before{content:"- "}
 <a href="tel:5548991642332">(48) 99164-2332 - SC</a>
 </div>
 </div>
-<nav class="main-nav" style="background:#27405f;padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center">
-<a href="../../index.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Início</a>
-<a href="../../imoveis.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Imóveis Caixa</a>
-<a href="../../mapa.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
-<a href="../../como-funciona.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Como funciona</a>
-<a href="https://sagestao.com" target="_blank" rel="noopener" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">SA Gestão</a>
-<a href="../../calculadora.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
-<a href="../../assessoria.html" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Assessoria Grátis</a>
-<a href="../../index.html#contato" style="color:#c6a052;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
+<nav class="main-nav" style="background:#1a2d4a;padding:0.5rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem 1.5rem;justify-content:center">
+<a href="../../index.html" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">Início</a>
+<a href="../../imoveis.html" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">Imóveis Caixa</a>
+<a href="../../mapa.html" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">Mapa</a>
+<a href="../../como-funciona.html" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">Como funciona</a>
+<a href="https://sagestao.com" target="_blank" rel="noopener" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">SA Gestão</a>
+<a href="../../calculadora.html" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">Calculadora ROI</a>
+<a href="../../assessoria.html" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">Assessoria Grátis</a>
+<a href="../../index.html#contato" style="color:#e3cd9c;font-weight:600;font-size:0.93rem;text-decoration:none">Contato</a>
 </nav>
 </header>
 
@@ -905,28 +905,28 @@ return `<!doctype html>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../imovel.css">
 <style>
 /* bloco financeiro: hierarquia tipografica */
 /* widget de alertas por e-mail */
-.alerta-card{background:#fff;border:1px solid #d4c08a;border-radius:12px;padding:1.25rem;margin:1.25rem 0;box-shadow:0 2px 8px rgba(30,43,63,.07)}
-.alerta-card__title{font-size:1rem;font-weight:700;color:#1e2b3f;margin:0 0 .4rem}
+.alerta-card{background:#fff;border:1px solid #d4c08a;border-radius:12px;padding:1.25rem;margin:1.25rem 0;box-shadow:0 2px 8px rgba(8,17,32,.09)}
+.alerta-card__title{font-family:var(--serif);font-size:1.05rem;font-weight:600;color:#0f1e33;margin:0 0 .4rem}
 .alerta-card__sub{font-size:.85rem;color:#6b7280;margin:0 0 1rem;line-height:1.5}
 .alerta-card__sub--sem-data{color:#92400e;background:#fef3c7;border-radius:6px;padding:.4rem .6rem;font-size:.82rem;margin:0 0 1rem;display:block}
 .alerta-form{display:flex;flex-direction:column;gap:.6rem}
-.alerta-form input[type=text],.alerta-form input[type=email]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#1e2b3f;outline:none;transition:border-color .2s}
+.alerta-form input[type=text],.alerta-form input[type=email]{padding:.55rem .75rem;border:1px solid #d1d5db;border-radius:7px;font-size:.9rem;font-family:inherit;color:#0f1e33;outline:none;transition:border-color .2s}
 .alerta-input{min-height:44px;width:100%;box-sizing:border-box}
-.alerta-form input:focus{border-color:#c6a052;box-shadow:0 0 0 3px rgba(198,160,82,.25)}
+.alerta-form input:focus{border-color:#c9a15a;box-shadow:0 0 0 3px rgba(201,161,90,.25)}
 .alerta-form .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .alerta-form label.check{display:flex;align-items:flex-start;gap:.4rem;font-size:.8rem;color:#4b5563;cursor:pointer;line-height:1.4}
-.alerta-form label.check input{margin-top:3px;flex-shrink:0;accent-color:#c6a052}
-.alerta-btn{background:#1e2b3f;color:#c6a052;border:none;border-radius:7px;padding:.65rem 1rem;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;font-family:inherit}
-.alerta-btn:hover{background:#27405f}
+.alerta-form label.check input{margin-top:3px;flex-shrink:0;accent-color:#c9a15a}
+.alerta-btn{background:#0f1e33;color:#c9a15a;border:none;border-radius:7px;padding:.65rem 1rem;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s;font-family:inherit}
+.alerta-btn:hover{background:#1a2d4a}
 .alerta-btn:disabled{opacity:.6;cursor:default}
 .alerta-ok{color:#166534;background:#dcfce7;border-radius:7px;padding:.75rem 1rem;font-size:.9rem;font-weight:600;text-align:center}
 .alerta-err{color:#991b1b;background:#fee2e2;border-radius:7px;padding:.6rem .75rem;font-size:.82rem;margin-top:.25rem}
-.price--hero{font-size:2rem;font-weight:800;color:var(--navy,#1f324c);line-height:1.1}
+.price--hero{font-family:var(--serif);font-size:2rem;font-weight:600;color:var(--navy,#0f1e33);line-height:1.1}
 .price--aval{font-size:1.125rem;font-weight:500;color:#6b7280}
 .price-savings--compact{font-size:1.25rem;font-weight:700;color:#16a34a;white-space:nowrap}
 @media(max-width:480px){
