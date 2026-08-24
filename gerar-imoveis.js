@@ -1019,7 +1019,7 @@ hasFim
 'body:JSON.stringify({imovel_id:"' + i.id + '",nome:nome,email:email,telefone:tel,unsubscribe_token:token})',
 '});',
 'if(res.status===201||res.status===200){',
-'showOk("\u2705 Prontinho! Voc\u00EA vai receber alertas em "+email+".");',
+'showOk("Prontinho! Voc\u00EA vai receber alertas em "+email+".");',
 'if(window.gtag){gtag("event","generate_lead",{method:"alerta_leilao",item_id:"' + i.id + '",cidade:' + JSON.stringify(cidade) + ',uf:"' + i.uf + '"});}',
 '}else if(res.status===409){',
 'showErr("Voc\u00EA j\u00E1 est\u00E1 inscrito neste im\u00F3vel.");',
@@ -1079,7 +1079,7 @@ ${i.desconto>0?`<div class="price-block__row price-block__savings">
 <b>${
 fin===null
 ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre financiamento do imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:var(--gold)">Confirmo pra você — me chame</a>`
-: (fin==='Sim' ? '<span style="color:var(--green)">✅ Aceita</span>' : 'Somente à vista')
+: (fin==='Sim' ? '<span style="color:var(--green)"><svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-3px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg> Aceita</span>' : 'Somente à vista')
 }</b>
 </div>
 <div class="price-block__row price-block__fgts">
@@ -1087,14 +1087,14 @@ fin===null
 <b>${
 fgts===null
 ? `<a href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero saber sobre FGTS no imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'). Link: '+url)}" target="_blank" rel="noopener" style="color:var(--gold)">Confirmo pra você — me chame</a>`
-: (fgts==='Sim' ? '<span style="color:var(--green)">✅ Aceita</span>' : 'Somente à vista')
+: (fgts==='Sim' ? '<span style="color:var(--green)"><svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-3px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg> Aceita</span>' : 'Somente à vista')
 }</b>
 </div>
 ${htmlPrazoDetalhe(det.data_fim || null)}
 ${htmlOcupacaoDetalhe(det.ocupacao || null)}
 ${(i.modalidade === "Venda Online" && det.data_fim) ? `<div class="price-block__row price-block__aovivo-cta" style="flex-direction:column;align-items:stretch;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.08)">
-<a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener" style="display:block;text-align:center">🔴 Ver lances ao vivo na Caixa</a>
-<a class="btn gold" href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero dar lance no imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'), Venda Online. Pode me ajudar com a assessoria? Link: '+url)}" target="_blank" rel="noopener" style="display:block;text-align:center">💬 Quero dar lance com assessoria</a>
+<a class="btn ghost" href="${esc(fichaCaixa)}" target="_blank" rel="noopener" style="display:block;text-align:center"><svg viewBox="0 0 24 24" width="10" height="10" style="vertical-align:-1px" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg> Ver lances ao vivo na Caixa</a>
+<a class="btn gold" href="https://wa.me/${WHATS[i.uf]||WHATS.RS}?text=${encodeURIComponent('Olá Reginaldo! Quero dar lance no imóvel cod. '+i.id+' - '+titulo+' ('+brl(i.preco)+'), Venda Online. Pode me ajudar com a assessoria? Link: '+url)}" target="_blank" rel="noopener" style="display:block;text-align:center"><svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:-3px" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5h16v11H8l-4 4V5z"/></svg> Quero dar lance com assessoria</a>
 </div>` : ""}
 <div class="price-block__costs">
 Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
@@ -1177,9 +1177,10 @@ var timer=setInterval(function(){ if(!tick(el,target)) clearInterval(timer); },1
 document.getElementById('sh').addEventListener('click',async function(){
 const url=location.href, t=${JSON.stringify(titulo+" - "+brl(i.preco))};
 const txt=t+"\\nImóvel da Caixa com Reginaldo Rosso:\\n"+url;
+const shareOriginalHTML=this.innerHTML;
 if(window.gtag)gtag('event','share',{item_id:'${i.id}'});
 try{ if(navigator.share){ await navigator.share({title:t,text:txt,url}); return; } }catch(e){ return; }
-try{ await navigator.clipboard.writeText(txt); this.textContent='\u2713 Link copiado!'; setTimeout(()=>{this.textContent='\u{1F517} Compartilhar';},2000);}catch(e){ window.prompt('Copie o link:',url); }
+try{ await navigator.clipboard.writeText(txt); this.textContent='\u2713 Link copiado!'; setTimeout(()=>{this.innerHTML=shareOriginalHTML;},2000);}catch(e){ window.prompt('Copie o link:',url); }
 });
 if(window.gtag)gtag('event','view_item',{item_id:'${i.id}',item_name:${JSON.stringify(cidade+"/"+i.uf)}});
 document.addEventListener('click',function(ev){
