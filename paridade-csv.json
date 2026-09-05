@@ -1,18 +1,18 @@
 {
   "RS": {
-    "atualizado": "2026-09-05T06:19:37.745521+00:00",
+    "atualizado": "2026-09-05T11:11:45.519992+00:00",
     "total_csv": 963,
-    "total_banco_disponivel": 1305,
+    "total_banco_disponivel": 1302,
     "faltando_count": 0,
     "faltando_ids": [],
-    "sobrando_count": 342
+    "sobrando_count": 339
   },
   "SC": {
-    "atualizado": "2026-09-05T06:19:38.780835+00:00",
+    "atualizado": "2026-09-05T11:11:47.145000+00:00",
     "total_csv": 186,
-    "total_banco_disponivel": 264,
+    "total_banco_disponivel": 262,
     "faltando_count": 0,
     "faltando_ids": [],
-    "sobrando_count": 78
+    "sobrando_count": 76
   }
 }
