@@ -77,13 +77,20 @@ textarea.fld{min-height:70px;resize:vertical}
   <div><b>Reginaldo Rosso</b><br><small>CRM · Investidores</small></div>
   <div class="sp"></div>
   <span class="who" id="who"></span>
+  <button class="btn ghost" id="btnSenhaNova" hidden>Trocar senha</button>
   <button class="btn ghost" id="btnSair" hidden>Sair</button>
 </header>
 
 <main id="telaLogin" class="login" hidden>
   <h1>Entrar no CRM</h1>
-  <p id="loginTxt">Digite seu e-mail. Enviamos um código de acesso (e um link) para ele.</p>
-  <div id="passo1">
+  <p id="loginTxt">Entre com seu e-mail e senha.</p>
+  <div id="passoSenha">
+    <input type="email" id="loginEmailSenha" placeholder="seu@email.com" autocomplete="username">
+    <input type="password" id="loginSenha" placeholder="Senha" autocomplete="current-password">
+    <button class="btn" id="btnSenha">Entrar</button>
+    <button class="btn sec" id="btnIrCodigo" style="width:100%;margin-top:8px">Esqueci a senha / entrar com código por e-mail</button>
+  </div>
+  <div id="passo1" hidden>
     <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
     <button class="btn" id="btnCodigo">Enviar código</button>
   </div>
@@ -91,7 +98,7 @@ textarea.fld{min-height:70px;resize:vertical}
     <input type="text" id="loginCodigo" inputmode="numeric" autocomplete="one-time-code" placeholder="Código recebido por e-mail" maxlength="10">
     <button class="btn" id="btnEntrar">Entrar</button>
     <p class="msg">Se o e-mail trouxer só um link, basta clicar nele neste mesmo navegador.</p>
-    <button class="btn sec" id="btnVoltar" style="width:100%;margin-top:8px">Usar outro e-mail</button>
+    <button class="btn sec" id="btnVoltar" style="width:100%;margin-top:8px">Voltar para entrar com senha</button>
   </div>
   <p class="msg" id="loginMsg"></p>
 </main>
@@ -129,7 +136,7 @@ const $=id=>document.getElementById(id);
 let leads=[], emailUser='', nomeUser='', canal=null;
 
 function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==='class')e.className=attrs[k];else if(k==='text')e.textContent=attrs[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k]);}for(const c of kids)if(c!=null)e.append(c);return e;}
-function show(id){for(const t of ['telaLogin','telaSemAcesso','telaCrm'])$(t).hidden=(t!==id);$('btnSair').hidden=(id==='telaLogin');}
+function show(id){for(const t of ['telaLogin','telaSemAcesso','telaCrm'])$(t).hidden=(t!==id);$('btnSair').hidden=(id==='telaLogin');$('btnSenhaNova').hidden=(id!=='telaCrm');}
 function msg(t,ok){const m=$('loginMsg');m.className='msg '+(ok?'ok':'err');m.textContent=t||'';}
 function soDig(s){return String(s||'').replace(/\D/g,'');}
 function waNum(t){let d=soDig(t);if(d.length<=11)d='55'+d;return d;}
@@ -138,6 +145,31 @@ function horas(s){return (Date.now()-new Date(s).getTime())/36e5;}
 function tempo(s){const h=horas(s);if(h<1)return Math.max(1,Math.round(h*60))+' min';if(h<48)return Math.round(h)+' h';return Math.round(h/24)+' d';}
 
 // ---------- Login ----------
+$('btnSenha').addEventListener('click',async()=>{
+  const email=$('loginEmailSenha').value.trim().toLowerCase(), password=$('loginSenha').value;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg('Informe um e-mail válido.');
+  if(!password)return msg('Digite a senha.');
+  $('btnSenha').disabled=true;msg('');
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  $('btnSenha').disabled=false;
+  if(error)return msg(/invalid/i.test(error.message)?'E-mail ou senha incorretos.':'Não foi possível entrar: '+error.message);
+});
+$('loginSenha').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnSenha').click();});
+$('btnIrCodigo').addEventListener('click',()=>{$('passoSenha').hidden=true;$('passo1').hidden=false;$('loginEmail').value=$('loginEmailSenha').value;$('loginTxt').textContent='Digite seu e-mail. Enviamos um código de acesso (e um link) para ele.';msg('');});
+$('btnSenhaNova').addEventListener('click',()=>{
+  const s1=el('input',{class:'fld',type:'password',placeholder:'Nova senha (mínimo 8 caracteres)',autocomplete:'new-password'}),s2=el('input',{class:'fld',type:'password',placeholder:'Repita a nova senha',autocomplete:'new-password'});
+  const m=el('p',{class:'msg'});
+  $('panel').replaceChildren(el('button',{class:'x',text:'×',onclick:fechar}),el('h2',{text:'Trocar senha'}),
+    el('label',{class:'l',text:'Nova senha'}),s1,el('label',{class:'l',text:'Confirmar'}),s2,
+    el('div',{class:'row'},el('button',{class:'btn',text:'Salvar nova senha',onclick:async(e)=>{
+      if(s1.value.length<8){m.className='msg err';m.textContent='Use pelo menos 8 caracteres.';return;}
+      if(s1.value!==s2.value){m.className='msg err';m.textContent='As senhas não conferem.';return;}
+      e.target.disabled=true;const {error}=await sb.auth.updateUser({password:s1.value});e.target.disabled=false;
+      if(error){m.className='msg err';m.textContent='Não foi possível trocar: '+error.message;return;}
+      m.className='msg ok';m.textContent='Senha alterada. Use a nova senha no próximo acesso.';s1.value='';s2.value='';
+    }})),m);
+  $('drawer').classList.add('on');
+});
 $('btnCodigo').addEventListener('click',async()=>{
   const email=$('loginEmail').value.trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg('Informe um e-mail válido.');
@@ -156,7 +188,7 @@ $('btnEntrar').addEventListener('click',async()=>{
   $('btnEntrar').disabled=false;
   if(error)return msg('Código inválido ou expirado. Peça um novo.');
 });
-$('btnVoltar').addEventListener('click',()=>{$('passo1').hidden=false;$('passo2').hidden=true;msg('');});
+$('btnVoltar').addEventListener('click',()=>{$('passoSenha').hidden=false;$('passo1').hidden=true;$('passo2').hidden=true;$('loginTxt').textContent='Entre com seu e-mail e senha.';msg('');});
 $('loginCodigo').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnEntrar').click();});
 $('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnCodigo').click();});
 async function sair(){await sb.auth.signOut();if(canal){clearInterval(canal);canal=null;}leads=[];show('telaLogin');$('who').textContent='';}
