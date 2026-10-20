@@ -1377,6 +1377,22 @@ if(d){ im._det = d; comDetalhe++; }
 }
 console.log("Imoveis: "+imoveis.length+" | com ficha detalhada do banco: "+comDetalhe);
 
+  // ===== Fonte unica de verdade (20/10/2026): imovel fora do CSV oficial da
+  // Caixa vira "Indisponivel" ANTES de gerar paginas, sitemap, hubs e similares.
+  // Antes so a vitrine (imoveis.html) filtrava pelo snapshot; as paginas
+  // individuais e o sitemap seguiam o status do banco e continuavam
+  // anunciando como disponivel imovel que a Caixa ja tinha tirado da lista.
+  const snapshotCsvOficial = carregarSnapshotCsvOficial(path.join(__dirname, "csv-oficial-snapshot.json"));
+  {
+    let nForaSnapshot = 0;
+    for (const im of imoveis) {
+      if ((im.status||"Disponivel")==="Disponivel" && !estaNoSnapshotCsvOficial(im, snapshotCsvOficial)) {
+        im.status = "Indisponivel"; nForaSnapshot++;
+      }
+    }
+    console.log("Fora do CSV oficial da Caixa (viram encerrados): " + nForaSnapshot + (snapshotCsvOficial ? "" : " (snapshot ausente - sem filtro)"));
+  }
+
   // ===== Hubs de cidade: recalcula TOP 10 por volume + mantem fixas e ja existentes vivos =====
   {
     const disponiveisPorCidade = {};
@@ -1519,7 +1535,7 @@ data_inclusao: im.created_at ? new Date(im.created_at).toISOString().slice(0,10)
 preco_anterior: (im.preco_anterior_14d != null && im.preco_anterior_14d > im.preco) ? im.preco_anterior_14d : null
 };
 }
-const snapshotCsvOficial = carregarSnapshotCsvOficial(path.join(__dirname, "csv-oficial-snapshot.json"));
+// snapshotCsvOficial ja carregado acima (antes da geracao das paginas).
 if (!snapshotCsvOficial) {
 console.warn("[vitrine] AVISO: csv-oficial-snapshot.json ausente/invalido - publicando por status apenas (sem filtro de CSV), protecao contra reduzir a vitrine por falha de leitura do snapshot.");
 }
