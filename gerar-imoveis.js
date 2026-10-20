@@ -244,10 +244,10 @@ const r = await cli.query(
 "modalidade, descricao, area_total, area_privativa, area, " +
 "debito_tributos, debito_condominio, " +
 "aceita_fgts, fgts, aceita_financiamento, tipo_real, quartos, data_fim, ocupacao, " +
-"matricula_s3_url, fotos_urls, status, scraped_at " +
+"matricula_s3_url, fotos_urls, status, scraped_at, texto_detalhe_bruto " +
 "FROM imoveis_caixa"
 );
-for(const row of r.rows){ mapa[String(row.numero_imovel).replace(/\D/g,"")] = row; }
+for(const row of r.rows){ row._pracas = parsePracas(row.texto_detalhe_bruto); delete row.texto_detalhe_bruto; mapa[String(row.numero_imovel).replace(/\D/g,"")] = row; }
 console.log("Banco: "+r.rows.length+" registros detalhados carregados.");
 } catch(e){
 console.log("Falha ao consultar o banco ("+e.message+") - gerando apenas com CSV.");
@@ -314,6 +314,63 @@ if (norm.includes("ocupado")) return `<div class="price-block__row price-block__
 // valor nao reconhecido: registra no log e nao renderiza
 if (ocupacaoStr) console.warn("ocupacao nao reconhecida:", JSON.stringify(ocupacaoStr));
 return "";
+}
+
+// === 1a/2a praca (Leilao SFI) ================================================
+// Extrai valor minimo e data de cada praca do texto_detalhe_bruto ja gravado
+// pela Etapa 2 - nenhuma requisicao nova a Caixa. Formatos reais conhecidos
+// (fixtures em scraper/tests): "Valor mínimo de venda 1º Leilão: R$ 355.000,00"
+// e "Data do 2º Leilão - 17/07/2026 - 10h00". As datas sao exibidas como
+// "anunciadas no edital" e NUNCA alimentam data_fim/countdown: para SFI com
+// 2 pracas nenhuma das datas e indicador confiavel de encerramento (achado
+// 21/07/2026, ver scraper/data_fim_heuristica.py).
+// Retorna null quando o texto nao traz nenhuma informacao de 2a praca.
+const _ORD = "(?:([12])\\s*[\u00bao\u00b0]?|(primeiro|segundo))";
+const _RE_PRACA_VALOR = new RegExp("valor\\s+m[i\u00ed]nimo\\s+de\\s+venda\\s+(?:do\\s+)?" + _ORD + "\\s*leil[a\u00e3]o\\s*:?\\s*R\\$\\s*([\\d.]+,\\d{2})", "gi");
+const _RE_PRACA_DATA = new RegExp("data\\s+(?:do\\s+)?" + _ORD + "\\s*leil[a\u00e3]o\\s*[-\u2013:]?\\s*(\\d{2}/\\d{2}/\\d{4})(?:\\s*[-\u2013,]?\\s*(?:\u00e0s\\s*)?(\\d{1,2})\\s*[h:]\\s*(\\d{2})?)?", "gi");
+function _numPraca(m1, m2){ return (m1 === "1" || /^primeiro$/i.test(m2||"")) ? 1 : 2; }
+function _moedaBR(s){ const n = parseFloat(String(s).replace(/\./g,"").replace(",", ".")); return isNaN(n) ? null : n; }
+function parsePracas(texto){
+if (!texto || typeof texto !== "string") return null;
+const t = texto.replace(/[\s\u00a0]+/g, " ");
+const p = { 1: {}, 2: {} };
+let m;
+_RE_PRACA_VALOR.lastIndex = 0;
+while ((m = _RE_PRACA_VALOR.exec(t))) { const k = _numPraca(m[1], m[2]); if (p[k].valor == null) p[k].valor = _moedaBR(m[3]); }
+_RE_PRACA_DATA.lastIndex = 0;
+while ((m = _RE_PRACA_DATA.exec(t))) {
+const k = _numPraca(m[1], m[2]);
+if (p[k].data == null) { p[k].data = m[3]; if (m[4]) p[k].hora = String(m[4]).padStart(2,"0") + ":" + (m[5] || "00"); }
+}
+if (p[2].valor == null && p[2].data == null) return null; // sem 2a praca: nada a mostrar
+const lim = s => { const o = {}; for (const c of ["valor","data","hora"]) if (s[c] != null) o[c] = s[c]; return Object.keys(o).length ? o : null; };
+const out = { primeira: lim(p[1]), segunda: lim(p[2]) };
+const lm = t.match(/[Ll]eiloeir[oa](?:\(a\))?\s*:\s*([A-Z\u00c0-\u00dc][A-Z\u00c0-\u00dc .'-]{3,80}?)(?=\s+(?:Data|Edital|N[u\u00fa]mero|Valor|Endere|$))/);
+if (lm) out.leiloeiro = lm[1].trim();
+return out;
+}
+
+// Linhas do bloco de preco da ficha. hoje injetavel para testes.
+function htmlPracasDetalhe(pracas, hoje){
+if (!pracas || !pracas.segunda) return "";
+const ref = hoje ? new Date(hoje) : new Date(); ref.setHours(0,0,0,0);
+const linha = (n, s) => {
+if (!s) return "";
+const d = s.data ? parseDateBR(s.data) : null;
+const passou = d && d < ref;
+const quando = s.data ? (s.data.slice(0,5) + (s.hora ? " às " + s.hora.replace(":", "h") : "")) : "data no edital";
+const valor = s.valor != null ? brl(s.valor) : "valor no edital";
+return `<div class="price-block__row price-block__praca${passou ? " price-block__praca--passou" : ""}">
+<span class="price-block__label">${n}º leilão <small style="font-weight:400;opacity:.75">${esc(quando)}${passou ? " · já realizado" : ""}</small></span>
+<b${passou ? ' style="opacity:.6"' : ""}>${esc(valor)}</b>
+</div>`;
+};
+const v1 = pracas.primeira && pracas.primeira.valor, v2 = pracas.segunda.valor;
+let nota = "Se não houver lance no 1º leilão, o imóvel vai ao 2º com outro valor mínimo.";
+if (v1 && v2 && v2 < v1) nota = "No 2º leilão o lance mínimo cai " + Math.round((1 - v2/v1)*100) + "% — se não houver lance no 1º.";
+if (v1 && v2 && v2 > v1) nota = "Atenção: neste edital o lance mínimo do 2º leilão é maior que o do 1º.";
+return linha(1, pracas.primeira) + linha(2, pracas.segunda) +
+`<div class="price-block__row price-block__praca-nota"><small style="color:#64748b">${esc(nota)} Datas anunciadas no edital — confirme sempre na Caixa.</small></div>`;
 }
 
 // Versao curta para cards de listagem e hubs
@@ -761,6 +818,9 @@ const fichaCaixa = i.link || ("https://venda-imoveis.caixa.gov.br/sistema/detalh
 const tipoLeilao = /venda\s*(on[\s-]?line|direta)/i.test(i.modalidade||"") ? "venda_direta" : "extrajudicial";
 const comissaoLeiloeiro = tipoLeilao === "venda_direta" ? 0 : 5;
 const roiUrl = "../calculadora.html?tipoLeilao="+tipoLeilao+"&valorLance="+Math.round(i.preco)+"&valorAvaliacao="+Math.round(i.avaliacao)+"&comissaoLeiloeiro="+comissaoLeiloeiro;
+// Simulador da 2a praca: so quando o minimo do 2o leilao e menor que o lance atual
+const _v2 = det._pracas && det._pracas.segunda && det._pracas.segunda.valor;
+const roiUrl2 = (_v2 && _v2 < i.preco) ? "../calculadora.html?tipoLeilao="+tipoLeilao+"&valorLance="+Math.round(_v2)+"&valorAvaliacao="+Math.round(i.avaliacao)+"&comissaoLeiloeiro="+comissaoLeiloeiro : null;
 const sp = specs(i.descricao);
 const specsHTML = sp.length? '<div class="specs">'+sp.map(s=>'<span>'+esc(s)+'</span>').join("")+'</div>' : '';
 const colLeftHTML = galeriaFotos ? `<div class="ph ph--carrossel">
@@ -1074,6 +1134,7 @@ ${i.desconto>0?`<div class="price-block__row price-block__savings">
 <span class="price-block__label">Modalidade</span>
 <span class="price-block__chip">${esc(i.modalidade||"-")}</span>
 </div>
+${htmlPracasDetalhe(det._pracas || null)}
 <div class="price-block__row price-block__fin">
 <span class="price-block__label">Financiamento</span>
 <b>${
@@ -1098,7 +1159,8 @@ ${(i.modalidade === "Venda Online" && det.data_fim) ? `<div class="price-block__
 </div>` : ""}
 <div class="price-block__costs">
 Custos de arrematação (ITBI, cartório, eventual desocupação) variam por município e edital — calcule o lucro líquido exato na calculadora.
-<a class="btn roi-btn" href="${roiUrl}" style="margin-top:10px;display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI</a>
+<a class="btn roi-btn" href="${roiUrl}" style="margin-top:10px;display:inline-flex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg> Calcular ROI</a>${roiUrl2 ? `
+<a class="btn ghost roi-btn" href="${roiUrl2}" style="margin-top:8px;display:inline-flex">Simular no 2º leilão (${brl(_v2)})</a>` : ""}
 </div>
 <p class="price-block__disclaimer">Valores do edital oficial Caixa. Estimativas não constituem promessa de resultado. Dados conferidos no site oficial da Caixa em ${new Date().toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}.</p>
 </div>
@@ -1207,7 +1269,7 @@ await cli.connect();
 const r = await cli.query(
 "SELECT numero_imovel, uf, cidade, bairro, endereco, preco_avaliacao, preco_minimo, " +
 "modalidade, descricao, tipo_real, area_total, area_privativa, debito_tributos, debito_condominio, " +
-"aceita_fgts, aceita_financiamento, quartos, data_fim, ocupacao, matricula_s3_url, fotos_urls, status, scraped_at, created_at " +
+"aceita_fgts, aceita_financiamento, quartos, data_fim, ocupacao, matricula_s3_url, fotos_urls, status, scraped_at, created_at, texto_detalhe_bruto " +
 "FROM imoveis_caixa " +
 "WHERE status IN ('Disponivel','Indisponivel') AND uf IN ('RS','SC') " +
 "AND cidade IS NOT NULL " +
@@ -1233,6 +1295,7 @@ console.log("historico_imoveis indisponivel (" + e2.message + ") - preco_anterio
 }
 
 const lista = r.rows.map(row => {
+row._pracas = parsePracas(row.texto_detalhe_bruto); delete row.texto_detalhe_bruto;
 const id = String(row.numero_imovel).replace(/\D/g,"");
 const preco = Number(row.preco_minimo)||0;
 const aval = Number(row.preco_avaliacao)||0;
@@ -1532,7 +1595,8 @@ data_fim: im._det ? (im._det.data_fim != null ? im._det.data_fim : null) : null,
 tipo_real: (im._det && im._det.tipo_real) || parseTipoAreaFromDesc(im.descricao).tipo_real || null,
 ocupacao: im._det ? (im._det.ocupacao != null ? im._det.ocupacao : null) : null,
 data_inclusao: im.created_at ? new Date(im.created_at).toISOString().slice(0,10) : null,
-preco_anterior: (im.preco_anterior_14d != null && im.preco_anterior_14d > im.preco) ? im.preco_anterior_14d : null
+preco_anterior: (im.preco_anterior_14d != null && im.preco_anterior_14d > im.preco) ? im.preco_anterior_14d : null,
+pracas: (im._det && im._det._pracas) || null
 };
 }
 // snapshotCsvOficial ja carregado acima (antes da geracao das paginas).
@@ -1642,4 +1706,4 @@ console.log("Geradas "+n+" paginas em /imovel/ ("+nDisp+" disponiveis, "+nEnc+" 
 
 // Exports para testes (tests/gerar-imoveis.test.js) - nao afeta a execucao
 // via `node gerar-imoveis.js` (guardada por require.main acima).
-module.exports = { resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, htmlPrazoDetalhe, htmlPrazoCard, diasAteEncerramento, quedaDePublicacaoSuspeita, resolverTextoDebito, estaNoSnapshotCsvOficial, carregarSnapshotCsvOficial };
+module.exports = { parsePracas, htmlPracasDetalhe, resolverFinanciamento, resolverFgts, detectarAVistaExclusivo, htmlPrazoDetalhe, htmlPrazoCard, diasAteEncerramento, quedaDePublicacaoSuspeita, resolverTextoDebito, estaNoSnapshotCsvOficial, carregarSnapshotCsvOficial };
