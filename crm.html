@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src https://xpkznaqgctfkoonqpcye.supabase.co; base-uri 'self'; object-src 'none'; form-action 'none'">
+<title>CRM · Reginaldo Rosso</title>
+<link rel="icon" href="/favicon.ico">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--navy:#0f1e33;--navy2:#1a2d4a;--gold:#c9a15a;--gold-soft:#e3cd9c;--bg:#f7f4ee;--card:#fff;--ink:#14213a;--ink2:#3c4b64;--muted:#6d7889;--line:#e7e1d2;--quente:#b3261e;--morno:#b26b00;--frio:#6d7889;--ok:#1f7a3f;--serif:'Fraunces',Georgia,serif;--sans:'IBM Plex Sans',system-ui,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink2);font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+header{background:linear-gradient(180deg,var(--navy2),var(--navy));color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+header b{font-family:var(--serif);font-size:1.1rem;font-weight:600}
+header small{color:var(--gold-soft);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase}
+header .sp{flex:1}
+header .who{font-size:.8rem;color:var(--gold-soft)}
+.btn{border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer;background:var(--gold);color:var(--navy)}
+.btn.sec{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.ghost{background:transparent;color:var(--gold-soft);border:1px solid rgba(227,205,156,.4);padding:6px 10px;font-size:.8rem}
+.btn.wa{background:#1f9d55;color:#fff}
+.btn:disabled{opacity:.6;cursor:wait}
+.login{max-width:420px;margin:9vh auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:30px}
+.login h1{font-family:var(--serif);color:var(--ink);font-size:1.6rem;font-weight:600;margin-bottom:6px}
+.login p{color:var(--muted);margin-bottom:16px}
+.login input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:10px;background:#fff}
+.login input:focus,.fld:focus{outline:none;border-color:var(--gold)}
+.login .btn{width:100%;padding:13px}
+.msg{font-size:.88rem;margin-top:10px}.msg.err{color:var(--quente)}.msg.ok{color:var(--ok)}
+.top{padding:16px 18px 6px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px}
+.kpi span{display:block;font-size:.72rem;color:var(--muted)}
+.kpi b{font-family:var(--serif);font-size:1.5rem;font-weight:500;color:var(--ink)}
+.kpi.alerta b{color:var(--quente)}
+.filtros{padding:6px 18px 10px;display:flex;flex-wrap:wrap;gap:8px}
+.fld{padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.filtros input.fld{flex:1;min-width:180px}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);gap:12px;padding:0 18px 30px;overflow-x:auto;align-items:start}
+.col{background:#efe9dc;border-radius:12px;padding:10px;min-height:200px}
+.col.over{outline:2px dashed var(--gold)}
+.col h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);display:flex;justify-content:space-between;margin:2px 4px 10px}
+.col h3 em{font-style:normal;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--frio);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.card.QUENTE{border-left-color:var(--quente)}.card.MORNO{border-left-color:var(--morno)}
+.card:hover{border-color:var(--gold)}
+.card .n{font-weight:600;color:var(--ink);display:flex;justify-content:space-between;gap:6px}
+.card .p{font-size:.78rem;color:var(--ink2)}
+.card .m{font-size:.72rem;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between;gap:6px}
+.card .atr{color:var(--quente);font-weight:600}
+.tag{font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.tag.QUENTE{color:var(--quente)}.tag.MORNO{color:var(--morno)}.tag.FRIO{color:var(--frio)}
+.vazio{color:var(--muted);font-size:.8rem;text-align:center;padding:16px 4px}
+.drawer{position:fixed;inset:0;background:rgba(8,17,32,.45);display:none;z-index:40}
+.drawer.on{display:block}
+.panel{position:absolute;right:0;top:0;bottom:0;width:min(560px,100%);background:var(--bg);overflow:auto;padding:20px}
+.panel h2{font-family:var(--serif);color:var(--ink);font-size:1.4rem;font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+.grid2 div span{display:block;font-size:.7rem;color:var(--muted)}
+.grid2 div b{font-weight:500;color:var(--ink);font-size:.88rem;word-break:break-word}
+label.l{display:block;font-size:.75rem;color:var(--muted);margin:10px 0 4px}
+.panel .fld{width:100%}
+textarea.fld{min-height:70px;resize:vertical}
+.hist{margin-top:14px}
+.hist li{list-style:none;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:.85rem}
+.hist li small{display:block;color:var(--muted);font-size:.7rem}
+.x{float:right;background:none;border:0;font-size:1.6rem;line-height:1;cursor:pointer;color:var(--muted)}
+.mostrar-perdidos{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}header .who{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div><b>Reginaldo Rosso</b><br><small>CRM · Investidores</small></div>
+  <div class="sp"></div>
+  <span class="who" id="who"></span>
+  <button class="btn ghost" id="btnSair" hidden>Sair</button>
+</header>
+
+<main id="telaLogin" class="login" hidden>
+  <h1>Entrar no CRM</h1>
+  <p id="loginTxt">Digite seu e-mail. Enviamos um código de acesso (e um link) para ele.</p>
+  <div id="passo1">
+    <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+    <button class="btn" id="btnCodigo">Enviar código</button>
+  </div>
+  <div id="passo2" hidden>
+    <input type="text" id="loginCodigo" inputmode="numeric" autocomplete="one-time-code" placeholder="Código recebido por e-mail" maxlength="10">
+    <button class="btn" id="btnEntrar">Entrar</button>
+    <p class="msg">Se o e-mail trouxer só um link, basta clicar nele neste mesmo navegador.</p>
+    <button class="btn sec" id="btnVoltar" style="width:100%;margin-top:8px">Usar outro e-mail</button>
+  </div>
+  <p class="msg" id="loginMsg"></p>
+</main>
+
+<main id="telaSemAcesso" class="login" hidden>
+  <h1>Sem acesso</h1>
+  <p>Este e-mail não está liberado para o CRM. Peça ao administrador para incluir o seu e-mail.</p>
+  <button class="btn sec" id="btnSair2" style="width:100%">Sair</button>
+</main>
+
+<div id="telaCrm" hidden>
+  <section class="top" id="kpis"></section>
+  <section class="filtros">
+    <input class="fld" id="fBusca" placeholder="Buscar por nome, telefone, e-mail, região...">
+    <select class="fld" id="fPrio"><option value="">Todas as prioridades</option><option>QUENTE</option><option>MORNO</option><option>FRIO</option></select>
+    <select class="fld" id="fOrigem"><option value="">Todas as origens</option><option value="quiz">Quiz</option><option value="encerrado">Imóvel encerrado</option><option value="contato">Formulário de contato</option><option value="manual">Manual</option><option value="indicacao">Indicação</option></select>
+    <label class="mostrar-perdidos"><input type="checkbox" id="fPerdidos"> Mostrar perdidos</label>
+    <button class="btn" id="btnNovo">+ Lead</button>
+    <button class="btn sec" id="btnAtualizar">Atualizar</button>
+  </section>
+  <section class="board" id="board"></section>
+</div>
+
+<div class="drawer" id="drawer"><div class="panel" id="panel"></div></div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+const SB_URL='https://xpkznaqgctfkoonqpcye.supabase.co';
+const SB_KEY='sb_publishable_f4Gt8pMtbDfegyQISo6ZzQ_RntanbAF';
+const sb=supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'rr-crm-auth'}});
+const ETAPAS=[['novo','Novo'],['contatado','Contatado'],['qualificado','Qualificado'],['negociacao','Negociação'],['fechado','Fechado'],['perdido','Perdido']];
+const ORIGEM={quiz:'Quiz',encerrado:'Imóvel encerrado',contato:'Contato',manual:'Manual',indicacao:'Indicação'};
+const $=id=>document.getElementById(id);
+let leads=[], emailUser='', nomeUser='', canal=null;
+
+function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){if(k==='class')e.className=attrs[k];else if(k==='text')e.textContent=attrs[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k]);}for(const c of kids)if(c!=null)e.append(c);return e;}
+function show(id){for(const t of ['telaLogin','telaSemAcesso','telaCrm'])$(t).hidden=(t!==id);$('btnSair').hidden=(id==='telaLogin');}
+function msg(t,ok){const m=$('loginMsg');m.className='msg '+(ok?'ok':'err');m.textContent=t||'';}
+function soDig(s){return String(s||'').replace(/\D/g,'');}
+function waNum(t){let d=soDig(t);if(d.length<=11)d='55'+d;return d;}
+function dataBR(s){if(!s)return '—';const d=new Date(s);return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function horas(s){return (Date.now()-new Date(s).getTime())/36e5;}
+function tempo(s){const h=horas(s);if(h<1)return Math.max(1,Math.round(h*60))+' min';if(h<48)return Math.round(h)+' h';return Math.round(h/24)+' d';}
+
+// ---------- Login ----------
+$('btnCodigo').addEventListener('click',async()=>{
+  const email=$('loginEmail').value.trim().toLowerCase();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return msg('Informe um e-mail válido.');
+  $('btnCodigo').disabled=true;msg('');
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:location.origin+'/crm.html'}});
+  $('btnCodigo').disabled=false;
+  if(error)return msg(/rate|limit|seconds/i.test(error.message)?'Muitas tentativas. Aguarde um minuto e tente de novo.':'Não foi possível enviar: '+error.message);
+  $('passo1').hidden=true;$('passo2').hidden=false;$('loginTxt').textContent='Enviamos o acesso para '+email+'. Confira também a caixa de spam.';
+  $('loginCodigo').focus();
+});
+$('btnEntrar').addEventListener('click',async()=>{
+  const email=$('loginEmail').value.trim().toLowerCase(), token=soDig($('loginCodigo').value);
+  if(token.length<6)return msg('Digite o código do e-mail.');
+  $('btnEntrar').disabled=true;
+  const {error}=await sb.auth.verifyOtp({email,token,type:'email'});
+  $('btnEntrar').disabled=false;
+  if(error)return msg('Código inválido ou expirado. Peça um novo.');
+});
+$('btnVoltar').addEventListener('click',()=>{$('passo1').hidden=false;$('passo2').hidden=true;msg('');});
+$('loginCodigo').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnEntrar').click();});
+$('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnCodigo').click();});
+async function sair(){await sb.auth.signOut();if(canal){clearInterval(canal);canal=null;}leads=[];show('telaLogin');$('who').textContent='';}
+$('btnSair').addEventListener('click',sair);$('btnSair2').addEventListener('click',sair);
+
+async function entrou(session){
+  if(!session){show('telaLogin');return;}
+  emailUser=(session.user.email||'').toLowerCase();
+  const {data:ok,error}=await sb.rpc('crm_rr_autorizado');
+  if(error||!ok){show('telaSemAcesso');return;}
+  const {data:a}=await sb.from('crm_rr_acesso').select('nome').eq('email',emailUser).maybeSingle();
+  nomeUser=(a&&a.nome)||emailUser;
+  $('who').textContent=nomeUser;
+  show('telaCrm');
+  if(location.hash.includes('access_token'))history.replaceState(null,'',location.pathname);
+  await carregar();
+  if(!canal){canal=setInterval(()=>{if(!document.hidden&&!$('drawer').classList.contains('on'))carregar();},60000);}
+}
+sb.auth.onAuthStateChange((ev,session)=>{if(ev==='SIGNED_IN'||ev==='INITIAL_SESSION')entrou(session);if(ev==='SIGNED_OUT')show('telaLogin');});
+
+// ---------- Dados ----------
+async function carregar(){
+  const {data,error}=await sb.from('leads_quiz_investidor').select('*').neq('status','descartado').order('created_at',{ascending:false}).limit(1000);
+  if(error){$('board').replaceChildren(el('p',{class:'vazio',text:'Não foi possível carregar os leads: '+error.message}));return;}
+  leads=data||[];render();
+}
+$('btnAtualizar').addEventListener('click',carregar);
+for(const id of ['fBusca','fPrio','fOrigem','fPerdidos'])$(id).addEventListener('input',render);
+
+function filtrados(){
+  const q=$('fBusca').value.trim().toLowerCase(), p=$('fPrio').value, o=$('fOrigem').value;
+  return leads.filter(l=>(!p||l.prioridade===p)&&(!o||l.origem===o)&&(!q||[l.nome,l.telefone,l.email,l.regiao,l.perfil,l.interesse,l.imovel_id].join(' ').toLowerCase().includes(q)));
+}
+function render(){
+  const ls=filtrados();
+  const novosQ=leads.filter(l=>l.etapa==='novo'&&l.prioridade==='QUENTE').length;
+  const k=[['Leads ativos',leads.filter(l=>l.etapa!=='perdido'&&l.etapa!=='fechado').length],['QUENTES sem contato',novosQ,novosQ>0],['Novos sem contato',leads.filter(l=>l.etapa==='novo').length],['Em negociação',leads.filter(l=>l.etapa==='negociacao').length],['Fechados',leads.filter(l=>l.etapa==='fechado').length]];
+  $('kpis').replaceChildren(...k.map(([t,v,a])=>el('div',{class:'kpi'+(a?' alerta':'')},el('span',{text:t}),el('b',{text:String(v)}))));
+  const etapas=ETAPAS.filter(e=>e[0]!=='perdido'||$('fPerdidos').checked);
+  const ordem={QUENTE:0,MORNO:1,FRIO:2};
+  $('board').replaceChildren(...etapas.map(([id,nome])=>{
+    const itens=ls.filter(l=>l.etapa===id).sort((a,b)=>(ordem[a.prioridade]??3)-(ordem[b.prioridade]??3)||new Date(b.created_at)-new Date(a.created_at));
+    const col=el('div',{class:'col','data-etapa':id},el('h3',{},document.createTextNode(nome),el('em',{text:String(itens.length)})));
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('over');});
+    col.addEventListener('dragleave',()=>col.classList.remove('over'));
+    col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('over');const lid=e.dataTransfer.getData('text/plain');if(lid)mudarEtapa(lid,id);});
+    if(!itens.length)col.append(el('p',{class:'vazio',text:id==='novo'?'Nenhum lead novo.':'—'}));
+    for(const l of itens){
+      const atrasado=l.etapa==='novo'&&horas(l.created_at)>(l.prioridade==='QUENTE'?1:24);
+      const c=el('div',{class:'card '+(l.prioridade||''),draggable:'true'},
+        el('div',{class:'n'},el('span',{text:(l.nome||'Sem nome')}),l.prioridade?el('span',{class:'tag '+l.prioridade,text:l.prioridade}):null),
+        el('div',{class:'p',text:[l.perfil,l.valor].filter(Boolean).join(' · ')||l.interesse||ORIGEM[l.origem]||''}),
+        el('div',{class:'m'},el('span',{text:(ORIGEM[l.origem]||'')+(l.regiao?' · '+l.regiao:'')}),el('span',{class:atrasado?'atr':'',text:(atrasado?'⏱ ':'')+tempo(l.created_at)})),
+        l.proximo_passo?el('div',{class:'m'},el('span',{text:'➜ '+l.proximo_passo+(l.proximo_passo_em?' ('+new Date(l.proximo_passo_em+'T12:00').toLocaleDateString('pt-BR')+')':'')})):null);
+      c.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',l.id));
+      c.addEventListener('click',()=>abrir(l.id));
+      col.append(c);
+    }
+    return col;
+  }));
+}
+
+async function nota(leadId,tipo,texto){await sb.from('crm_rr_notas').insert({lead_id:leadId,autor_email:emailUser,tipo,texto});}
+async function mudarEtapa(id,etapa){
+  const l=leads.find(x=>x.id===id);if(!l||l.etapa===etapa)return;
+  const antes=l.etapa;l.etapa=etapa;render();
+  const {error}=await sb.from('leads_quiz_investidor').update({etapa,atualizado_em:new Date().toISOString(),responsavel:l.responsavel||nomeUser}).eq('id',id);
+  if(error){l.etapa=antes;render();alert('Não foi possível mover: '+error.message);return;}
+  await nota(id,'etapa',nomeUser+' moveu de '+rotulo(antes)+' para '+rotulo(etapa)+'.');
+}
+function rotulo(e){const x=ETAPAS.find(a=>a[0]===e);return x?x[1]:e;}
+
+// ---------- Detalhe ----------
+$('drawer').addEventListener('click',e=>{if(e.target.id==='drawer')fechar();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fechar();});
+function fechar(){$('drawer').classList.remove('on');}
+async function abrir(id){
+  const l=leads.find(x=>x.id===id);if(!l)return;
+  const p=$('panel');
+  const primeiro=(l.nome||'').split(' ')[0];
+  const txtWa='Olá '+primeiro+', tudo bem? Aqui é '+(nomeUser==='Reginaldo'?'o Reginaldo Rosso':nomeUser+', da equipe do Reginaldo Rosso')+', corretor credenciado Caixa. Vi que você respondeu nosso quiz de perfil de investidor'+(l.perfil?' ('+l.perfil+')':'')+'. Separei algumas oportunidades da Caixa que combinam com você. Posso te mandar?';
+  const sel=el('select',{class:'fld'},...ETAPAS.map(([v,t])=>{const o=el('option',{value:v,text:t});if(v===l.etapa)o.selected=true;return o;}));
+  const pp=el('input',{class:'fld',value:l.proximo_passo||'',placeholder:'Ex.: enviar 3 imóveis de Criciúma'});
+  const ppd=el('input',{class:'fld',type:'date',value:l.proximo_passo_em||''});
+  const nt=el('textarea',{class:'fld',placeholder:'Resumo da conversa, objeções, imóveis enviados...'});
+  const tipo=el('select',{class:'fld'},...[['nota','Nota'],['whatsapp','WhatsApp'],['ligacao','Ligação'],['email','E-mail'],['visita','Visita']].map(([v,t])=>el('option',{value:v,text:t})));
+  const hist=el('ul',{class:'hist'},el('li',{text:'Carregando histórico...'}));
+  const info=[['Telefone',l.telefone],['E-mail',l.email],['Prioridade',l.prioridade?(l.prioridade+(l.pontuacao!=null?' ('+l.pontuacao+'/8)':'')):'—'],['Origem',ORIGEM[l.origem]||l.origem],['Objetivo',l.objetivo],['Investimento',l.valor],['Pagamento',l.pagamento],['Experiência',l.experiencia],['Região',l.regiao],['Prazo',l.prazo],['Interesse',l.interesse],['Imóvel',l.imovel_id],['Recebido',dataBR(l.created_at)],['Responsável',l.responsavel],['Consentimento LGPD',l.consentimento_lgpd?'Sim, em '+dataBR(l.consentimento_em):'—'],['Página',l.pagina]];
+  p.replaceChildren(
+    el('button',{class:'x',text:'×',onclick:fechar,'aria-label':'Fechar'}),
+    el('h2',{text:l.nome||'Sem nome'}),
+    el('div',{class:'p',text:l.perfil||''}),
+    el('div',{class:'row'},
+      l.telefone?el('a',{class:'btn wa',href:'https://wa.me/'+waNum(l.telefone)+'?text='+encodeURIComponent(txtWa),target:'_blank',rel:'noopener',text:'WhatsApp',onclick:()=>{nota(l.id,'whatsapp',nomeUser+' abriu conversa no WhatsApp.');if(l.etapa==='novo')mudarEtapa(l.id,'contatado');}}):null,
+      l.telefone?el('a',{class:'btn sec',href:'tel:+'+waNum(l.telefone),text:'Ligar'}):null,
+      l.email?el('a',{class:'btn sec',href:'mailto:'+l.email,text:'E-mail'}):null,
+      l.imovel_id?el('a',{class:'btn sec',href:'/imovel/'+encodeURIComponent(l.imovel_id)+'.html',target:'_blank',text:'Ver imóvel'}):null),
+    el('div',{class:'grid2'},...info.filter(i=>i[1]).map(([t,v])=>el('div',{},el('span',{text:t}),el('b',{text:String(v)})))),
+    el('label',{class:'l',text:'Etapa'}),sel,
+    el('label',{class:'l',text:'Próximo passo'}),pp,
+    el('label',{class:'l',text:'Data do próximo passo'}),ppd,
+    el('div',{class:'row'},el('button',{class:'btn',text:'Salvar',onclick:async(e)=>{
+      e.target.disabled=true;
+      const upd={proximo_passo:pp.value.trim()||null,proximo_passo_em:ppd.value||null,atualizado_em:new Date().toISOString()};
+      const {error}=await sb.from('leads_quiz_investidor').update(upd).eq('id',l.id);
+      e.target.disabled=false;
+      if(error)return alert('Não foi possível salvar: '+error.message);
+      Object.assign(l,upd);
+      if(sel.value!==l.etapa)await mudarEtapa(l.id,sel.value);
+      render();e.target.textContent='Salvo ✓';setTimeout(()=>{e.target.textContent='Salvar';},1500);
+    }})),
+    el('label',{class:'l',text:'Registrar atendimento'}),tipo,el('div',{style:'height:6px'}),nt,
+    el('div',{class:'row'},el('button',{class:'btn sec',text:'Adicionar ao histórico',onclick:async()=>{
+      const t=nt.value.trim();if(!t)return;
+      await nota(l.id,tipo.value,t);nt.value='';carregarHist(l.id,hist);
+    }})),
+    el('h3',{style:'margin-top:12px;font-size:.9rem;color:var(--ink)',text:'Histórico'}),hist);
+  $('drawer').classList.add('on');
+  carregarHist(l.id,hist);
+}
+async function carregarHist(id,ul){
+  const {data,error}=await sb.from('crm_rr_notas').select('*').eq('lead_id',id).order('created_at',{ascending:false}).limit(200);
+  if(error){ul.replaceChildren(el('li',{text:'Erro ao carregar: '+error.message}));return;}
+  const nomes={whatsapp:'WhatsApp',ligacao:'Ligação',email:'E-mail',visita:'Visita',etapa:'Etapa',nota:'Nota'};
+  ul.replaceChildren(...(data.length?data.map(n=>el('li',{},el('small',{text:(nomes[n.tipo]||n.tipo)+' · '+dataBR(n.created_at)+' · '+n.autor_email}),document.createTextNode(n.texto))):[el('li',{text:'Nenhum registro ainda.'})]));
+}
+
+// ---------- Lead manual ----------
+$('btnNovo').addEventListener('click',()=>{
+  const nome=el('input',{class:'fld',placeholder:'Nome'}),tel=el('input',{class:'fld',placeholder:'WhatsApp com DDD'}),em=el('input',{class:'fld',type:'email',placeholder:'E-mail'});
+  const org=el('select',{class:'fld'},el('option',{value:'manual',text:'Manual'}),el('option',{value:'indicacao',text:'Indicação'}),el('option',{value:'contato',text:'Formulário de contato'}));
+  const prio=el('select',{class:'fld'},...['MORNO','QUENTE','FRIO'].map(v=>el('option',{value:v,text:v})));
+  const int=el('input',{class:'fld',placeholder:'Interesse (ex.: apartamento até 300 mil em Criciúma)'});
+  const ok=el('label',{class:'mostrar-perdidos'},el('input',{type:'checkbox'}),document.createTextNode(' A pessoa autorizou receber contato (LGPD)'));
+  const m=el('p',{class:'msg'});
+  $('panel').replaceChildren(el('button',{class:'x',text:'×',onclick:fechar}),el('h2',{text:'Novo lead'}),
+    el('label',{class:'l',text:'Nome'}),nome,el('label',{class:'l',text:'WhatsApp'}),tel,el('label',{class:'l',text:'E-mail'}),em,
+    el('label',{class:'l',text:'Origem'}),org,el('label',{class:'l',text:'Prioridade'}),prio,el('label',{class:'l',text:'Interesse'}),int,
+    el('div',{style:'height:10px'}),ok,
+    el('div',{class:'row'},el('button',{class:'btn',text:'Criar lead',onclick:async(e)=>{
+      const t=tel.value.trim(),e2=em.value.trim();
+      if(nome.value.trim().length<2){m.className='msg err';m.textContent='Informe o nome.';return;}
+      if(soDig(t).length<10){m.className='msg err';m.textContent='Informe o WhatsApp com DDD.';return;}
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e2)){m.className='msg err';m.textContent='Informe um e-mail válido.';return;}
+      if(!ok.querySelector('input').checked){m.className='msg err';m.textContent='Confirme o consentimento do contato.';return;}
+      e.target.disabled=true;
+      const {data,error}=await sb.from('leads_quiz_investidor').insert({nome:nome.value.trim(),telefone:t,email:e2,origem:org.value,prioridade:prio.value,interesse:int.value.trim()||null,consentimento_lgpd:true,responsavel:nomeUser,pagina:'/crm'}).select('id').single();
+      e.target.disabled=false;
+      if(error){m.className='msg err';m.textContent='Não foi possível criar: '+error.message;return;}
+      await nota(data.id,'nota','Lead criado manualmente por '+nomeUser+'.');
+      await carregar();abrir(data.id);
+    }})),m);
+  $('drawer').classList.add('on');
+});
+})();
+</script>
+</body>
+</html>
