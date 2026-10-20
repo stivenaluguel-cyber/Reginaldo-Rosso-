@@ -31,6 +31,12 @@ jobs:
       - name: Dependencias
         run: cd scraper && pip install -r requirements.txt
 
+      - name: Rebase do snapshot (aceita a lista de hoje como nova base)
+        # 20/10/2026: SC caiu 184 -> 138 desde 09/09 e a trava de queda >20%
+        # bloqueava toda rodada. Remover o snapshot antigo faz o script gerar
+        # a base nova (as protecoes de RS+SC baixados com sucesso continuam).
+        run: rm -f csv-oficial-snapshot.json
+
       - name: Rodar gerar_snapshot_inicial.py
         run: cd scraper && python gerar_snapshot_inicial.py
         env:
@@ -49,11 +55,11 @@ jobs:
             echo "Sem mudancas em csv-oficial-snapshot.json."
             exit 0
           fi
-          git commit -m "chore: gera snapshot inicial do CSV oficial (regra de vitrine)"
+          git commit -m "chore: rebase do snapshot do CSV oficial (nova base)"
           for i in 1 2 3; do
             git push && exit 0
             echo "push falhou (tentativa $i), rebase e retry..."
-            git pull --rebase origin main
+            git pull --rebase --autostash origin main
           done
           echo "::error::Nao foi possivel publicar csv-oficial-snapshot.json apos 3 tentativas."
           exit 1
