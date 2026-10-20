@@ -137,10 +137,11 @@
       var btn = f.querySelector('.qz-send'); btn.disabled = true; btn.textContent = 'Enviando...';
       var d = new FormData();
       d.append('access_key', ACCESS_KEY);
-      d.append('subject', '[' + pf.prio + '] Lead investidor (quiz) — ' + pf.nome);
+      d.append('subject', (pf.prio === 'QUENTE' ? '🔥 ' : '') + '[' + pf.prio + '] Lead investidor (quiz) — ' + pf.nome);
       d.append('from_name', 'Site Reginaldo Rosso · Quiz');
       d.append('nome', nome); d.append('telefone', f.telefone.value.trim()); d.append('email', em);
       d.append('perfil', pf.nome); d.append('prioridade', pf.prio + ' (' + pf.pts + '/8)');
+      d.append('whatsapp_do_lead', 'https://wa.me/' + (tel.length <= 11 ? '55' + tel : tel)); d.append('abrir_no_crm', 'https://reginaldorosso.com.br/crm.html');
       P.forEach(function (p) { d.append(p.q, resp[p.k] || ''); });
       d.append('pagina', location.pathname); d.append('consentimento_lgpd', 'sim — ' + new Date().toISOString());
       if (f.botcheck.checked) d.append('botcheck', 'on');
