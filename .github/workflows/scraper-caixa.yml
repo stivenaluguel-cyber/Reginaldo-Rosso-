@@ -96,7 +96,7 @@ jobs:
           for i in 1 2 3; do
             git push && exit 0
             echo "push falhou (tentativa $i), rebase e retry..."
-            git pull --rebase origin main
+            git pull --rebase --autostash origin main
           done
           echo "::warning::Nao foi possivel publicar paridade-csv.json apos 3 tentativas."
 
@@ -121,7 +121,7 @@ jobs:
           for i in 1 2 3; do
             git push && exit 0
             echo "push falhou (tentativa $i), rebase e retry..."
-            git pull --rebase origin main
+            git pull --rebase --autostash origin main
           done
           echo "::warning::Nao foi possivel publicar csv-oficial-snapshot.json apos 3 tentativas."
 
