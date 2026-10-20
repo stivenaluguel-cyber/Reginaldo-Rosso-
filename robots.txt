@@ -3,5 +3,6 @@ Allow: /
 Disallow: /gestao.html
 Disallow: /painel-interno.html
 Disallow: /painel-dados.json
+Disallow: /social/
 
 Sitemap: https://reginaldorosso.com.br/sitemap.xml
