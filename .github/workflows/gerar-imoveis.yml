@@ -2,6 +2,10 @@ name: Gerar Páginas de Imóveis
 
 on:
   push:
+    # So no main: sem isso, um push de gerar-imoveis.js num branch de
+    # feature fazia o robo regenerar e commitar ~950 paginas no branch,
+    # que depois conflitavam com as regeneracoes do main no merge.
+    branches: [main]
     paths:
       - '**.csv'
       - 'imoveis-rs.json'
