@@ -7,6 +7,8 @@
 
   var ACCESS_KEY = 'efe281ee-c450-4faa-bfe0-dbb185f349ab';
   var WA = '5551991104976';
+  var SB_URL = 'https://xpkznaqgctfkoonqpcye.supabase.co';
+  var SB_KEY = 'sb_publishable_f4Gt8pMtbDfegyQISo6ZzQ_RntanbAF'; // chave pública: a tabela só aceita INSERT (RLS)
 
   var P = [
     { k: 'objetivo', q: 'Qual é o seu objetivo principal com imóveis da Caixa?',
@@ -142,9 +144,17 @@
       P.forEach(function (p) { d.append(p.q, resp[p.k] || ''); });
       d.append('pagina', location.pathname); d.append('consentimento_lgpd', 'sim — ' + new Date().toISOString());
       if (f.botcheck.checked) d.append('botcheck', 'on');
+      var linha = { nome: nome, telefone: f.telefone.value.trim(), email: em, objetivo: resp.objetivo, valor: resp.valor,
+        pagamento: resp.pagamento, experiencia: resp.experiencia, regiao: resp.regiao, prazo: resp.prazo,
+        perfil: pf.nome, prioridade: pf.prio, pontuacao: pf.pts, pagina: location.pathname.slice(0, 200), consentimento_lgpd: true };
+      var pSb = fetch(SB_URL + '/rest/v1/leads_quiz_investidor', { method: 'POST',
+        headers: { apikey: SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify(linha) }).then(function (r) { return r.ok; }).catch(function () { return false; });
+      var pW3 = fetch('https://api.web3forms.com/submit', { method: 'POST', body: d, headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.json(); }).then(function (j) { return !!j.success; }).catch(function () { return false; });
       try {
-        var r = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: d, headers: { Accept: 'application/json' } });
-        var j = await r.json(); if (!j.success) throw 0;
+        var ok = await Promise.all([pSb, pW3]);
+        if (!ok[0] && !ok[1]) throw 0;
         enviado = true;
         ev('generate_lead', { method: 'quiz_investidor', perfil: pf.nome, prioridade: pf.prio });
         try { if (window.fbq) fbq('track', 'Lead', { content_name: 'quiz_investidor' }); } catch (x) {}
