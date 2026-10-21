@@ -204,45 +204,55 @@ def tirar_tarjas(im, limiar=18):
 
 def faixas_carimbo(im, gap=.10):
     """Linhas de corte que tiram o carimbo das fotos de vistoria (data, GPS,
-    endereco). O carimbo e texto claro, alinhado a direita, colado na borda
-    de cima ou de baixo. Para cada lado, encadeia linhas de texto a partir da
-    borda (fio contra o ceu cruza a foto toda com poucos pontos e nao conta)
-    e corta ate onde a cadeia chega, no maximo 40% em cima e 35% embaixo.
-    Em cima o limite de brilho e mais alto porque ceu claro engana.
-    Calibrado em 13 fotos reais da Caixa. Devolve (y_topo, y_base)."""
+    endereco). O carimbo e texto claro, alinhado a direita ou a esquerda,
+    colado na borda de cima ou de baixo. Para cada lado e alinhamento,
+    encadeia linhas de texto a partir da borda (fio contra o ceu cruza a foto
+    toda com poucos pontos e nao conta) e corta ate onde a cadeia chega, no
+    maximo 40% em cima e 35% embaixo. Em cima o limite de brilho e mais alto
+    porque ceu claro engana. Calibrado em fotos reais da Caixa.
+    Devolve (y_topo, y_base)."""
     L = im.convert("L")
     g = np.asarray(L, dtype=np.int16)
     rgb = np.asarray(im.convert("RGB"), dtype=np.int16)
     sat = rgb.max(2) - rgb.min(2)
     mn = np.asarray(L.filter(ImageFilter.MinFilter(5)), dtype=np.int16)
     h, w = g.shape
-    x0 = int(w * .45)        # o carimbo fica sempre na metade direita
     y_topo, y_base = 0, h
+    # (inicio da faixa, fim da faixa, teste da borda do texto)
+    # (inicio, fim, teste da borda, minimo de tracos na linha). A esquerda
+    # exige mais tracos: parede branca com janela tambem encosta na borda,
+    # mas tem poucos tracos por linha; texto tem muitos.
+    alinhamentos = ((int(w * .45), w, lambda a, b: b > .8 * w, 0),      # carimbo a direita
+                    (0, int(w * .55), lambda a, b: a < .2 * w, 14))     # carimbo a esquerda
     for lado, brilho, lim in (("topo", 215, h * .40), ("base", 195, h * .35)):
         # letra clara com contorno escuro (nuvem contra ceu azul nao tem vizinho escuro)
-        t = ((g >= brilho) & (sat < 45) & ((g - mn) >= 70) & (mn <= 130))[:, x0:]
-        linhas = []
-        for y in range(h):
-            n = int(t[y].sum())
-            if n < 6:
+        t_full = (g >= brilho) & (sat < 45) & ((g - mn) >= 70) & (mn <= 130)
+        for x0, x1, encosta, tracos in alinhamentos:
+            t = t_full[:, x0:x1]
+            linhas = []
+            for y in range(h):
+                n = int(t[y].sum())
+                if n < 6:
+                    continue
+                idx = np.where(t[y])[0] + x0
+                a, b = int(idx.min()), int(idx.max())
+                if tracos and int(np.count_nonzero(np.diff(t[y].astype(np.int8)) == 1)) < tracos:
+                    continue
+                if encosta(a, b) and n / max(b - a, 1) >= .08:
+                    linhas.append(y)
+            borda = 0 if lado == "topo" else h - 1
+            fim, prev, cont = None, borda, 0
+            for y in (linhas if lado == "topo" else linhas[::-1]):
+                if abs(y - borda) > lim or abs(y - prev) > gap * h:
+                    break
+                fim, prev, cont = y, y, cont + 1
+            if fim is None or cont < 5:
                 continue
-            idx = np.where(t[y])[0] + x0
-            a, b = int(idx.min()), int(idx.max())
-            if b > .8 * w and n / max(b - a, 1) >= .08:
-                linhas.append(y)
-        borda = 0 if lado == "topo" else h - 1
-        fim, prev, cont = None, borda, 0
-        for y in (linhas if lado == "topo" else linhas[::-1]):
-            if abs(y - borda) > lim or abs(y - prev) > gap * h:
-                break
-            fim, prev, cont = y, y, cont + 1
-        if fim is None or cont < 5:
-            continue
-        m = int(h * .025)
-        if lado == "topo":
-            y_topo = int(min(fim + m, lim))
-        else:
-            y_base = int(max(fim - m, h - lim))
+            m = int(h * .025)
+            if lado == "topo":
+                y_topo = max(y_topo, int(min(fim + m, lim)))
+            else:
+                y_base = min(y_base, int(max(fim - m, h - lim)))
     return y_topo, y_base
 
 
