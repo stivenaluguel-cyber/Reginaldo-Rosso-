@@ -1,18 +1,25 @@
 name: Cards Instagram (diário)
 
-# Gera 1 card + legenda por UF (RS e SC) com a melhor oportunidade do dia,
-# a partir de imoveis-rs.json / imoveis-sc.json ja publicados no site.
+# Posts do @regirossoleiloes no visual Raio-X, so com Venda Direta / Venda
+# Online (comissao do corretor paga pela Caixa):
+#   - todo dia 07:47 BRT: Raio-X de RS e de SC (scripts/cards_instagram.py)
+#   - segunda 07:17 BRT: Selecao da semana, carrossel de 10 slides
+#     (scripts/selecao_semana.py)
 # Resultado em https://reginaldorosso.com.br/social/ (noindex, fora do
-# sitemap) com botoes "Baixar imagem" e "Copiar legenda".
-# Nao publica sozinho no Instagram: a postagem continua manual.
+# sitemap) com "Baixar" e "Copiar legenda". Nao publica no Instagram sozinho.
 
 on:
   schedule:
-    - cron: "47 10 * * *"   # 07:47 BRT, depois da atualizacao noturna dos imoveis
+    - cron: "47 10 * * *"   # diario, 07:47 BRT
+    - cron: "17 10 * * 1"   # segunda, 07:17 BRT: selecao da semana
   workflow_dispatch:
     inputs:
+      tarefa:
+        description: "diario, semana ou ambos"
+        required: false
+        default: "diario"
       uf:
-        description: "RS, SC ou vazio para os dois"
+        description: "Só para o diário: RS, SC ou vazio para os dois"
         required: false
         default: ""
 
@@ -26,7 +33,7 @@ concurrency:
 jobs:
   cards:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,20 +46,29 @@ jobs:
       - name: Dependências
         run: pip install "pillow>=10.3" "numpy>=1.26"
 
-      - name: Gerar cards
+      - name: Gerar posts
         env:
           TZ: America/Sao_Paulo
+          AGENDA: ${{ github.event.schedule }}
+          TAREFA: ${{ github.event.inputs.tarefa }}
           UF: ${{ github.event.inputs.uf }}
         run: |
-          if [ -n "$UF" ]; then python scripts/cards_instagram.py --uf "$UF"; else python scripts/cards_instagram.py; fi
+          if [ "$AGENDA" = "17 10 * * 1" ]; then TAREFA=semana; fi
+          TAREFA=${TAREFA:-diario}
+          if [ "$TAREFA" = "semana" ] || [ "$TAREFA" = "ambos" ]; then
+            python scripts/selecao_semana.py
+          fi
+          if [ "$TAREFA" = "diario" ] || [ "$TAREFA" = "ambos" ]; then
+            if [ -n "$UF" ]; then python scripts/cards_instagram.py --uf "$UF"; else python scripts/cards_instagram.py; fi
+          fi
 
       - name: Publicar
         run: |
           git config user.name "robo-imoveis"
           git config user.email "robo@users.noreply.github.com"
           git add -A social/
-          git diff --cached --quiet && { echo "Sem cards novos."; exit 0; }
-          git commit -m "Cards Instagram ($(TZ=America/Sao_Paulo date +%F))"
+          git diff --cached --quiet && { echo "Sem posts novos."; exit 0; }
+          git commit -m "Posts Instagram ($(TZ=America/Sao_Paulo date +%F))"
           for i in 1 2 3; do
             git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
             sleep 10
