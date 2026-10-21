@@ -223,7 +223,7 @@ def faixas_carimbo(im, gap=.10):
     # exige mais tracos: parede branca com janela tambem encosta na borda,
     # mas tem poucos tracos por linha; texto tem muitos.
     alinhamentos = ((int(w * .45), w, lambda a, b: b > .8 * w, 0),      # carimbo a direita
-                    (0, int(w * .55), lambda a, b: a < .2 * w, 14))     # carimbo a esquerda
+                    (0, int(w * .55), lambda a, b: a < .2 * w, 11))     # carimbo a esquerda
     for lado, brilho, lim in (("topo", 215, h * .40), ("base", 195, h * .35)):
         # letra clara com contorno escuro (nuvem contra ceu azul nao tem vizinho escuro)
         t_full = (g >= brilho) & (sat < 45) & ((g - mn) >= 70) & (mn <= 130)
