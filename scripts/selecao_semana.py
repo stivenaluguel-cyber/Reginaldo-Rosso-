@@ -134,7 +134,8 @@ def selecionar(imoveis, hoje, historico, obter_foto):
             break
         if i not in sel and cabe(i):
             sel.append(i); por_cidade[i["cidade"]] = por_cidade.get(i["cidade"], 0) + 1
-    sel.sort(key=lambda i: (-pontos(i, hoje), -i["desconto"]))   # mais forte nos slides 2-3
+    # mais forte nos primeiros slides; o de entrada (< R$ 65 mil) fecha a lista
+    sel.sort(key=lambda i: (i["preco"] < rv.PRECO_MIN, -pontos(i, hoje), -i["desconto"]))
     return [(i, fotos[i["id"]]) for i in sel]
 
 
@@ -149,8 +150,6 @@ def gancho(sel):
     k = max(range(len(sel)), key=lambda j: (sel[j].get("avaliacao") or 0) - sel[j]["preco"])
     titulo = f"{len(sel)} imóveis da Caixa sem leilão, todos {dmin}% ou mais abaixo da avaliação"
     loop = (f"o nº {k + 1} é avaliado em {rv.brl(sel[k]['avaliacao'])} e sai por {rv.brl(sel[k]['preco'])}")
-    if sel[k].get("financiamento") is True:
-        loop += ", com financiamento"
     return titulo, loop
 
 
@@ -160,7 +159,7 @@ def capa(sel, destino, segunda, fotos):
     rv.cabecalho(d, "Seleção da semana", f"{segunda.strftime('%d/%m')} · RS e SC")
     titulo, loop = gancho(sel)
     y = rv.bloco_manchete(d, titulo, rv.M, 140, rv.W - 2 * rv.M, tam=76, tam_min=56, max_linhas=4)
-    d.text((rv.M, y + 18), loop, font=rv.fonte(rv.SANS_B, 34), fill=rv.OURO)
+    d.text((rv.M, y + 18), loop, font=rv.caber(d, loop, rv.SANS_B, 34, rv.W - 2 * rv.M, 24), fill=rv.OURO)
     # mosaico 2x2 de fotos reais
     top = y + 92
     gap = 12

@@ -111,6 +111,14 @@ def pontuar(im, hoje, hist, dias_sem_repetir=DIAS_SEM_REPETIR, bloqueados=frozen
     return round(min(s, 100), 1)
 
 
+def parece_documento(f):
+    """Relatorio escaneado no lugar da foto (pagina branca com miniaturas)."""
+    import numpy as np
+    a = np.asarray(f.convert("RGB").resize((150, 150))).astype(int)
+    mn, sat = a.min(axis=2), a.max(axis=2) - a.min(axis=2)
+    return float((sat < 25).mean()) > .95 or float(((mn > 200) & (sat < 20)).mean()) > .30
+
+
 def escolher(uf, hoje, hist, bloqueados, sem_foto=False):
     """Melhor imovel da UF com foto utilizavel. Devolve (imovel, foto)."""
     imoveis = carregar(uf)
@@ -125,10 +133,11 @@ def escolher(uf, hoje, hist, bloqueados, sem_foto=False):
             if sem_foto:
                 return im, None
             foto = rv.foto_do_imovel(im)
-            if foto is not None and foto.width >= 500:
+            if foto is not None and foto.width >= 500 and not parece_documento(foto):
                 return im, foto
         if cands:
-            return cands[0][3], rv.foto_do_imovel(cands[0][3])
+            f = rv.foto_do_imovel(cands[0][3])
+            return cands[0][3], (f if f is not None and not parece_documento(f) else None)
     return None, None
 
 
