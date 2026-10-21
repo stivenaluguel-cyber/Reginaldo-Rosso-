@@ -188,38 +188,58 @@ def tirar_tarjas(im, limiar=18):
     return im.crop((0, y0, im.width, y1)) if (y0 > 4 or y1 < im.height - 4) else im
 
 
-def faixa_carimbo(im):
-    """As fotos de vistoria da Caixa trazem carimbo de data/GPS/endereco
-    alinhado a direita, no topo OU na base. Detecta tracos claros com contorno
-    escuro (o texto do carimbo) na metade direita e devolve ('topo'|'base', y)
-    com a linha de corte, ou None se nao houver carimbo."""
+def bloco_carimbo(im):
+    """Localiza o carimbo de data/GPS/endereco das fotos de vistoria da Caixa:
+    linhas de texto claro com contorno escuro, alinhadas a direita, agrupadas
+    em blocos no topo ou na base. Retorna a caixa (x0, y0, x1, y1) ou None."""
     L = im.convert("L")
     g = np.asarray(L, dtype=np.int16)
+    rgb = np.asarray(im.convert("RGB"), dtype=np.int16)
+    sat = rgb.max(2) - rgb.min(2)
     mn = np.asarray(L.filter(ImageFilter.MinFilter(5)), dtype=np.int16)
-    txt = (g >= 205) & ((g - mn) >= 90)
     h, w = g.shape
-    perfil = txt[:, w // 2:].mean(axis=1)
-    topo, base = perfil[: int(h * .4)], perfil[int(h * .6):]
-    s_topo, s_base = topo[: int(h * .32)].mean(), base[-int(h * .32):].mean()
-    if max(s_topo, s_base) < .015:
+    x0 = int(w * .3)
+    txt = (g >= 225) & (sat < 45) & ((g - mn) >= 95)
+    t = txt[:, x0:]
+    r = t.mean(axis=1)
+    xs = np.arange(x0, w)
+    mx = np.where(t.any(axis=1), (t * xs).max(axis=1), -1)
+    cand = [y for y in range(h) if r[y] > .025 and mx[y] > .8 * w]
+    blocos, cur = [], None
+    for y in cand:
+        if cur and y - cur[1] <= 8:
+            cur[1] = y; cur[2] += r[y]; cur[3].append(int(np.argmax(t[y]) + x0))
+        else:
+            cur = [y, y, r[y], [int(np.argmax(t[y]) + x0)]]; blocos.append(cur)
+    topo = [b for b in blocos if b[1] < .5 * h]
+    base = [b for b in blocos if b[0] > .45 * h]
+    s_t, s_b = sum(b[2] for b in topo), sum(b[2] for b in base)
+    lado = topo if s_t >= s_b else base
+    if max(s_t, s_b) < .8 or not lado:
         return None
-    if s_topo >= s_base:
-        linhas = np.where(topo > .04)[0]
-        return ("topo", min(int(linhas[-1] + h * .03), int(h * .42))) if len(linhas) else None
-    linhas = np.where(base > .04)[0]
-    return ("base", max(int(h * .6 + linhas[0] - h * .03), int(h * .58))) if len(linhas) else None
+    ys0, ys1 = min(b[0] for b in lado), max(b[1] for b in lado)
+    xmin = int(np.percentile(sum((b[3] for b in lado), []), 10))
+    m = 18
+    return (max(0, xmin - m), max(0, ys0 - m), w, min(h, ys1 + m))
+
+def disfarcar(im, caixa):
+    """Desfoca e escurece a area do carimbo com borda suave."""
+    x0, y0, x1, y1 = caixa
+    borrada = im.filter(ImageFilter.GaussianBlur(18))
+    escura = Image.blend(borrada, Image.new("RGB", im.size, (15, 30, 51)), .52)
+    mask = Image.new("L", im.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle(caixa, radius=24, fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(14))
+    return Image.composite(escura, im, mask)
 
 
 def preparar_foto(foto):
-    """Tira tarjas e o carimbo e enquadra no topo do card."""
+    """Tira tarjas pretas, disfarca o carimbo e enquadra no topo do card."""
     foto = tirar_tarjas(foto)
-    c = faixa_carimbo(foto)
-    cy = .45
-    if c and c[0] == "topo":
-        foto, cy = foto.crop((0, c[1], foto.width, foto.height)), .15
-    elif c:
-        foto, cy = foto.crop((0, 0, foto.width, c[1])), .6
-    return ImageOps.fit(foto, (W, FOTO_H), Image.LANCZOS, centering=(.5, cy))
+    caixa = bloco_carimbo(foto)
+    if caixa:
+        foto = disfarcar(foto, caixa)
+    return ImageOps.fit(foto, (W, FOTO_H), Image.LANCZOS, centering=(.5, .45))
 
 
 def fundo_sem_foto():
