@@ -30,6 +30,7 @@ import urllib.request
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -177,6 +178,50 @@ def baixar_foto(url):
     return img.convert("RGB")
 
 
+def tirar_tarjas(im, limiar=18):
+    """Remove faixas pretas (letterbox) em cima/embaixo da foto."""
+    linhas = np.asarray(im.convert("L")).mean(axis=1)
+    claras = np.where(linhas > limiar)[0]
+    if len(claras) == 0:
+        return im
+    y0, y1 = int(claras[0]), int(claras[-1]) + 1
+    return im.crop((0, y0, im.width, y1)) if (y0 > 4 or y1 < im.height - 4) else im
+
+
+def faixa_carimbo(im):
+    """As fotos de vistoria da Caixa trazem carimbo de data/GPS/endereco
+    alinhado a direita, no topo OU na base. Detecta tracos claros com contorno
+    escuro (o texto do carimbo) na metade direita e devolve ('topo'|'base', y)
+    com a linha de corte, ou None se nao houver carimbo."""
+    L = im.convert("L")
+    g = np.asarray(L, dtype=np.int16)
+    mn = np.asarray(L.filter(ImageFilter.MinFilter(5)), dtype=np.int16)
+    txt = (g >= 205) & ((g - mn) >= 90)
+    h, w = g.shape
+    perfil = txt[:, w // 2:].mean(axis=1)
+    topo, base = perfil[: int(h * .4)], perfil[int(h * .6):]
+    s_topo, s_base = topo[: int(h * .32)].mean(), base[-int(h * .32):].mean()
+    if max(s_topo, s_base) < .015:
+        return None
+    if s_topo >= s_base:
+        linhas = np.where(topo > .04)[0]
+        return ("topo", min(int(linhas[-1] + h * .03), int(h * .42))) if len(linhas) else None
+    linhas = np.where(base > .04)[0]
+    return ("base", max(int(h * .6 + linhas[0] - h * .03), int(h * .58))) if len(linhas) else None
+
+
+def preparar_foto(foto):
+    """Tira tarjas e o carimbo e enquadra no topo do card."""
+    foto = tirar_tarjas(foto)
+    c = faixa_carimbo(foto)
+    cy = .45
+    if c and c[0] == "topo":
+        foto, cy = foto.crop((0, c[1], foto.width, foto.height)), .15
+    elif c:
+        foto, cy = foto.crop((0, 0, foto.width, c[1])), .6
+    return ImageOps.fit(foto, (W, FOTO_H), Image.LANCZOS, centering=(.5, cy))
+
+
 def fundo_sem_foto():
     img = Image.new("RGB", (W, FOTO_H), NAVY)
     d = ImageDraw.Draw(img)
@@ -257,15 +302,7 @@ def gerar_card(im, destino, hoje, sem_foto=False):
             except Exception as e:  # noqa: BLE001 - qualquer falha cai no fundo de marca
                 print(f"  foto falhou ({url}): {e}", file=sys.stderr)
     base = Image.new("RGB", (W, H), NAVY)
-    if foto:
-        # As fotos de vistoria da Caixa trazem carimbo de GPS/endereco no canto
-        # superior direito: corta o quarto de cima (quase sempre ceu) e
-        # enquadra puxando para a esquerda, o que tira o carimbo do card.
-        fw, fh = foto.size
-        foto = foto.crop((0, int(fh * .25), fw, fh))
-        topo = ImageOps.fit(foto, (W, FOTO_H), Image.LANCZOS, centering=(.25, .4))
-    else:
-        topo = fundo_sem_foto()
+    topo = preparar_foto(foto) if foto else fundo_sem_foto()
     base.paste(topo, (0, 0))
 
     # degrade da foto para o painel (leitura do texto)
