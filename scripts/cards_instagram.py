@@ -145,16 +145,11 @@ def legenda(im, hoje):
         "",
     ]
     fin, fgts = im.get("financiamento"), im.get("fgts")
-    pag = []
-    if fin is True:
-        pag.append("aceita financiamento")
-    elif fin is False:
-        pag.append("é só à vista")
-    if fgts is True:
-        pag.append("aceita FGTS")
-    if pag:
-        frase = " e ".join(pag)
-        linhas.append(frase[0].upper() + frase[1:] + ".")
+    # financiamento e FGTS sao coisas diferentes: uma linha para cada
+    if fin is not None:
+        linhas.append(f"Aceita financiamento: {'sim' if fin else 'não'}.")
+    if fgts is not None:
+        linhas.append(f"Aceita FGTS: {'sim' if fgts else 'não'}.")
     if im.get("modalidade") == "Venda Online":
         fim = fim_futuro(im, hoje)
         linhas.append("Venda Online: a proposta vai pela internet"

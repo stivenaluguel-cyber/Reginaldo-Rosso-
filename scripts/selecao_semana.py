@@ -197,8 +197,10 @@ def resumo(sel, destino):
         nome = f"{rv.tipo_de(i)} · {rv.cidade(i)}/{i['uf']}"
         fn = rv.caber(d, nome, rv.SANS_M, 27, larg_nome, 20)
         d.text((rv.M + 62, y), nome, font=fn, fill=rv.TINTA)
-        extra = "financiamento" if i.get("financiamento") else ("FGTS" if i.get("fgts") else "à vista")
-        d.text((rv.M + 62, y + 36), f"{rv.modalidade_curta(i)} · {extra}", font=rv.fonte(rv.SANS, 21), fill=rv.MUDO)
+        sn = lambda v: "sim" if v else "não"  # noqa: E731
+        sub = (f"{rv.modalidade_curta(i)} · Financiamento: {sn(i.get('financiamento'))}"
+               f" · FGTS: {sn(i.get('fgts'))}")
+        d.text((rv.M + 62, y + 36), sub, font=rv.caber(d, sub, rv.SANS, 21, larg_nome, 16), fill=rv.MUDO)
         d.text((rv.W - rv.M - 330, y), rv.brl(i["preco"]), font=f_cb, fill=rv.TINTA)
         pct = f"{round(i['desconto'])}%"
         d.text((rv.W - rv.M - d.textlength(pct, font=f_cb), y), pct, font=f_cb, fill=rv.TINTA)
@@ -224,12 +226,14 @@ def legenda(sel, segunda):
     titulo, loop = gancho(sel)
     dmed = round(sum(i["desconto"] for i in sel) / len(sel))
     nfin = sum(1 for i in sel if i.get("financiamento") is True)
+    nfgts = sum(1 for i in sel if i.get("fgts") is True)
     cidades = sorted({rv.cidade(i) for i in sel})
     linhas = [
         f"{titulo.replace('imóveis da Caixa', 'imóveis da Caixa no RS e SC')}. {loop[0].upper() + loop[1:]}.",
         "",
         f"desconto médio de {dmed}% sobre a avaliação da própria Caixa"
-        + (f", e {nfin} deles aceitam financiamento." if nfin else "."),
+        + ".",
+        f"{nfin} de {len(sel)} aceitam financiamento. {nfgts} de {len(sel)} aceitam FGTS.",
         "cidades desta semana: " + ", ".join(cidades) + ".",
         "",
         "Venda Direta não tem disputa de lances: você fecha pelo preço da Caixa ou faz proposta. "
@@ -252,6 +256,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", help="AAAA-MM-DD (padrao: hoje)")
     ap.add_argument("--sem-foto", action="store_true")
+    ap.add_argument("--refazer", action="store_true", help="mesmos imoveis ja escolhidos nesta semana")
     a = ap.parse_args()
     hoje = date.fromisoformat(a.data) if a.data else date.today()
     segunda = hoje - timedelta(days=hoje.weekday())
@@ -263,7 +268,13 @@ def main():
             return img
     else:
         obter = rv.foto_do_imovel
-    pares = selecionar(carregar(), hoje, h, obter)
+    anterior = next((x for x in hist() if x["semana"] == segunda.isoformat()), None)
+    if a.refazer and anterior:
+        # refaz as artes da semana com os mesmos imoveis (ex.: mudou o layout)
+        por_id = {str(i["id"]): i for i in carregar()}
+        pares = [(por_id[k], obter(por_id[k])) for k in anterior["ids"] if k in por_id]
+    else:
+        pares = selecionar(carregar(), hoje, h, obter)
     if len(pares) < 4:
         print("menos de 4 imoveis elegiveis; nada gerado")
         return

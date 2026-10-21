@@ -145,10 +145,11 @@ def linhas_ficha(im, hoje=None):
     L = [("Avaliação Caixa", brl(im["avaliacao"]), False),
          (rotulo_preco(im), brl(im["preco"]), True)]
     fin, fgts = im.get("financiamento"), im.get("fgts")
+    # financiamento e FGTS sao coisas diferentes: uma linha para cada
     if fin is not None:
-        L.append(("Financiamento", "aceita" if fin else "só à vista", False))
+        L.append(("Aceita financiamento", "sim" if fin else "não", False))
     if fgts is not None:
-        L.append(("FGTS", "aceita" if fgts else "não aceita", False))
+        L.append(("Aceita FGTS", "sim" if fgts else "não", False))
     deb = []
     for chave, nome in (("debito_condominio", "condomínio"), ("debito_tributos", "IPTU")):
         v = (im.get(chave) or "").lower()
