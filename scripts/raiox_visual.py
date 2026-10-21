@@ -208,17 +208,18 @@ def faixas_carimbo(im, gap=.10):
     borda (fio contra o ceu cruza a foto toda com poucos pontos e nao conta)
     e corta ate onde a cadeia chega, no maximo 40% em cima e 35% embaixo.
     Em cima o limite de brilho e mais alto porque ceu claro engana.
-    Calibrado em 12 fotos reais da Caixa. Devolve (y_topo, y_base)."""
+    Calibrado em 13 fotos reais da Caixa. Devolve (y_topo, y_base)."""
     L = im.convert("L")
     g = np.asarray(L, dtype=np.int16)
     rgb = np.asarray(im.convert("RGB"), dtype=np.int16)
     sat = rgb.max(2) - rgb.min(2)
     mn = np.asarray(L.filter(ImageFilter.MinFilter(5)), dtype=np.int16)
     h, w = g.shape
-    x0 = int(w * .3)
+    x0 = int(w * .45)        # o carimbo fica sempre na metade direita
     y_topo, y_base = 0, h
     for lado, brilho, lim in (("topo", 215, h * .40), ("base", 195, h * .35)):
-        t = ((g >= brilho) & (sat < 45) & ((g - mn) >= 70))[:, x0:]
+        # letra clara com contorno escuro (nuvem contra ceu azul nao tem vizinho escuro)
+        t = ((g >= brilho) & (sat < 45) & ((g - mn) >= 70) & (mn <= 130))[:, x0:]
         linhas = []
         for y in range(h):
             n = int(t[y].sum())
@@ -226,7 +227,7 @@ def faixas_carimbo(im, gap=.10):
                 continue
             idx = np.where(t[y])[0] + x0
             a, b = int(idx.min()), int(idx.max())
-            if b > .8 * w and a > .36 * w and n / max(b - a, 1) >= .08:
+            if b > .8 * w and n / max(b - a, 1) >= .08:
                 linhas.append(y)
         borda = 0 if lado == "topo" else h - 1
         fim, prev, cont = None, borda, 0
