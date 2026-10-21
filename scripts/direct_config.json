@@ -1,0 +1,13 @@
+{
+  "palavras_comentario": ["LISTA", "QUERO", "CAIXA"],
+  "palavras_direct": ["LISTA"],
+  "respostas_publicas": [
+    "Te mandei a lista no direct.",
+    "Enviado no seu direct, confere lá.",
+    "Pronto, a lista da semana está no seu direct."
+  ],
+  "link": "https://reginaldorosso.com.br/lista/?utm_source=instagram&utm_medium=dm",
+  "mensagem": "Oi! Aqui está a lista desta semana: {n} imóveis da Caixa no RS e SC, sem leilão e abaixo da avaliação. Em cada um tem o botão para chamar no WhatsApp com o código do imóvel:\n{link}\n\nSe algum te interessar, me manda o código aqui mesmo que eu te respondo.",
+  "dias_de_posts": 30,
+  "ativo": true
+}
