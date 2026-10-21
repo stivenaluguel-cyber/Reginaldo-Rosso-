@@ -9,15 +9,19 @@ name: Cards Instagram (diário)
 # sitemap) com "Baixar" e "Copiar legenda". Nao publica no Instagram sozinho.
 # A selecao tambem gera https://reginaldorosso.com.br/lista/ (link que a automacao
 # do direct manda para quem comenta LISTA).
+#   - a cada 15 min: direct automatico (scripts/direct_automatico.py): quem
+#     comenta LISTA/QUERO/CAIXA ou manda LISTA no direct recebe o link da lista.
+#     Precisa do secret IG_TOKEN; sem ele so avisa e sai. Nao gera commit.
 
 on:
   schedule:
     - cron: "47 10 * * *"   # diario, 07:47 BRT
     - cron: "17 10 * * 1"   # segunda, 07:17 BRT: selecao da semana
+    - cron: "*/15 * * * *"  # direct automatico
   workflow_dispatch:
     inputs:
       tarefa:
-        description: "diario, semana, ambos ou refazer (refaz as artes de hoje e da semana com os mesmos imoveis)"
+        description: "diario, semana, ambos, refazer (refaz as artes de hoje e da semana com os mesmos imoveis) ou direct (roda o direct automatico agora)"
         required: false
         default: "diario"
       uf:
@@ -28,12 +32,12 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: cards-instagram
-  cancel-in-progress: false
-
 jobs:
   cards:
+    if: github.event.schedule != '*/15 * * * *' && github.event.inputs.tarefa != 'direct'
+    concurrency:
+      group: cards-instagram
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -79,3 +83,26 @@ jobs:
             sleep 10
           done
           exit 1
+
+  direct:
+    if: github.event.schedule == '*/15 * * * *' || github.event.inputs.tarefa == 'direct'
+    concurrency:
+      group: direct-automatico
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Estado (cache, fora do repositorio)
+        uses: actions/cache@v4
+        with:
+          path: social/direct/estado.json
+          key: direct-estado-${{ github.run_id }}
+          restore-keys: direct-estado-
+
+      - name: Responder comentarios e directs
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: python3 scripts/direct_automatico.py
