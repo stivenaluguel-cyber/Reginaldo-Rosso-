@@ -37,7 +37,7 @@ jobs:
           python-version: "3.12"
 
       - name: Dependências
-        run: pip install "pillow>=10.3"
+        run: pip install "pillow>=10.3" "numpy>=1.26"
 
       - name: Gerar cards
         env:
