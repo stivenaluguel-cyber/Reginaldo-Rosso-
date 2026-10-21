@@ -41,6 +41,10 @@ WHATS = {"RS": "(51) 99110-4976", "SC": "(48) 99164-2332"}
 CRECI = "CRECI/RS 28565J · CRECI/SC 8152J"
 DIAS_GALERIA = 14       # cards mantidos em social/
 DIAS_SEM_REPETIR = 60   # mesmo imovel nao volta antes disso
+DIAS_SEM_REPETIR_MIN = 21  # se a UF esgotar ineditos (SC tem poucos), aceita repetir apos isso
+# Foco comercial: so modalidades em que a comissao do corretor credenciado e
+# paga pela Caixa (Venda Online e Venda Direta Online).
+MODALIDADES_FOCO = ("Venda Direta Online", "Venda Online")
 DIAS_CIDADE = 14        # cidade repetida recebe penalidade
 DESCONTO_MIN = 25
 
@@ -110,8 +114,10 @@ def carregar_hist():
         return []
 
 
-def pontuar(im, hoje, hist):
+def pontuar(im, hoje, hist, dias_sem_repetir=DIAS_SEM_REPETIR):
     """Score 0-100. Retorna None se o imovel nao serve para card."""
+    if im.get("modalidade") not in MODALIDADES_FOCO:
+        return None
     desc = im.get("desconto") or 0
     if desc < DESCONTO_MIN or not im.get("preco") or not im.get("cidade"):
         return None
@@ -120,11 +126,11 @@ def pontuar(im, hoje, hist):
     fim = fim_futuro(im, hoje)
     if fim and fim < hoje + timedelta(days=2):
         return None  # encerra hoje/amanha: nao da tempo de captar
-    limite = (hoje - timedelta(days=DIAS_SEM_REPETIR)).isoformat()
+    limite = (hoje - timedelta(days=dias_sem_repetir)).isoformat()
     if any(h["id"] == im["id"] and h["data"] >= limite for h in hist):
         return None
     s = min(desc, 70) * 0.9                       # ate 63
-    s += 9 if im.get("financiamento") is True else 0
+    s += 12 if im.get("financiamento") is True else 0   # amplia o publico comprador
     s += 7 if im.get("fgts") is True else 0
     s += 7 if (im.get("ocupacao") or "").lower().startswith("desocup") else 0
     if fim and fim <= hoje + timedelta(days=15):
@@ -138,11 +144,15 @@ def pontuar(im, hoje, hist):
 
 
 def escolher(uf, hoje, hist):
+    imoveis = carregar(uf)
     cands = []
-    for im in carregar(uf):
-        sc = pontuar(im, hoje, hist)
-        if sc is not None:
-            cands.append((sc, im["desconto"], im["id"], im))
+    for janela in (DIAS_SEM_REPETIR, DIAS_SEM_REPETIR_MIN):
+        for im in imoveis:
+            sc = pontuar(im, hoje, hist, janela)
+            if sc is not None:
+                cands.append((sc, im["desconto"], im["id"], im))
+        if cands:
+            break
     if not cands:
         return None
     cands.sort(key=lambda c: (-c[0], -c[1], c[2]))
@@ -212,6 +222,15 @@ def chip(d, x, y, texto, f, fill, cor, pad=(22, 12), raio=999):
     return x + tw + pad[0] * 2
 
 
+def rotulo_preco(im):
+    return "VALOR MÍNIMO" if im.get("modalidade") == "Venda Online" else "PREÇO DE VENDA"
+
+
+def hora_fim(im):
+    m = re.search(r"\b(\d{1,2}):(\d{2})\b", im.get("data_fim") or "")
+    return f"{int(m.group(1))}h{m.group(2)}" if m else None
+
+
 def titulo_do(im):
     tipo = im.get("tipo_real") or im.get("tipo") or "Imóvel"
     q = im.get("quartos")
@@ -238,7 +257,15 @@ def gerar_card(im, destino, hoje, sem_foto=False):
             except Exception as e:  # noqa: BLE001 - qualquer falha cai no fundo de marca
                 print(f"  foto falhou ({url}): {e}", file=sys.stderr)
     base = Image.new("RGB", (W, H), NAVY)
-    topo = ImageOps.fit(foto, (W, FOTO_H), Image.LANCZOS, centering=(.5, .45)) if foto else fundo_sem_foto()
+    if foto:
+        # As fotos de vistoria da Caixa trazem carimbo de GPS/endereco no canto
+        # superior direito: corta o quarto de cima (quase sempre ceu) e
+        # enquadra puxando para a esquerda, o que tira o carimbo do card.
+        fw, fh = foto.size
+        foto = foto.crop((0, int(fh * .25), fw, fh))
+        topo = ImageOps.fit(foto, (W, FOTO_H), Image.LANCZOS, centering=(.25, .4))
+    else:
+        topo = fundo_sem_foto()
     base.paste(topo, (0, 0))
 
     # degrade da foto para o painel (leitura do texto)
@@ -279,7 +306,7 @@ def gerar_card(im, destino, hoje, sem_foto=False):
     y += 112
 
     # preco
-    d.text((M, y), "LANCE MÍNIMO", font=fonte(SANS_B, 26), fill=MUTED)
+    d.text((M, y), rotulo_preco(im), font=fonte(SANS_B, 26), fill=MUTED)
     d.text((M, y + 34), brl(im["preco"]), font=fonte(SERIF, 96), fill=BRANCO)
     if im.get("avaliacao") and im["avaliacao"] > im["preco"]:
         xa = W - M
@@ -331,6 +358,13 @@ def gerar_card(im, destino, hoje, sem_foto=False):
         x += tw + 14
     y_rodape = H - 130
 
+    # faixa comercial: a comissao do corretor credenciado e paga pela Caixa
+    fy = y_rodape - 118
+    d.rounded_rectangle([M, fy, W - M, fy + 64], radius=32, outline=GOLD, width=2, fill=(26, 42, 64))
+    f_fx = fonte(SANS_B, 28)
+    txt_fx = "Assessoria gratuita: quem paga o corretor é a Caixa"
+    d.text(((W - d.textlength(txt_fx, font=f_fx)) / 2, fy + 14), txt_fx, font=f_fx, fill=GOLD_SOFT)
+
     # rodape de marca
     d.line([(M, y_rodape - 28), (W - M, y_rodape - 28)], fill=(46, 66, 94), width=2)
     escudo(d, M, y_rodape - 6, 86)
@@ -363,7 +397,7 @@ def legenda(im, hoje):
         f"{round(im['desconto'])}% abaixo da avaliação da Caixa em {cid}/{im['uf']} 🔑",
         "",
         f"🏠 {tit}" + (f" · {cap(im['bairro'])}" if im.get("bairro") else ""),
-        f"💰 Lance mínimo: {brl(im['preco'])} (avaliação {brl(im['avaliacao'])})",
+        f"💰 {rotulo_preco(im).capitalize()}: {brl(im['preco'])} (avaliação {brl(im['avaliacao'])})",
     ]
     fin, fgts = im.get("financiamento"), im.get("fgts")
     if fin is True and fgts is True:
@@ -383,18 +417,28 @@ def legenda(im, hoje):
     if (pr.get("segunda") or {}).get("valor") and pr["segunda"]["valor"] < im["preco"]:
         linhas.append(f"📉 Sem lance no 1º leilão, o 2º sai por {brl(pr['segunda']['valor'])}")
     fim = fim_futuro(im, hoje)
-    if fim:
-        linhas.append(f"⏳ Encerra em {fim.strftime('%d/%m/%Y')}")
+    if im.get("modalidade") == "Venda Online":
+        if fim:
+            h = hora_fim(im)
+            linhas.append(f"⏳ Venda Online: propostas pela internet até {fim.strftime('%d/%m')}" + (f" às {h}" if h else ""))
+        else:
+            linhas.append("⏳ Venda Online: propostas pela internet, no prazo do edital")
+    else:
+        linhas.append("🤝 Venda Direta: sem disputa de lances. Você fecha pelo preço da Caixa ou faz proposta.")
     linhas += [
         "",
-        f"Quer a análise completa (matrícula, edital, custos e retorno)? Chame no WhatsApp {WHATS[im['uf']]} "
-        f"e informe o código {im['id']}. Link na bio.",
+        "Assessoria gratuita: a comissão do corretor credenciado é paga pela Caixa, não por você. "
+        "Basta incluir o CRECI do Reginaldo na sua proposta.",
+        f"Antes de enviar, chame no WhatsApp {WHATS[im['uf']]} com o código {im['id']}: "
+        "conferimos matrícula, edital e custos com você. Link na bio.",
         "",
         f"Reginaldo Rosso · Corretor credenciado Caixa · {CRECI}",
         "Valores e condições do edital Caixa, sujeitos a alteração. Confirme sempre no site oficial. "
         "Não constitui promessa de resultado.",
         "",
-        " ".join(t for t in [tag("imoveiscaixa"), tag("leilaodeimoveis"), tag("leilaocaixa"), tag(cid),
+        " ".join(t for t in [tag("imoveiscaixa"),
+                             tag("vendaonlinecaixa" if im.get("modalidade") == "Venda Online" else "vendadiretacaixa"),
+                             tag("imoveisdacaixa"), tag(cid),
                              tag(cid + "imoveis"), tag("imoveis" + im["uf"]), tag("investimentoimobiliario")] if t),
     ]
     return "\n".join(linhas)
