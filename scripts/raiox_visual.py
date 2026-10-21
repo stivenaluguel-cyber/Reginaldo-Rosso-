@@ -27,6 +27,9 @@ W, H = 1080, 1350          # 4:5, preenche o feed
 M = 64                     # margem
 CRECI = "CRECI/RS 28565J · CRECI/SC 8152J"
 WHATS = {"RS": "(51) 99110-4976", "SC": "(48) 99164-2332"}
+# Nas legendas o (48) 99164-2332 nao entra (pedido do Stiven, 21/10: e o numero
+# dele). Post de SC fica so com "mande o codigo no direct".
+WHATS_LEGENDA = {"RS": "(51) 99110-4976"}
 
 # Faixa de preco do canal (pedido do Stiven, 21/10): o foco e imovel a partir
 # de R$ 65 mil, com preferencia para os de valor maior e bom desconto. Abaixo

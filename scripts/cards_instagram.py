@@ -174,8 +174,9 @@ def legenda(im, hoje):
         "",
         "a assessoria é grátis: a comissão do corretor credenciado é paga pela Caixa. "
         "Só precisa do CRECI do Reginaldo na proposta, então fale antes de enviar.",
-        f"sobre este, mande o código {im['id']} no direct ou no WhatsApp {rv.WHATS[im['uf']]} "
-        "que eu te passo matrícula, edital e a conta completa.",
+        f"sobre este, mande o código {im['id']} no direct"
+        + (f" ou no WhatsApp {rv.WHATS_LEGENDA[im['uf']]}" if rv.WHATS_LEGENDA.get(im['uf']) else "")
+        + " que eu te passo matrícula, edital e a conta completa.",
         "quer a lista com os imóveis da semana? manda LISTA no direct.",
         "",
         f"Reginaldo Rosso · corretor credenciado Caixa · {rv.CRECI}",
