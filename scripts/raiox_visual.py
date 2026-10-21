@@ -28,6 +28,19 @@ M = 64                     # margem
 CRECI = "CRECI/RS 28565J · CRECI/SC 8152J"
 WHATS = {"RS": "(51) 99110-4976", "SC": "(48) 99164-2332"}
 
+# Faixa de preco do canal (pedido do Stiven, 21/10): o foco e imovel a partir
+# de R$ 65 mil, com preferencia para os de valor maior e bom desconto. Abaixo
+# disso entra so de vez em quando (1 por semana na selecao, post de sabado).
+PRECO_MIN = 65000
+
+
+def bonus_valor(preco):
+    """0 em R$ 65 mil, ~8 em R$ 200 mil, 15 a partir de ~R$ 650 mil."""
+    import math
+    if not preco or preco <= PRECO_MIN:
+        return 0.0
+    return min(15.0, 15.0 * math.log10(preco / PRECO_MIN))
+
 # paleta do site (index.html)
 PAPEL = (247, 244, 238)     # --bg
 TINTA = (20, 33, 58)        # --ink

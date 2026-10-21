@@ -60,6 +60,7 @@ def pontos(im, hoje):
     s += 14 if im.get("financiamento") is True else 0
     s += 6 if im.get("fgts") is True else 0
     s += 6 if im.get("tipo") in ("Apartamento", "Casa", "Sobrado") else 0
+    s += rv.bonus_valor(im.get("preco"))
     f = rv.data_br(im.get("data_fim"))
     if im.get("modalidade") == "Venda Online" and f and hoje <= f <= hoje + timedelta(days=10):
         s += 8                                   # urgencia real: propostas encerram na semana
@@ -117,14 +118,18 @@ def selecionar(imoveis, hoje, historico, obter_foto):
     def cabe(i):
         return por_cidade.get(i["cidade"], 0) < 2 and foto_boa(i)
 
-    # garante SC (estoque menor) e faixa de preco variada
-    for regra in (lambda i: i["uf"] == "SC", lambda i: i["uf"] == "SC",
-                  lambda i: i["preco"] <= 100000, lambda i: i["preco"] >= 250000):
+    def faixa(i):  # abaixo de R$ 65 mil so pela vaga de entrada
+        return i["preco"] >= rv.PRECO_MIN
+
+    # garante SC (estoque menor), dois de valor alto e uma vaga de entrada (< R$ 65 mil)
+    for regra in (lambda i: i["uf"] == "SC" and faixa(i), lambda i: i["uf"] == "SC" and faixa(i),
+                  lambda i: i["preco"] >= 250000, lambda i: i["preco"] >= 250000,
+                  lambda i: i["preco"] < rv.PRECO_MIN):
         for i in pool:
             if i not in sel and cabe(i) and regra(i):
                 sel.append(i); por_cidade[i["cidade"]] = por_cidade.get(i["cidade"], 0) + 1
                 break
-    for i in pool:
+    for i in [i for i in pool if faixa(i)]:
         if len(sel) >= N:
             break
         if i not in sel and cabe(i):
@@ -140,11 +145,12 @@ def selecionar(imoveis, hoje, historico, obter_foto):
 def gancho(sel):
     dmin = min(round(i["desconto"]) for i in sel)
     fin = [k for k, i in enumerate(sel, 1) if i.get("financiamento") is True]
-    barato = min(range(len(sel)), key=lambda k: sel[k]["preco"])
+    # gancho: a maior diferenca em reais entre avaliacao e preco
+    k = max(range(len(sel)), key=lambda j: (sel[j].get("avaliacao") or 0) - sel[j]["preco"])
     titulo = f"{len(sel)} imóveis da Caixa sem leilão, todos {dmin}% ou mais abaixo da avaliação"
-    loop = f"o nº {barato + 1} sai por {rv.brl(sel[barato]['preco'])}"
-    if sel[barato].get("financiamento") is True:
-        loop += " e aceita financiamento"
+    loop = (f"o nº {k + 1} é avaliado em {rv.brl(sel[k]['avaliacao'])} e sai por {rv.brl(sel[k]['preco'])}")
+    if sel[k].get("financiamento") is True:
+        loop += ", com financiamento"
     return titulo, loop
 
 

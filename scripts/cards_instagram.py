@@ -44,7 +44,8 @@ DIAS_SEM_REPETIR = 60   # mesmo imovel nao volta antes disso
 DIAS_SEM_REPETIR_MIN = 21  # se a UF esgotar ineditos (SC tem poucos), aceita repetir apos isso
 MODALIDADES_FOCO = ("Venda Direta Online", "Venda Online")
 DIAS_CIDADE = 14        # cidade repetida recebe penalidade
-DESCONTO_MIN = 25
+DESCONTO_MIN = 35
+DIA_ENTRADA = 5         # sabado: dia do imovel abaixo de R$ 65 mil
 
 
 # ---------------------------------------------------------------------------
@@ -84,6 +85,9 @@ def pontuar(im, hoje, hist, dias_sem_repetir=DIAS_SEM_REPETIR, bloqueados=frozen
     desc = im.get("desconto") or 0
     if desc < DESCONTO_MIN or not im.get("preco") or not im.get("cidade"):
         return None
+    # faixa: >= R$ 65 mil todo dia; abaixo disso so no dia de entrada (sabado)
+    if (im["preco"] < rv.PRECO_MIN) != (hoje.weekday() == DIA_ENTRADA):
+        return None
     if im.get("excluir_foto") or not im.get("fotos"):
         return None
     fim = fim_futuro(im, hoje)
@@ -100,6 +104,7 @@ def pontuar(im, hoje, hist, dias_sem_repetir=DIAS_SEM_REPETIR, bloqueados=frozen
         s += 6
     s += min(len(im.get("fotos") or []), 8) * 0.5
     s += 4 if im.get("tipo") in ("Casa", "Apartamento", "Sobrado") else 0
+    s += rv.bonus_valor(im["preco"])
     lim_cid = (hoje - timedelta(days=DIAS_CIDADE)).isoformat()
     if any(h.get("cidade") == im["cidade"] and h["data"] >= lim_cid for h in hist):
         s *= 0.6
