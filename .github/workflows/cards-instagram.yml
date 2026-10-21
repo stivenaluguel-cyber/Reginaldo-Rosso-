@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       tarefa:
-        description: "diario, semana ou ambos"
+        description: "diario, semana, ambos ou refazer (refaz as artes de hoje e da semana com os mesmos imoveis)"
         required: false
         default: "diario"
       uf:
@@ -55,10 +55,13 @@ jobs:
         run: |
           if [ "$AGENDA" = "17 10 * * 1" ]; then TAREFA=semana; fi
           TAREFA=${TAREFA:-diario}
+          if [ "$TAREFA" = "refazer" ]; then
+            python scripts/selecao_semana.py --refazer
+          fi
           if [ "$TAREFA" = "semana" ] || [ "$TAREFA" = "ambos" ]; then
             python scripts/selecao_semana.py
           fi
-          if [ "$TAREFA" = "diario" ] || [ "$TAREFA" = "ambos" ]; then
+          if [ "$TAREFA" = "diario" ] || [ "$TAREFA" = "ambos" ] || [ "$TAREFA" = "refazer" ]; then
             if [ -n "$UF" ]; then python scripts/cards_instagram.py --uf "$UF"; else python scripts/cards_instagram.py; fi
           fi
 
