@@ -365,3 +365,62 @@ def raiox(im, destino, hoje, foto=None, numero=None, total=None):
     rodape(d)
     destino.parent.mkdir(parents=True, exist_ok=True)
     base.save(destino, "JPEG", quality=90, optimize=True, progressive=True)
+
+
+# ---------------------------------------------------------------------------
+# Story 9:16 (1080x1920) com espaco para o adesivo de link da lista
+# Zonas seguras do Instagram: nada importante nos 220 px de cima e 330 de baixo.
+# ---------------------------------------------------------------------------
+
+LINK_STORY = "https://reginaldorosso.com.br/lista/?utm_source=instagram&utm_medium=story"
+
+
+def story(im, destino, hoje, foto=None):
+    SW, SH = 1080, 1920
+    base = Image.new("RGB", (SW, SH), PAPEL)
+    d = ImageDraw.Draw(base)
+    f = fonte(SANS_B, 26)
+    esq = f"RAIO-X · {modalidade_curta(im)} CAIXA".upper()
+    dir_ = f"{cidade(im)}/{im['uf']}".upper()
+    y0 = 236
+    d.text((M, y0), esq, font=f, fill=TINTA)
+    d.text((SW - M - d.textlength(dir_, font=f), y0), dir_, font=f, fill=OURO)
+    d.line([(M, y0 + 44), (SW - M, y0 + 44)], fill=TINTA, width=3)
+    fy, fh = y0 + 74, 540
+    base.paste(quadro_foto(foto, (SW - 2 * M, fh)), (M, fy))
+    d.rectangle([M, fy, SW - M - 1, fy + fh - 1], outline=TINTA, width=3)
+    d.text((M, fy + fh + 12), "Foto da vistoria Caixa", font=fonte(SANS, 24), fill=MUDO)
+    y = bloco_manchete(d, f"{resumo_tipo(im)} em {cidade(im)}", M, fy + fh + 62, SW - 2 * M,
+                       tam=64, tam_min=46, max_linhas=2)
+    y += 26
+    d.text((M, y), rotulo_preco(im), font=fonte(SANS_M, 34), fill=MUDO)
+    fp = fonte(SERIF, 150)
+    d.text((M - 4, y + 44), brl(im["preco"]), font=fp, fill=OURO)
+    y += 44 + 170
+    pct = round(im["desconto"])
+    d.text((M, y), f"{pct}% abaixo dos {brl(im['avaliacao'])} da avaliação da Caixa",
+           font=caber(d, f"{pct}% abaixo dos {brl(im['avaliacao'])} da avaliação da Caixa", SANS_B, 34, SW - 2 * M),
+           fill=TINTA)
+    y += 66
+    sn = lambda v: "sim" if v else "não"  # noqa: E731
+    x = M
+    for txt, ok in ((f"Financiamento: {sn(im.get('financiamento'))}", im.get("financiamento")),
+                    (f"FGTS: {sn(im.get('fgts'))}", im.get("fgts"))):
+        fc = fonte(SANS_B, 30)
+        wv = d.textlength(txt, font=fc) + 44
+        if ok:
+            d.rectangle([x, y, x + wv, y + 62], fill=TINTA)
+            d.text((x + 22, y + 13), txt, font=fc, fill=PAPEL)
+        else:
+            d.rectangle([x, y, x + wv, y + 62], outline=LINHA, width=3)
+            d.text((x + 22, y + 13), txt, font=fc, fill=MUDO)
+        x += wv + 18
+    # chamada para o adesivo de link (o adesivo fica logo abaixo, na faixa livre)
+    yc = 1456
+    d.text((M, yc), "Toque no link e veja a lista da semana", font=fonte(SERIF, 44), fill=TINTA)
+    # rodape acima da zona da interface
+    yr = SH - 300
+    d.text((M, yr), "Reginaldo Rosso · assessoria grátis, quem paga o corretor é a Caixa", font=caber(d, "Reginaldo Rosso · assessoria grátis, quem paga o corretor é a Caixa", SANS_B, 24, SW - 2 * M), fill=TINTA)
+    d.text((M, yr + 34), CRECI + " · valores do edital, sujeitos a alteração", font=fonte(SANS, 21), fill=MUDO)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    base.save(destino, "JPEG", quality=90, optimize=True, progressive=True)

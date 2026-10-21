@@ -208,7 +208,7 @@ def resumo(sel, destino):
         d.line([(rv.M, y), (rv.W - rv.M, y)], fill=rv.LINHA, width=2)
     y += 36
     f_cta = rv.fonte(rv.SERIF_M, 40)
-    y = rv.bloco_manchete(d, "Gostou de algum? Mande o número dele no direct.", rv.M, y, rv.W - 2 * rv.M,
+    y = rv.bloco_manchete(d, "Quer o link dos 8? Manda LISTA no direct.", rv.M, y, rv.W - 2 * rv.M,
                           tam=40, tam_min=32, max_linhas=2, nome=rv.SERIF_M)
     d.text((rv.M, y + 12), "A assessoria é grátis: quem paga o corretor credenciado é a Caixa.",
            font=rv.caber(d, "A assessoria é grátis: quem paga o corretor credenciado é a Caixa.", rv.SANS_M, 26,
@@ -242,7 +242,8 @@ def legenda(sel, segunda):
         "a assessoria é grátis porque a comissão do corretor credenciado é paga pela Caixa. "
         "Só precisa colocar o CRECI do Reginaldo na proposta, então fale antes de enviar.",
         "",
-        "mande o número do imóvel no direct que eu te passo matrícula, edital e a conta completa.",
+        "quer o link com os 8 e o botão de WhatsApp de cada um? manda LISTA no direct.",
+        "sobre um imóvel específico, mande o número dele que eu te passo matrícula, edital e a conta completa.",
         "",
         f"Reginaldo Rosso · corretor credenciado Caixa · {rv.CRECI}",
         "Valores do edital Caixa, sujeitos a alteração. Não é promessa de rentabilidade.",

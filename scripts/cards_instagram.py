@@ -160,8 +160,9 @@ def legenda(im, hoje):
         "",
         "a assessoria é grátis: a comissão do corretor credenciado é paga pela Caixa. "
         "Só precisa do CRECI do Reginaldo na proposta, então fale antes de enviar.",
-        f"mande o código {im['id']} no direct ou no WhatsApp {rv.WHATS[im['uf']]} "
+        f"sobre este, mande o código {im['id']} no direct ou no WhatsApp {rv.WHATS[im['uf']]} "
         "que eu te passo matrícula, edital e a conta completa.",
+        "quer a lista com os imóveis da semana? manda LISTA no direct.",
         "",
         f"Reginaldo Rosso · corretor credenciado Caixa · {rv.CRECI}",
         "Valores do edital Caixa, sujeitos a alteração. Não é promessa de rentabilidade.",
@@ -202,6 +203,20 @@ def gerar_galeria():
                 f'<section><h2>Seleção da semana · {d} · carrossel de {len(slides)} slides (poste na ordem)</h2>'
                 f'<div class="tira">{tiras}</div>'
                 + _figura(capa, "Legenda do carrossel", leg, "Baixar capa") + "</section>")
+    edu = SAIDA / "educativo"
+    if edu.exists():
+        for s in sorted(p for p in edu.iterdir() if p.is_dir()):
+            slides = sorted(s.glob("*.jpg"))
+            if not slides:
+                continue
+            leg = (s / "legenda.txt").read_text(encoding="utf-8") if (s / "legenda.txt").exists() else ""
+            tiras = "".join(f'<a href="educativo/{s.name}/{x.name}" download><img src="educativo/{s.name}/{x.name}" '
+                            f'loading="lazy" alt="slide {x.stem}"></a>' for x in slides)
+            blocos.append(
+                f'<section><h2>Educativo · {s.name.replace("-", " ")} · carrossel de {len(slides)} slides</h2>'
+                f'<div class="tira">{tiras}</div>'
+                + _figura(f"educativo/{s.name}/{slides[0].name}", "Legenda do carrossel", leg, "Baixar capa")
+                + "</section>")
     dias = sorted([p for p in SAIDA.iterdir() if p.is_dir() and re.fullmatch(r"\d{4}-\d{2}-\d{2}", p.name)],
                   reverse=True)
     for dia in dias:
@@ -209,7 +224,9 @@ def gerar_galeria():
         for jpg in sorted(dia.glob("*.jpg")):
             txt = jpg.with_suffix(".txt")
             leg = txt.read_text(encoding="utf-8") if txt.exists() else ""
-            itens.append(_figura(f"{dia.name}/{jpg.name}", f"Raio-X {jpg.stem.upper()}", leg))
+            rot = (f"Story {jpg.stem.split('-')[0].upper()} (adesivo de link)" if jpg.stem.endswith("-story")
+                   else f"Raio-X {jpg.stem.upper()}")
+            itens.append(_figura(f"{dia.name}/{jpg.name}", rot, leg, "Baixar imagem"))
         if itens:
             d = datetime.strptime(dia.name, "%Y-%m-%d").strftime("%d/%m/%Y")
             blocos.append(f"<section><h2>Raio-X do dia · {d}</h2><div class=g>{''.join(itens)}</div></section>")
@@ -280,6 +297,12 @@ def main():
         destino = SAIDA / hoje.isoformat() / f"{uf.lower()}.jpg"
         rv.raiox(im, destino, hoje, foto=foto)
         destino.with_suffix(".txt").write_text(legenda(im, hoje), encoding="utf-8")
+        st = destino.with_name(f"{uf.lower()}-story.jpg")
+        rv.story(im, st, hoje, foto=foto)
+        st.with_suffix(".txt").write_text(
+            "STORY: poste a imagem e ponha o adesivo de LINK na faixa livre logo abaixo de "
+            "\"Toque no link e veja a lista da semana\".\n"
+            f"Link: {rv.LINK_STORY}\nTexto do adesivo: LISTA DA SEMANA\n", encoding="utf-8")
         hist.append({"data": hoje.isoformat(), "uf": uf, "id": im["id"], "cidade": im["cidade"],
                      "desconto": im["desconto"], "com_foto": foto is not None})
         gerados += 1
