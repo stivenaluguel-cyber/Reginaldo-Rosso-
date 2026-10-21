@@ -286,6 +286,8 @@ def main():
         rv.raiox(i, pasta / f"{k + 1:02d}.jpg", hoje, foto=f, numero=k, total=len(sel))
     resumo(sel, pasta / f"{len(sel) + 2:02d}.jpg")
     (pasta / "legenda.txt").write_text(legenda(sel, segunda), encoding="utf-8")
+    import lista_semana
+    lista_semana.gerar(sel, segunda, RAIZ / "lista" / "index.html")
     h.append({"semana": segunda.isoformat(), "ids": [str(i["id"]) for i in sel]})
     SAIDA.mkdir(parents=True, exist_ok=True)
     HIST.write_text(json.dumps(h[-30:], ensure_ascii=False, indent=1), encoding="utf-8")
