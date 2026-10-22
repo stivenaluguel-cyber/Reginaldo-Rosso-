@@ -14,5 +14,21 @@
   "cidade": "MAFRA",
   "desconto": 51,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-22",
+  "uf": "RS",
+  "id": "8444413187110",
+  "cidade": "PORTO ALEGRE",
+  "desconto": 49,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-22",
+  "uf": "SC",
+  "id": "1444415815684",
+  "cidade": "BRUSQUE",
+  "desconto": 39,
+  "com_foto": true
  }
 ]
