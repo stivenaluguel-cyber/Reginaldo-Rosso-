@@ -30,5 +30,21 @@
   "cidade": "BRUSQUE",
   "desconto": 39,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-23",
+  "uf": "RS",
+  "id": "1444416143310",
+  "cidade": "SARANDI",
+  "desconto": 36,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-23",
+  "uf": "SC",
+  "id": "1444421408661",
+  "cidade": "SAO FRANCISCO DO SUL",
+  "desconto": 36,
+  "com_foto": true
  }
 ]

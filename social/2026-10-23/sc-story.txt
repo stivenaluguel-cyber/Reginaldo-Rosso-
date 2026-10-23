@@ -1,0 +1,3 @@
+STORY: poste a imagem e ponha o adesivo de LINK na faixa livre logo abaixo de "Toque no link e veja a lista da semana".
+Link: https://reginaldorosso.com.br/lista/?utm_source=instagram&utm_medium=story
+Texto do adesivo: LISTA DA SEMANA
