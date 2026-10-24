@@ -46,5 +46,21 @@
   "cidade": "SAO FRANCISCO DO SUL",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-24",
+  "uf": "RS",
+  "id": "8444422250857",
+  "cidade": "SAPUCAIA DO SUL",
+  "desconto": 72,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-24",
+  "uf": "SC",
+  "id": "8444426471130",
+  "cidade": "MELEIRO",
+  "desconto": 43,
+  "com_foto": true
  }
 ]
