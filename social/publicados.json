@@ -62,5 +62,21 @@
   "cidade": "MELEIRO",
   "desconto": 43,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-25",
+  "uf": "RS",
+  "id": "1444411456183",
+  "cidade": "TRAMANDAI",
+  "desconto": 41,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-25",
+  "uf": "SC",
+  "id": "1600000160770",
+  "cidade": "SAO JOSE",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
