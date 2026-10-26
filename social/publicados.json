@@ -78,5 +78,21 @@
   "cidade": "SAO JOSE",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-26",
+  "uf": "RS",
+  "id": "10136730",
+  "cidade": "SANTA MARIA",
+  "desconto": 55,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-26",
+  "uf": "SC",
+  "id": "8444417043210",
+  "cidade": "XANXERE",
+  "desconto": 47,
+  "com_foto": true
  }
 ]
