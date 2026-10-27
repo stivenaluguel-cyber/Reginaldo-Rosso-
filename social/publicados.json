@@ -94,5 +94,21 @@
   "cidade": "XANXERE",
   "desconto": 47,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-27",
+  "uf": "RS",
+  "id": "1444402332825",
+  "cidade": "RIO GRANDE",
+  "desconto": 54,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-27",
+  "uf": "SC",
+  "id": "8444420114506",
+  "cidade": "ARAQUARI",
+  "desconto": 68,
+  "com_foto": true
  }
 ]
