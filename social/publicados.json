@@ -110,5 +110,21 @@
   "cidade": "ARAQUARI",
   "desconto": 68,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-28",
+  "uf": "RS",
+  "id": "8555512745121",
+  "cidade": "CHARQUEADAS",
+  "desconto": 75,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-28",
+  "uf": "SC",
+  "id": "8444407172336",
+  "cidade": "RIO DO OESTE",
+  "desconto": 39,
+  "com_foto": true
  }
 ]
