@@ -126,5 +126,21 @@
   "cidade": "RIO DO OESTE",
   "desconto": 39,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-29",
+  "uf": "RS",
+  "id": "8047200400231",
+  "cidade": "CANOAS",
+  "desconto": 45,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-29",
+  "uf": "SC",
+  "id": "1555525723727",
+  "cidade": "BOM JESUS DO OESTE",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
