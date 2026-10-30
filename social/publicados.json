@@ -142,5 +142,21 @@
   "cidade": "BOM JESUS DO OESTE",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-30",
+  "uf": "RS",
+  "id": "10221388",
+  "cidade": "NOVO HAMBURGO",
+  "desconto": 44,
+  "com_foto": true
+ },
+ {
+  "data": "2026-10-30",
+  "uf": "SC",
+  "id": "1555527978129",
+  "cidade": "BIGUACU",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
