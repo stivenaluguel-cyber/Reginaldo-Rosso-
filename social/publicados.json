@@ -158,5 +158,13 @@
   "cidade": "BIGUACU",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-10-31",
+  "uf": "RS",
+  "id": "8444429335580",
+  "cidade": "ESTEIO",
+  "desconto": 46,
+  "com_foto": true
  }
 ]
