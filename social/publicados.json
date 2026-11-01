@@ -166,5 +166,21 @@
   "cidade": "ESTEIO",
   "desconto": 46,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-01",
+  "uf": "RS",
+  "id": "8444407362275",
+  "cidade": "URUGUAIANA",
+  "desconto": 49,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-01",
+  "uf": "SC",
+  "id": "1444417115809",
+  "cidade": "ITAPEMA",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
