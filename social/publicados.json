@@ -182,5 +182,21 @@
   "cidade": "ITAPEMA",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-02",
+  "uf": "RS",
+  "id": "1444420992696",
+  "cidade": "PASSO FUNDO",
+  "desconto": 51,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-02",
+  "uf": "SC",
+  "id": "1444417963958",
+  "cidade": "CORONEL FREITAS",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
