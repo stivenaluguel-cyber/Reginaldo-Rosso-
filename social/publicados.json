@@ -198,5 +198,21 @@
   "cidade": "CORONEL FREITAS",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-03",
+  "uf": "RS",
+  "id": "1444402906740",
+  "cidade": "MACHADINHO",
+  "desconto": 38,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-03",
+  "uf": "SC",
+  "id": "1555536433040",
+  "cidade": "SEARA",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
