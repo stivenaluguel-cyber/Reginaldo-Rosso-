@@ -214,5 +214,21 @@
   "cidade": "SEARA",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-04",
+  "uf": "RS",
+  "id": "10150725",
+  "cidade": "SANTA CRUZ DO SUL",
+  "desconto": 61,
+  "com_foto": false
+ },
+ {
+  "data": "2026-11-04",
+  "uf": "SC",
+  "id": "10286344",
+  "cidade": "FLORIANOPOLIS",
+  "desconto": 36,
+  "com_foto": false
  }
 ]
