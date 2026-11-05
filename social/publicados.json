@@ -230,5 +230,21 @@
   "cidade": "FLORIANOPOLIS",
   "desconto": 36,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-05",
+  "uf": "RS",
+  "id": "8444406656356",
+  "cidade": "PELOTAS",
+  "desconto": 51,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-05",
+  "uf": "SC",
+  "id": "1444418401155",
+  "cidade": "ITUPORANGA",
+  "desconto": 37,
+  "com_foto": true
  }
 ]
