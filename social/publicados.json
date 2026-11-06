@@ -246,5 +246,21 @@
   "cidade": "ITUPORANGA",
   "desconto": 37,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-06",
+  "uf": "RS",
+  "id": "8444428165460",
+  "cidade": "PORTO ALEGRE",
+  "desconto": 54,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-06",
+  "uf": "SC",
+  "id": "1444419122519",
+  "cidade": "CAMPO ERE",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
