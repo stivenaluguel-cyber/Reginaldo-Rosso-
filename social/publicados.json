@@ -262,5 +262,13 @@
   "cidade": "CAMPO ERE",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-07",
+  "uf": "RS",
+  "id": "8444411798422",
+  "cidade": "SAO LEOPOLDO",
+  "desconto": 69,
+  "com_foto": true
  }
 ]
