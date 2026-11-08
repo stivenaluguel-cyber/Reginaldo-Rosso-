@@ -270,5 +270,21 @@
   "cidade": "SAO LEOPOLDO",
   "desconto": 69,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-08",
+  "uf": "RS",
+  "id": "8444432178857",
+  "cidade": "SAPUCAIA DO SUL",
+  "desconto": 48,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-08",
+  "uf": "SC",
+  "id": "8444402334443",
+  "cidade": "CURITIBANOS",
+  "desconto": 44,
+  "com_foto": true
  }
 ]
