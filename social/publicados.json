@@ -286,5 +286,21 @@
   "cidade": "CURITIBANOS",
   "desconto": 44,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-09",
+  "uf": "RS",
+  "id": "1444407896565",
+  "cidade": "CACHOEIRINHA",
+  "desconto": 44,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-09",
+  "uf": "SC",
+  "id": "8444423569768",
+  "cidade": "TUBARAO",
+  "desconto": 40,
+  "com_foto": true
  }
 ]
