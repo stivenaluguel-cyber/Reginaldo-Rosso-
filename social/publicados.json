@@ -302,5 +302,21 @@
   "cidade": "TUBARAO",
   "desconto": 40,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-10",
+  "uf": "RS",
+  "id": "10171503",
+  "cidade": "SANTA MARIA",
+  "desconto": 65,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-10",
+  "uf": "SC",
+  "id": "1444402998416",
+  "cidade": "FLORIANOPOLIS",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
