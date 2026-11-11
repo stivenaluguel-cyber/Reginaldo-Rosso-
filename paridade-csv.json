@@ -1,6 +1,6 @@
 {
   "RS": {
-    "atualizado": "2026-11-11T19:30:42.988614+00:00",
+    "atualizado": "2026-11-11T20:06:38.600665+00:00",
     "total_csv": 1010,
     "total_banco_disponivel": 1718,
     "faltando_count": 0,
@@ -8,11 +8,11 @@
     "sobrando_count": 708
   },
   "SC": {
-    "atualizado": "2026-11-11T19:30:44.332568+00:00",
+    "atualizado": "2026-11-11T20:06:39.981388+00:00",
     "total_csv": 170,
-    "total_banco_disponivel": 332,
+    "total_banco_disponivel": 331,
     "faltando_count": 0,
     "faltando_ids": [],
-    "sobrando_count": 162
+    "sobrando_count": 161
   }
 }
