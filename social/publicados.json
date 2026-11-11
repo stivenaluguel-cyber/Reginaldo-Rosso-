@@ -318,5 +318,21 @@
   "cidade": "FLORIANOPOLIS",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-11",
+  "uf": "RS",
+  "id": "8444429269391",
+  "cidade": "VIAMAO",
+  "desconto": 47,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-11",
+  "uf": "SC",
+  "id": "10003975",
+  "cidade": "COCAL DO SUL",
+  "desconto": 50,
+  "com_foto": false
  }
 ]
