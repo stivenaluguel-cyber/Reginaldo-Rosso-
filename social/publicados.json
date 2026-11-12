@@ -334,5 +334,21 @@
   "cidade": "COCAL DO SUL",
   "desconto": 50,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-12",
+  "uf": "RS",
+  "id": "1444417079314",
+  "cidade": "ARROIO DO MEIO",
+  "desconto": 45,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-12",
+  "uf": "SC",
+  "id": "10193940",
+  "cidade": "JOINVILLE",
+  "desconto": 56,
+  "com_foto": true
  }
 ]
