@@ -350,5 +350,21 @@
   "cidade": "JOINVILLE",
   "desconto": 56,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-13",
+  "uf": "RS",
+  "id": "1444406771173",
+  "cidade": "CARLOS BARBOSA",
+  "desconto": 36,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-13",
+  "uf": "SC",
+  "id": "1444419173903",
+  "cidade": "MORRO DA FUMACA",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
