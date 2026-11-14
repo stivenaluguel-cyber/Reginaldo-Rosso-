@@ -366,5 +366,13 @@
   "cidade": "MORRO DA FUMACA",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-14",
+  "uf": "RS",
+  "id": "8444411730283",
+  "cidade": "CANOAS",
+  "desconto": 65,
+  "com_foto": true
  }
 ]
