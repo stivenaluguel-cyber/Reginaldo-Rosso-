@@ -374,5 +374,21 @@
   "cidade": "CANOAS",
   "desconto": 65,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-15",
+  "uf": "RS",
+  "id": "8444413973671",
+  "cidade": "SAO JERONIMO",
+  "desconto": 43,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-15",
+  "uf": "SC",
+  "id": "8444407368583",
+  "cidade": "ITUPORANGA",
+  "desconto": 39,
+  "com_foto": true
  }
 ]
