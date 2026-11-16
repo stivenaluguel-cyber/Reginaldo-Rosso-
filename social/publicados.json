@@ -390,5 +390,21 @@
   "cidade": "ITUPORANGA",
   "desconto": 39,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-16",
+  "uf": "RS",
+  "id": "1444421054886",
+  "cidade": "BENTO GONCALVES",
+  "desconto": 36,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-16",
+  "uf": "SC",
+  "id": "1444419482868",
+  "cidade": "SAO CRISTOVAO DO SUL",
+  "desconto": 38,
+  "com_foto": false
  }
 ]
