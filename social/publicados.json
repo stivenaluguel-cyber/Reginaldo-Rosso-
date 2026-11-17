@@ -406,5 +406,21 @@
   "cidade": "SAO CRISTOVAO DO SUL",
   "desconto": 38,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-17",
+  "uf": "RS",
+  "id": "1555533070273",
+  "cidade": "URUGUAIANA",
+  "desconto": 36,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-17",
+  "uf": "SC",
+  "id": "10303625",
+  "cidade": "MAFRA",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
