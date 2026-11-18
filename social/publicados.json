@@ -422,5 +422,21 @@
   "cidade": "MAFRA",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-18",
+  "uf": "RS",
+  "id": "8444438197616",
+  "cidade": "ALVORADA",
+  "desconto": 39,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-18",
+  "uf": "SC",
+  "id": "10300974",
+  "cidade": "PRESIDENTE GETULIO",
+  "desconto": 36,
+  "com_foto": false
  }
 ]
