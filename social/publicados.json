@@ -438,5 +438,21 @@
   "cidade": "PRESIDENTE GETULIO",
   "desconto": 36,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-19",
+  "uf": "RS",
+  "id": "8787713769738",
+  "cidade": "NOVO HAMBURGO",
+  "desconto": 39,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-19",
+  "uf": "SC",
+  "id": "8444405883294",
+  "cidade": "GARUVA",
+  "desconto": 39,
+  "com_foto": true
  }
 ]
