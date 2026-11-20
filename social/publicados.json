@@ -454,5 +454,21 @@
   "cidade": "GARUVA",
   "desconto": 39,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-20",
+  "uf": "RS",
+  "id": "7049520050143",
+  "cidade": "PELOTAS",
+  "desconto": 36,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-20",
+  "uf": "SC",
+  "id": "8444415932603",
+  "cidade": "BRUSQUE",
+  "desconto": 39,
+  "com_foto": true
  }
 ]
