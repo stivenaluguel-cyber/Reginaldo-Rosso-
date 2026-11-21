@@ -470,5 +470,13 @@
   "cidade": "BRUSQUE",
   "desconto": 39,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-21",
+  "uf": "RS",
+  "id": "8444416174877",
+  "cidade": "PORTO ALEGRE",
+  "desconto": 66,
+  "com_foto": false
  }
 ]
