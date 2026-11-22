@@ -478,5 +478,21 @@
   "cidade": "PORTO ALEGRE",
   "desconto": 66,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-22",
+  "uf": "RS",
+  "id": "1555536036726",
+  "cidade": "CARAZINHO",
+  "desconto": 57,
+  "com_foto": false
+ },
+ {
+  "data": "2026-11-22",
+  "uf": "SC",
+  "id": "1444403317277",
+  "cidade": "SAO JOSE",
+  "desconto": 36,
+  "com_foto": false
  }
 ]
