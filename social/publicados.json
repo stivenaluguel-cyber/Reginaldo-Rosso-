@@ -494,5 +494,21 @@
   "cidade": "SAO JOSE",
   "desconto": 36,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-23",
+  "uf": "RS",
+  "id": "1444404302362",
+  "cidade": "GRAVATAI",
+  "desconto": 69,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-23",
+  "uf": "SC",
+  "id": "8444401033156",
+  "cidade": "LAGUNA",
+  "desconto": 36,
+  "com_foto": false
  }
 ]
