@@ -510,5 +510,21 @@
   "cidade": "LAGUNA",
   "desconto": 36,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-24",
+  "uf": "RS",
+  "id": "1444405139775",
+  "cidade": "SAO LEOPOLDO",
+  "desconto": 43,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-24",
+  "uf": "SC",
+  "id": "8444420180320",
+  "cidade": "SAO JOAO BATISTA",
+  "desconto": 39,
+  "com_foto": true
  }
 ]
