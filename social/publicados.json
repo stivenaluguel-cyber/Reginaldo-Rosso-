@@ -526,5 +526,21 @@
   "cidade": "SAO JOAO BATISTA",
   "desconto": 39,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-25",
+  "uf": "RS",
+  "id": "8444426400675",
+  "cidade": "IMBE",
+  "desconto": 47,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-25",
+  "uf": "SC",
+  "id": "10308544",
+  "cidade": "CRICIUMA",
+  "desconto": 36,
+  "com_foto": true
  }
 ]
