@@ -542,5 +542,21 @@
   "cidade": "CRICIUMA",
   "desconto": 36,
   "com_foto": true
+ },
+ {
+  "data": "2026-11-26",
+  "uf": "RS",
+  "id": "8444407487655",
+  "cidade": "MONTENEGRO",
+  "desconto": 47,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-26",
+  "uf": "SC",
+  "id": "8444427169071",
+  "cidade": "NOVA VENEZA",
+  "desconto": 43,
+  "com_foto": false
  }
 ]
