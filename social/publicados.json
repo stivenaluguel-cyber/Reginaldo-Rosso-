@@ -558,5 +558,21 @@
   "cidade": "NOVA VENEZA",
   "desconto": 43,
   "com_foto": false
+ },
+ {
+  "data": "2026-11-27",
+  "uf": "RS",
+  "id": "1444414757168",
+  "cidade": "VIAMAO",
+  "desconto": 36,
+  "com_foto": true
+ },
+ {
+  "data": "2026-11-27",
+  "uf": "SC",
+  "id": "10159186",
+  "cidade": "SAO JOSE",
+  "desconto": 42,
+  "com_foto": true
  }
 ]
